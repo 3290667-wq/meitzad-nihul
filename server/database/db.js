@@ -53,12 +53,16 @@ const db = new Database(DB_PATH);
 // Enable foreign keys
 db.pragma('foreign_keys = ON');
 
-// Initialize schema
+// Initialize schema IMMEDIATELY on module load
+// This must happen before any prepared statements are created
+const schemaPath = path.join(__dirname, 'schema.sql');
+const schema = fs.readFileSync(schemaPath, 'utf8');
+db.exec(schema);
+console.log('Database schema initialized');
+
+// Initialize schema (kept for backwards compatibility, but no longer needed)
 function initializeDatabase() {
-  const schemaPath = path.join(__dirname, 'schema.sql');
-  const schema = fs.readFileSync(schemaPath, 'utf8');
-  db.exec(schema);
-  console.log('Database initialized successfully');
+  console.log('Database already initialized');
 }
 
 // Generate unique request number
