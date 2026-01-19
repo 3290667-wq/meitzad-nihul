@@ -53,6 +53,11 @@ const db = new Database(DB_PATH);
 // Enable foreign keys
 db.pragma('foreign_keys = ON');
 
+// Get database instance (for dynamic queries)
+function getDb() {
+  return db;
+}
+
 // Initialize schema IMMEDIATELY on module load
 // This must happen before any prepared statements are created
 const schemaPath = path.join(__dirname, 'schema.sql');
@@ -314,6 +319,7 @@ const getAllSettings = db.prepare(`
 // Export
 module.exports = {
   db,
+  getDb,
   initializeDatabase,
   generateRequestNumber,
 
