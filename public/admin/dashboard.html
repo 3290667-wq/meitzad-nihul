@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>לוח בקרה - מערכת ניהול מיצד</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/admin/admin.css">
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="admin-layout">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+      <div class="sidebar-header">
+        <h2>מיצד</h2>
+        <span>מערכת ניהול</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="/admin/dashboard.html" class="nav-item active">
+          <span class="nav-icon">📊</span>
+          <span class="nav-text">לוח בקרה</span>
+        </a>
+        <a href="/admin/requests.html" class="nav-item">
+          <span class="nav-icon">📬</span>
+          <span class="nav-text">פניות</span>
+          <span class="nav-badge" id="newRequestsBadge">0</span>
+        </a>
+        <a href="/admin/users.html" class="nav-item">
+          <span class="nav-icon">👥</span>
+          <span class="nav-text">משתמשים</span>
+        </a>
+        <a href="/admin/settings.html" class="nav-item">
+          <span class="nav-icon">⚙️</span>
+          <span class="nav-text">הגדרות</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <a href="/" class="nav-item">
+          <span class="nav-icon">🏠</span>
+          <span class="nav-text">לאתר הראשי</span>
+        </a>
+        <a href="#" class="nav-item" onclick="logout()">
+          <span class="nav-icon">🚪</span>
+          <span class="nav-text">התנתקות</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+      <header class="admin-header">
+        <h1>לוח בקרה</h1>
+        <div class="header-user">
+          <span id="userName">שלום</span>
+        </div>
+      </header>
+
+      <div class="admin-content">
+        <!-- Stats Cards -->
+        <section class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon new">📥</div>
+            <div class="stat-info">
+              <span class="stat-value" id="statNew">0</span>
+              <span class="stat-label">פניות חדשות</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon progress">⏳</div>
+            <div class="stat-info">
+              <span class="stat-value" id="statInProgress">0</span>
+              <span class="stat-label">בטיפול</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon resolved">✓</div>
+            <div class="stat-info">
+              <span class="stat-value" id="statResolved">0</span>
+              <span class="stat-label">נפתרו</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon time">⏱️</div>
+            <div class="stat-info">
+              <span class="stat-value" id="statAvgTime">-</span>
+              <span class="stat-label">זמן טיפול ממוצע</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Recent Requests -->
+        <section class="dashboard-section">
+          <div class="section-header">
+            <h2>פניות אחרונות</h2>
+            <a href="/admin/requests.html" class="btn btn-secondary btn-sm">צפייה בכל הפניות</a>
+          </div>
+
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>מספר</th>
+                  <th>נושא</th>
+                  <th>קטגוריה</th>
+                  <th>מגיש</th>
+                  <th>סטטוס</th>
+                  <th>תאריך</th>
+                  <th>פעולות</th>
+                </tr>
+              </thead>
+              <tbody id="recentRequestsTable">
+                <tr>
+                  <td colspan="7" class="loading">טוען...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+
+        <!-- Categories Stats -->
+        <section class="dashboard-section">
+          <div class="section-header">
+            <h2>פניות לפי קטגוריה</h2>
+          </div>
+
+          <div class="categories-stats" id="categoriesStats">
+            <!-- Loaded dynamically -->
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="/js/admin.js"></script>
+</body>
+</html>

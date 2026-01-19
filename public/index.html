@@ -1,0 +1,265 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>מערכת ניהול יישוב מיצד</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+</head>
+<body>
+  <header class="main-header">
+    <div class="container">
+      <div class="logo">
+        <h1>יישוב מיצד</h1>
+        <span class="subtitle">מערכת פניות ושירות תושבים</span>
+      </div>
+      <nav class="main-nav">
+        <a href="#" class="nav-link active" data-page="home">דף הבית</a>
+        <a href="#submit" class="nav-link" data-page="submit">הגשת פנייה</a>
+        <a href="#track" class="nav-link" data-page="track">מעקב פנייה</a>
+        <a href="#login" class="nav-link login-btn" id="loginBtn">התחברות</a>
+      </nav>
+      <button class="mobile-menu-btn" id="mobileMenuBtn">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <!-- Home Page -->
+    <section id="page-home" class="page active">
+      <div class="hero">
+        <div class="container">
+          <h2>ברוכים הבאים למערכת פניות יישוב מיצד</h2>
+          <p>מערכת מתקדמת לניהול פניות ושירות תושבים</p>
+          <div class="hero-buttons">
+            <a href="#submit" class="btn btn-primary btn-large" data-page="submit">הגשת פנייה חדשה</a>
+            <a href="#track" class="btn btn-secondary btn-large" data-page="track">מעקב פנייה קיימת</a>
+          </div>
+        </div>
+      </div>
+
+      <section class="features">
+        <div class="container">
+          <h3>איך זה עובד?</h3>
+          <div class="features-grid">
+            <div class="feature-card">
+              <div class="feature-icon">📝</div>
+              <h4>הגשת פנייה</h4>
+              <p>מלאו את הטופס עם פרטי הפנייה, בחרו קטגוריה ותארו את הבעיה</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">📧</div>
+              <h4>אישור במייל</h4>
+              <p>תקבלו אישור במייל עם מספר פנייה ייחודי למעקב</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">⚡</div>
+              <h4>טיפול מהיר</h4>
+              <p>הפנייה מועברת אוטומטית לצוות הוועד לטיפול</p>
+            </div>
+            <div class="feature-card">
+              <div class="feature-icon">🔔</div>
+              <h4>עדכונים שוטפים</h4>
+              <p>קבלו עדכונים על התקדמות הטיפול בפנייתכם</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="categories-section">
+        <div class="container">
+          <h3>קטגוריות פניות</h3>
+          <div class="categories-grid" id="categoriesGrid">
+            <!-- Categories loaded dynamically -->
+          </div>
+        </div>
+      </section>
+    </section>
+
+    <!-- Submit Request Page -->
+    <section id="page-submit" class="page">
+      <div class="container">
+        <div class="form-container">
+          <h2>הגשת פנייה חדשה</h2>
+          <p class="form-subtitle">מלאו את הפרטים ונטפל בפנייתכם בהקדם</p>
+
+          <form id="requestForm" class="request-form">
+            <fieldset>
+              <legend>פרטי פונה</legend>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="name">שם מלא *</label>
+                  <input type="text" id="name" name="name" required>
+                </div>
+                <div class="form-group">
+                  <label for="email">אימייל *</label>
+                  <input type="email" id="email" name="email" required>
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="phone">טלפון</label>
+                  <input type="tel" id="phone" name="phone" placeholder="050-1234567">
+                </div>
+                <div class="form-group">
+                  <label for="address">כתובת ביישוב</label>
+                  <input type="text" id="address" name="address">
+                </div>
+              </div>
+            </fieldset>
+
+            <fieldset>
+              <legend>פרטי הפנייה</legend>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="categoryId">קטגוריה *</label>
+                  <select id="categoryId" name="categoryId" required>
+                    <option value="">בחרו קטגוריה</option>
+                  </select>
+                </div>
+                <div class="form-group">
+                  <label for="priority">דחיפות</label>
+                  <select id="priority" name="priority">
+                    <option value="normal">רגילה</option>
+                    <option value="low">נמוכה</option>
+                    <option value="high">גבוהה</option>
+                    <option value="urgent">דחופה</option>
+                  </select>
+                </div>
+              </div>
+              <div class="form-group">
+                <label for="subject">נושא הפנייה *</label>
+                <input type="text" id="subject" name="subject" required maxlength="200">
+              </div>
+              <div class="form-group">
+                <label for="description">תיאור מפורט</label>
+                <textarea id="description" name="description" rows="5" placeholder="תארו את הבעיה בפירוט..."></textarea>
+              </div>
+              <div class="form-group">
+                <label for="location">מיקום (אם רלוונטי)</label>
+                <input type="text" id="location" name="location" placeholder="למשל: ליד בית הקהילה">
+              </div>
+            </fieldset>
+
+            <div class="form-actions">
+              <button type="submit" class="btn btn-primary btn-large">שליחת פנייה</button>
+              <button type="reset" class="btn btn-secondary">ניקוי טופס</button>
+            </div>
+          </form>
+
+          <div id="submitSuccess" class="success-message hidden">
+            <div class="success-icon">✓</div>
+            <h3>הפנייה נשלחה בהצלחה!</h3>
+            <p>מספר פנייה: <strong id="requestNumber"></strong></p>
+            <p>שמרו את מספר הפנייה למעקב. אישור נשלח לאימייל שלכם.</p>
+            <button class="btn btn-primary" onclick="location.reload()">פנייה חדשה</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Track Request Page -->
+    <section id="page-track" class="page">
+      <div class="container">
+        <div class="form-container">
+          <h2>מעקב פנייה</h2>
+          <p class="form-subtitle">הזינו את מספר הפנייה למעקב</p>
+
+          <form id="trackForm" class="track-form">
+            <div class="form-group">
+              <label for="trackNumber">מספר פנייה</label>
+              <input type="text" id="trackNumber" name="trackNumber" placeholder="M2026-0001" required>
+            </div>
+            <button type="submit" class="btn btn-primary">חיפוש</button>
+          </form>
+
+          <div id="trackResult" class="track-result hidden">
+            <!-- Results loaded dynamically -->
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Login Page -->
+    <section id="page-login" class="page">
+      <div class="container">
+        <div class="form-container small">
+          <h2>התחברות למערכת</h2>
+
+          <form id="loginForm" class="login-form">
+            <div class="form-group">
+              <label for="loginEmail">אימייל</label>
+              <input type="email" id="loginEmail" name="email" required>
+            </div>
+            <div class="form-group">
+              <label for="loginPassword">סיסמה</label>
+              <input type="password" id="loginPassword" name="password" required>
+            </div>
+            <button type="submit" class="btn btn-primary btn-full">התחברות</button>
+          </form>
+
+          <div class="form-footer">
+            <p>אין לך חשבון? <a href="#register" data-page="register">הרשמה</a></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Register Page -->
+    <section id="page-register" class="page">
+      <div class="container">
+        <div class="form-container small">
+          <h2>הרשמה למערכת</h2>
+
+          <form id="registerForm" class="register-form">
+            <div class="form-group">
+              <label for="regName">שם מלא *</label>
+              <input type="text" id="regName" name="name" required>
+            </div>
+            <div class="form-group">
+              <label for="regEmail">אימייל *</label>
+              <input type="email" id="regEmail" name="email" required>
+            </div>
+            <div class="form-group">
+              <label for="regPhone">טלפון</label>
+              <input type="tel" id="regPhone" name="phone">
+            </div>
+            <div class="form-group">
+              <label for="regAddress">כתובת ביישוב</label>
+              <input type="text" id="regAddress" name="address">
+            </div>
+            <div class="form-group">
+              <label for="regPassword">סיסמה *</label>
+              <input type="password" id="regPassword" name="password" required minlength="6">
+            </div>
+            <div class="form-group">
+              <label for="regPasswordConfirm">אימות סיסמה *</label>
+              <input type="password" id="regPasswordConfirm" name="passwordConfirm" required minlength="6">
+            </div>
+            <button type="submit" class="btn btn-primary btn-full">הרשמה</button>
+          </form>
+
+          <div class="form-footer">
+            <p>יש לך חשבון? <a href="#login" data-page="login">התחברות</a></p>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="main-footer">
+    <div class="container">
+      <p>&copy; 2026 יישוב מיצד - מערכת ניהול פניות</p>
+    </div>
+  </footer>
+
+  <!-- Toast notifications -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="/js/main.js"></script>
+</body>
+</html>
