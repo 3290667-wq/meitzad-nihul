@@ -3,11 +3,15 @@
   "version": "1.0.0",
   "description": "אתר ניהולי ליישוב מיצד",
   "main": "server/index.js",
+  "engines": {
+    "node": ">=18.0.0"
+  },
   "scripts": {
     "start": "node server/index.js",
     "dev": "nodemon server/index.js",
     "backup": "node server/services/backup.js manual",
-    "init-db": "node server/database/init.js"
+    "init-db": "node server/database/init.js",
+    "postinstall": "npm rebuild better-sqlite3"
   },
   "keywords": [
     "meitzad",
