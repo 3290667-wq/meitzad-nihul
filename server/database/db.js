@@ -4,11 +4,43 @@ const fs = require('fs');
 
 // Database file path - use Render's persistent disk in production if available
 // Otherwise fallback to /tmp (note: data will be lost on restart without disk)
-const dataDir = process.env.NODE_ENV === 'production'
-  ? (process.env.DATA_DIR || '/var/data')
-  : path.join(__dirname, '../../data');
+function getDataDir() {
+  if (process.env.NODE_ENV !== 'production') {
+    return path.join(__dirname, '../../data');
+  }
 
+  // Try DATA_DIR env var first
+  if (process.env.DATA_DIR) {
+    return process.env.DATA_DIR;
+  }
+
+  // Try /var/data (Render disk)
+  const varDataDir = '/var/data';
+  try {
+    if (!fs.existsSync(varDataDir)) {
+      fs.mkdirSync(varDataDir, { recursive: true });
+    }
+    // Test write permission
+    const testFile = path.join(varDataDir, '.test');
+    fs.writeFileSync(testFile, 'test');
+    fs.unlinkSync(testFile);
+    return varDataDir;
+  } catch (e) {
+    console.log('Cannot use /var/data, falling back to /tmp');
+  }
+
+  // Fallback to /tmp
+  const tmpDir = '/tmp/meitzad-data';
+  if (!fs.existsSync(tmpDir)) {
+    fs.mkdirSync(tmpDir, { recursive: true });
+  }
+  console.warn('WARNING: Using /tmp for database - data will be lost on restart!');
+  return tmpDir;
+}
+
+const dataDir = getDataDir();
 const DB_PATH = path.join(dataDir, 'meitzad.db');
+console.log(`Database path: ${DB_PATH}`);
 
 // Ensure data directory exists
 if (!fs.existsSync(dataDir)) {
