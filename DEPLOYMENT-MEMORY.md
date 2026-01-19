@@ -1,50 +1,133 @@
 # קובץ זיכרון - העלאה ל-GitHub ו-Render
 
 ## תאריך התחלה: 2026-01-19
-## סטטוס: בתהליך
+## סטטוס: הושלם חלקית
 
 ---
 
 ## שלב 1: בדיקת מבנה הפרויקט ✅
 - פרויקט Node.js + Express
-- SQLite database
+- SQLite database (better-sqlite3)
 - Frontend ב-public/
 - Backend ב-server/
 - קיים render.yaml מוכן
 
 ---
 
-## שלב 2: העלאה ל-GitHub 🔄
-**GitHub Token:** התקבל מהמשתמש
-**Repository:** meitzad-nihul (יווצר)
-**Username:** יזוהה אוטומטית
+## שלב 2: העלאה ל-GitHub ✅
+**GitHub Repository:** https://github.com/3290667-wq/meitzad-nihul
+**Branch:** main
+**סטטוס:** הועלה בהצלחה!
 
-### פעולות:
-- [ ] זיהוי username מ-GitHub
-- [ ] יצירת repository חדש
-- [ ] הגדרת remote origin
-- [ ] Push לקוד
+### פעולות שבוצעו:
+- [x] זיהוי username: 3290667-wq
+- [x] יצירת repository חדש: meitzad-nihul
+- [x] הגדרת remote origin
+- [x] Push הקוד ל-main branch
 
 ---
 
-## שלב 3: העלאה ל-Render ⏳
-**משתני סביבה נדרשים:**
-- JWT_SECRET
-- ADMIN_EMAIL
-- PORT (default: 3000)
+## שלב 3: העלאה ל-Render 🔄
+**סטטוס:** דורש העלאה ידנית דרך הדשבורד
 
-### פעולות:
-- [ ] יצירת שירות חדש ב-Render
-- [ ] חיבור ל-GitHub repo
-- [ ] הגדרת משתני סביבה
-- [ ] בדיקת deploy
+### הוראות להעלאה ל-Render:
+
+#### 1. כניסה ל-Render
+- היכנס ל: https://dashboard.render.com
+- התחבר עם GitHub
+
+#### 2. יצירת שירות חדש
+1. לחץ על **"New +"** → **"Web Service"**
+2. בחר **"Build and deploy from a Git repository"**
+3. חבר את ה-repository: `3290667-wq/meitzad-nihul`
+4. בחר branch: `main`
+
+#### 3. הגדרות השירות
+```
+Name: meitzad-nihul
+Region: Frankfurt (EU Central)
+Branch: main
+Runtime: Node
+Build Command: npm install
+Start Command: npm start
+```
+
+#### 4. הגדרת Disk (נדרש ל-SQLite!)
+**חשוב:** התוכנית החינמית אינה תומכת ב-Disk.
+יש לבחור תוכנית **Starter ($7/חודש)** לפחות.
+
+```
+Disk Name: meitzad-data
+Mount Path: /var/data
+Size: 1 GB
+```
+
+#### 5. משתני סביבה (Environment Variables)
+הוסף את המשתנים הבאים:
+
+| Key | Value | הערות |
+|-----|-------|-------|
+| NODE_ENV | production | |
+| PORT | 10000 | Render משתמש בפורט זה |
+| JWT_SECRET | [צור מפתח אקראי] | לפחות 32 תווים |
+| ADMIN_EMAIL | admin@meitzad.org.il | מייל המנהל |
+
+משתנים אופציונליים (לאינטגרציות):
+| Key | Value |
+|-----|-------|
+| WHATSAPP_GROUP_ID | מזהה קבוצת WhatsApp |
+| WHATSAPP_BRIDGE_URL | כתובת גשר WhatsApp |
+| SMTP_HOST | smtp.gmail.com |
+| SMTP_PORT | 587 |
+| SMTP_SECURE | false |
+| SMTP_USER | your-email@gmail.com |
+| SMTP_PASS | app-password |
+| SMTP_FROM | pniyot@meitzad.org.il |
+
+#### 6. Deploy
+- לחץ **"Create Web Service"**
+- המתן ל-build (2-5 דקות)
+- בדוק את ה-logs
+
+---
+
+## חלופה חינמית - ללא Disk
+
+אם רוצים להישאר בתוכנית החינמית, יש אפשרות:
+1. להחליף ל-PostgreSQL (Render מציע DB חינמי)
+2. להשתמש ב-Railway.app במקום
+3. להשתמש ב-Fly.io עם volume חינמי
 
 ---
 
 ## לוג פעולות:
 
-### 2026-01-19 - התחלה
-- נקראו קבצי הפרויקט
-- זוהה מבנה הפרויקט
-- התקבל GitHub token
+### 2026-01-19
+- 17:00 - התחלת תהליך
+- 17:01 - נקראו קבצי הפרויקט
+- 17:02 - זוהה מבנה הפרויקט
+- 17:03 - נוצר GitHub repository
+- 17:03 - הקוד הועלה ל-GitHub בהצלחה
+- 17:04 - הכנת הוראות להעלאה ל-Render
 
+---
+
+## קישורים חשובים:
+- **GitHub Repo:** https://github.com/3290667-wq/meitzad-nihul
+- **Render Dashboard:** https://dashboard.render.com
+- **תיעוד Render:** https://docs.render.com/web-services
+
+---
+
+## סיכום:
+- ✅ GitHub - הועלה בהצלחה
+- 🔄 Render - דורש העלאה ידנית דרך הדשבורד
+
+**הערה חשובה:** הפרויקט משתמש ב-SQLite שדורש Disk קבוע.
+התוכנית החינמית של Render אינה תומכת ב-Disk, לכן:
+- יש צורך בתוכנית Starter ($7/חודש) לפחות
+- או להחליף לפתרון מסד נתונים חלופי
+
+---
+
+*עדכון אחרון: 2026-01-19 17:04*
