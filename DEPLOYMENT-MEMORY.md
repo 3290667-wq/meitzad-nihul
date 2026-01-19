@@ -1,7 +1,8 @@
 # קובץ זיכרון - העלאה ל-GitHub ו-Render
 
 ## תאריך התחלה: 2026-01-19
-## סטטוס: הושלם חלקית
+## עדכון אחרון: 2026-01-19 - שדרוג עיצוב
+## סטטוס: מוכן להעלאה ל-Render
 
 ---
 
@@ -24,6 +25,23 @@
 - [x] יצירת repository חדש: meitzad-nihul
 - [x] הגדרת remote origin
 - [x] Push הקוד ל-main branch
+- [x] שדרוג עיצוב ל-premium level (2026-01-19)
+
+---
+
+## שלב 2.5: שדרוג עיצוב ✅
+**תאריך:** 2026-01-19
+**סטטוס:** הושלם!
+
+### מה נעשה:
+- עיצוב CSS מודרני ומרשים עם design system מלא
+- gradients ו-glassmorphism effects
+- צבעים premium (Teal + Golden accents)
+- אנימציות מתקדמות ו-transitions חלקים
+- רספונסיביות מלאה למובייל (320px ומעלה)
+- עיצוב admin dashboard משודרג
+- toast notifications משופרים
+- buttons עם hover effects מתקדמים
 
 ---
 

@@ -2,9 +2,10 @@ const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
 
-// Database file path - use Render's persistent disk in production
+// Database file path - use Render's persistent disk in production if available
+// Otherwise fallback to /tmp (note: data will be lost on restart without disk)
 const dataDir = process.env.NODE_ENV === 'production'
-  ? '/var/data'
+  ? (process.env.DATA_DIR || '/var/data')
   : path.join(__dirname, '../../data');
 
 const DB_PATH = path.join(dataDir, 'meitzad.db');
