@@ -1,11 +1,11 @@
 services:
   - type: web
     name: meitzad-nihul
-    runtime: node
+    runtime: docker
     region: frankfurt
     plan: starter
-    buildCommand: npm install
-    startCommand: npm start
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
     envVars:
       - key: NODE_ENV
         value: production

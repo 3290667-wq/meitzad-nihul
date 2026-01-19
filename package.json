@@ -10,8 +10,7 @@
     "start": "node server/index.js",
     "dev": "nodemon server/index.js",
     "backup": "node server/services/backup.js manual",
-    "init-db": "node server/database/init.js",
-    "postinstall": "npm rebuild better-sqlite3"
+    "init-db": "node server/database/init.js"
   },
   "keywords": [
     "meitzad",
