@@ -2,13 +2,30 @@ const fs = require('fs');
 const path = require('path');
 const cron = require('node-cron');
 
-const BACKUP_DIR = path.join(__dirname, '../../data/backups');
-const DB_PATH = path.join(__dirname, '../../data/meitzad.db');
+// Use dynamic data directory based on environment
+function getDataDir() {
+  if (process.env.NODE_ENV === 'production') {
+    // In production, try /var/data or fallback to /tmp
+    if (fs.existsSync('/var/data')) {
+      return '/var/data';
+    }
+    return '/tmp/meitzad-data';
+  }
+  return path.join(__dirname, '../../data');
+}
+
+const DATA_DIR = getDataDir();
+const BACKUP_DIR = path.join(DATA_DIR, 'backups');
+const DB_PATH = path.join(DATA_DIR, 'meitzad.db');
 const MAX_BACKUPS = 7; // Keep last 7 backups
 
-// Ensure backup directory exists
-if (!fs.existsSync(BACKUP_DIR)) {
-  fs.mkdirSync(BACKUP_DIR, { recursive: true });
+// Ensure backup directory exists (with error handling)
+try {
+  if (!fs.existsSync(BACKUP_DIR)) {
+    fs.mkdirSync(BACKUP_DIR, { recursive: true });
+  }
+} catch (error) {
+  console.warn('Could not create backup directory:', error.message);
 }
 
 // Create a backup

@@ -1,4 +1,7 @@
-require('dotenv').config({ path: require('path').join(__dirname, '../config/.env') });
+// Load environment variables from .env file (if exists)
+const dotenvPath = require('path').join(__dirname, '../config/.env');
+require('dotenv').config({ path: dotenvPath });
+console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
 
 const express = require('express');
 const cors = require('cors');
