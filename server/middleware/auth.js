@@ -71,6 +71,7 @@ function generateToken(user) {
 
 module.exports = {
   verifyToken,
+  authenticateToken: verifyToken, // Alias for backward compatibility
   requireRole,
   isAuthenticated,
   isAdmin,
