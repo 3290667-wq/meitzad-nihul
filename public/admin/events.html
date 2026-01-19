@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>לוח אירועים - מערכת ניהול יישוב מיצד</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/admin/admin.css">
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="admin-layout">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+      <div class="sidebar-header">
+        <h2>מיצד</h2>
+        <span>מערכת ניהול יישוב</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <span class="nav-section-title">ראשי</span>
+          <a href="/admin/dashboard.html" class="nav-item">
+            <span class="nav-icon">📊</span>
+            <span class="nav-text">לוח בקרה</span>
+          </a>
+          <a href="/admin/requests.html" class="nav-item">
+            <span class="nav-icon">📬</span>
+            <span class="nav-text">פניות תושבים</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <span class="nav-section-title">קהילה</span>
+          <a href="/admin/events.html" class="nav-item active">
+            <span class="nav-icon">📅</span>
+            <span class="nav-text">לוח אירועים</span>
+          </a>
+          <a href="/admin/announcements.html" class="nav-item">
+            <span class="nav-icon">📢</span>
+            <span class="nav-text">הודעות והכרזות</span>
+          </a>
+          <a href="/admin/directory.html" class="nav-item">
+            <span class="nav-icon">📖</span>
+            <span class="nav-text">ספר טלפונים</span>
+          </a>
+          <a href="/admin/polls.html" class="nav-item">
+            <span class="nav-icon">🗳️</span>
+            <span class="nav-text">סקרים והצבעות</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <span class="nav-section-title">משאבים</span>
+          <a href="/admin/facilities.html" class="nav-item">
+            <span class="nav-icon">🏛️</span>
+            <span class="nav-text">הזמנת מתקנים</span>
+          </a>
+          <a href="/admin/documents.html" class="nav-item">
+            <span class="nav-icon">📄</span>
+            <span class="nav-text">מסמכים ונהלים</span>
+          </a>
+          <a href="/admin/maintenance.html" class="nav-item">
+            <span class="nav-icon">🔧</span>
+            <span class="nav-text">תחזוקה</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <span class="nav-section-title">ניהול</span>
+          <a href="/admin/users.html" class="nav-item">
+            <span class="nav-icon">👥</span>
+            <span class="nav-text">משתמשים</span>
+          </a>
+          <a href="/admin/committee.html" class="nav-item">
+            <span class="nav-icon">🏅</span>
+            <span class="nav-text">חברי וועד</span>
+          </a>
+          <a href="/admin/finance.html" class="nav-item">
+            <span class="nav-icon">💰</span>
+            <span class="nav-text">כספים ותשלומים</span>
+          </a>
+          <a href="/admin/settings.html" class="nav-item">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-text">הגדרות</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <a href="/" class="nav-item">
+          <span class="nav-icon">🏠</span>
+          <span class="nav-text">לאתר הראשי</span>
+        </a>
+        <a href="#" class="nav-item" onclick="logout()">
+          <span class="nav-icon">🚪</span>
+          <span class="nav-text">התנתקות</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Mobile Menu Toggle -->
+    <button class="admin-menu-toggle" onclick="toggleSidebar()">☰</button>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+      <header class="admin-header">
+        <div class="header-right">
+          <h1>📅 לוח אירועים</h1>
+        </div>
+        <div class="header-left">
+          <button class="btn btn-primary" onclick="showCreateEventModal()">
+            <span>+</span> אירוע חדש
+          </button>
+        </div>
+      </header>
+
+      <div class="admin-content">
+        <!-- Filters -->
+        <div class="filters-bar">
+          <div class="filter-group">
+            <label>תצוגה:</label>
+            <select id="viewMode" onchange="changeViewMode(this.value)">
+              <option value="calendar">לוח שנה</option>
+              <option value="list">רשימה</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>סוג:</label>
+            <select id="filterType" onchange="filterEvents()">
+              <option value="">הכל</option>
+              <option value="general">כללי</option>
+              <option value="community">קהילתי</option>
+              <option value="kids">ילדים</option>
+              <option value="sports">ספורט</option>
+              <option value="culture">תרבות</option>
+              <option value="holiday">חג</option>
+              <option value="meeting">ישיבה</option>
+              <option value="emergency">חירום</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>סטטוס:</label>
+            <select id="filterStatus" onchange="filterEvents()">
+              <option value="">הכל</option>
+              <option value="published">פורסם</option>
+              <option value="draft">טיוטה</option>
+              <option value="cancelled">בוטל</option>
+              <option value="completed">הסתיים</option>
+            </select>
+          </div>
+        </div>
+
+        <!-- Calendar View -->
+        <div id="calendarView" class="calendar-container">
+          <div class="calendar-header">
+            <button class="calendar-nav-btn" onclick="prevMonth()">&lt;</button>
+            <h2 id="currentMonth">ינואר 2026</h2>
+            <button class="calendar-nav-btn" onclick="nextMonth()">&gt;</button>
+          </div>
+          <div class="calendar-grid">
+            <div class="calendar-weekdays">
+              <span>ראשון</span>
+              <span>שני</span>
+              <span>שלישי</span>
+              <span>רביעי</span>
+              <span>חמישי</span>
+              <span>שישי</span>
+              <span>שבת</span>
+            </div>
+            <div class="calendar-days" id="calendarDays">
+              <!-- Days will be rendered here -->
+            </div>
+          </div>
+        </div>
+
+        <!-- List View -->
+        <div id="listView" class="events-list-container" style="display: none;">
+          <div class="events-list-full" id="eventsList">
+            <div class="loading-placeholder">טוען אירועים...</div>
+          </div>
+        </div>
+
+        <!-- Upcoming Events Summary -->
+        <section class="dashboard-section upcoming-summary">
+          <div class="section-header">
+            <h2>אירועים קרובים</h2>
+          </div>
+          <div class="upcoming-events-grid" id="upcomingEventsGrid">
+            <div class="loading-placeholder">טוען...</div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Create/Edit Event Modal -->
+  <div id="eventModal" class="modal-overlay hidden">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h3 id="eventModalTitle">יצירת אירוע חדש</h3>
+        <button class="modal-close" onclick="closeEventModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="eventForm" onsubmit="saveEvent(event)">
+          <input type="hidden" id="eventId">
+
+          <div class="form-row">
+            <div class="form-group full">
+              <label for="eventTitle">כותרת האירוע *</label>
+              <input type="text" id="eventTitle" required placeholder="שם האירוע">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="eventType">סוג אירוע</label>
+              <select id="eventType">
+                <option value="general">כללי</option>
+                <option value="community">קהילתי</option>
+                <option value="kids">ילדים</option>
+                <option value="sports">ספורט</option>
+                <option value="culture">תרבות</option>
+                <option value="holiday">חג</option>
+                <option value="meeting">ישיבת וועד</option>
+                <option value="emergency">חירום</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="eventStatus">סטטוס</label>
+              <select id="eventStatus">
+                <option value="draft">טיוטה</option>
+                <option value="published">פורסם</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="eventStartDate">תאריך התחלה *</label>
+              <input type="datetime-local" id="eventStartDate" required>
+            </div>
+            <div class="form-group">
+              <label for="eventEndDate">תאריך סיום</label>
+              <input type="datetime-local" id="eventEndDate">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group checkbox-group">
+              <input type="checkbox" id="eventAllDay" onchange="toggleAllDay()">
+              <label for="eventAllDay">אירוע יום שלם</label>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group full">
+              <label for="eventLocation">מיקום</label>
+              <input type="text" id="eventLocation" placeholder="איפה מתקיים האירוע">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group full">
+              <label for="eventDescription">תיאור</label>
+              <textarea id="eventDescription" rows="4" placeholder="פרטים נוספים על האירוע..."></textarea>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h4>הגדרות הרשמה</h4>
+            <div class="form-row">
+              <div class="form-group checkbox-group">
+                <input type="checkbox" id="eventRegistrationRequired" onchange="toggleRegistration()">
+                <label for="eventRegistrationRequired">דורש הרשמה מראש</label>
+              </div>
+            </div>
+            <div id="registrationOptions" style="display: none;">
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="eventMaxParticipants">מספר משתתפים מקסימלי</label>
+                  <input type="number" id="eventMaxParticipants" min="1" placeholder="ללא הגבלה">
+                </div>
+                <div class="form-group">
+                  <label for="eventRegistrationDeadline">מועד אחרון להרשמה</label>
+                  <input type="datetime-local" id="eventRegistrationDeadline">
+                </div>
+              </div>
+              <div class="form-row">
+                <div class="form-group">
+                  <label for="eventCost">עלות השתתפות (₪)</label>
+                  <input type="number" id="eventCost" min="0" step="0.01" placeholder="0 = חינם">
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-section">
+            <h4>הגדרות חזרתיות</h4>
+            <div class="form-row">
+              <div class="form-group">
+                <label for="eventRecurring">חזרתיות</label>
+                <select id="eventRecurring" onchange="toggleRecurring()">
+                  <option value="none">חד פעמי</option>
+                  <option value="daily">יומי</option>
+                  <option value="weekly">שבועי</option>
+                  <option value="monthly">חודשי</option>
+                  <option value="yearly">שנתי</option>
+                </select>
+              </div>
+              <div class="form-group" id="recurringEndGroup" style="display: none;">
+                <label for="eventRecurringEnd">סיום חזרתיות</label>
+                <input type="date" id="eventRecurringEnd">
+              </div>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeEventModal()">ביטול</button>
+        <button type="submit" form="eventForm" class="btn btn-primary">שמור אירוע</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- View Event Modal -->
+  <div id="viewEventModal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="viewEventTitle">פרטי אירוע</h3>
+        <button class="modal-close" onclick="closeViewEventModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="viewEventContent">
+        <!-- Event details will be rendered here -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeViewEventModal()">סגור</button>
+        <button class="btn btn-warning" id="editEventBtn" onclick="editEventFromView()">עריכה</button>
+        <button class="btn btn-error" id="deleteEventBtn" onclick="deleteEventFromView()">מחיקה</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="/js/events.js"></script>
+</body>
+</html>

@@ -147,3 +147,329 @@ INSERT OR IGNORE INTO settings (key, value, description) VALUES
 ('whatsapp_notifications', 'true', 'האם לשלוח התראות WhatsApp'),
 ('email_notifications', 'true', 'האם לשלוח התראות אימייל'),
 ('auto_assign', 'false', 'הקצאה אוטומטית של פניות');
+
+-- =====================================================
+-- COMMUNITY MANAGEMENT MODULES - שדרוג לניהול יישוב כללי
+-- =====================================================
+
+-- Events table - לוח אירועים קהילתי
+CREATE TABLE IF NOT EXISTS events (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    description TEXT,
+    event_type TEXT DEFAULT 'general' CHECK(event_type IN ('general', 'community', 'kids', 'sports', 'culture', 'holiday', 'meeting', 'emergency')),
+    location TEXT,
+    start_date DATETIME NOT NULL,
+    end_date DATETIME,
+    all_day INTEGER DEFAULT 0,
+    recurring TEXT CHECK(recurring IN ('none', 'daily', 'weekly', 'monthly', 'yearly')),
+    recurring_end_date DATETIME,
+    max_participants INTEGER,
+    current_participants INTEGER DEFAULT 0,
+    registration_required INTEGER DEFAULT 0,
+    registration_deadline DATETIME,
+    cost REAL DEFAULT 0,
+    image_url TEXT,
+    status TEXT DEFAULT 'published' CHECK(status IN ('draft', 'published', 'cancelled', 'completed')),
+    created_by INTEGER REFERENCES users(id),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Event registrations - הרשמות לאירועים
+CREATE TABLE IF NOT EXISTS event_registrations (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    event_id INTEGER REFERENCES events(id) ON DELETE CASCADE,
+    user_id INTEGER REFERENCES users(id),
+    guest_name TEXT,
+    guest_phone TEXT,
+    guest_email TEXT,
+    num_guests INTEGER DEFAULT 1,
+    notes TEXT,
+    status TEXT DEFAULT 'confirmed' CHECK(status IN ('pending', 'confirmed', 'cancelled', 'attended')),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Announcements - הודעות והכרזות
+CREATE TABLE IF NOT EXISTS announcements (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    content TEXT NOT NULL,
+    type TEXT DEFAULT 'info' CHECK(type IN ('info', 'important', 'urgent', 'warning', 'celebration')),
+    priority INTEGER DEFAULT 0,
+    is_pinned INTEGER DEFAULT 0,
+    publish_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    expire_date DATETIME,
+    target_audience TEXT DEFAULT 'all' CHECK(target_audience IN ('all', 'residents', 'committee', 'parents', 'youth', 'elderly')),
+    attachment_url TEXT,
+    views_count INTEGER DEFAULT 0,
+    send_notification INTEGER DEFAULT 1,
+    created_by INTEGER REFERENCES users(id),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Announcement reads - מעקב קריאת הודעות
+CREATE TABLE IF NOT EXISTS announcement_reads (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    announcement_id INTEGER REFERENCES announcements(id) ON DELETE CASCADE,
+    user_id INTEGER REFERENCES users(id),
+    read_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(announcement_id, user_id)
+);
+
+-- Facilities/Resources - מתקנים ומשאבים להזמנה
+CREATE TABLE IF NOT EXISTS facilities (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    description TEXT,
+    facility_type TEXT CHECK(facility_type IN ('hall', 'room', 'sports', 'playground', 'equipment', 'vehicle', 'other')),
+    location TEXT,
+    capacity INTEGER,
+    hourly_rate REAL DEFAULT 0,
+    daily_rate REAL DEFAULT 0,
+    requires_approval INTEGER DEFAULT 0,
+    min_booking_hours INTEGER DEFAULT 1,
+    max_booking_hours INTEGER DEFAULT 24,
+    available_days TEXT DEFAULT '0,1,2,3,4,5,6',
+    available_start_time TEXT DEFAULT '07:00',
+    available_end_time TEXT DEFAULT '22:00',
+    image_url TEXT,
+    rules TEXT,
+    is_active INTEGER DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Facility bookings - הזמנות מתקנים
+CREATE TABLE IF NOT EXISTS facility_bookings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    facility_id INTEGER REFERENCES facilities(id) ON DELETE CASCADE,
+    user_id INTEGER REFERENCES users(id),
+    booking_date DATE NOT NULL,
+    start_time TEXT NOT NULL,
+    end_time TEXT NOT NULL,
+    purpose TEXT,
+    num_participants INTEGER,
+    status TEXT DEFAULT 'pending' CHECK(status IN ('pending', 'approved', 'rejected', 'cancelled', 'completed')),
+    total_cost REAL DEFAULT 0,
+    payment_status TEXT DEFAULT 'unpaid' CHECK(payment_status IN ('unpaid', 'paid', 'refunded')),
+    admin_notes TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Community directory - ספר טלפונים קהילתי
+CREATE TABLE IF NOT EXISTS directory_entries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER REFERENCES users(id),
+    display_name TEXT NOT NULL,
+    family_name TEXT,
+    address TEXT,
+    phone TEXT,
+    mobile TEXT,
+    email TEXT,
+    secondary_phone TEXT,
+    occupation TEXT,
+    skills TEXT,
+    bio TEXT,
+    profile_image TEXT,
+    is_public INTEGER DEFAULT 1,
+    show_phone INTEGER DEFAULT 1,
+    show_email INTEGER DEFAULT 1,
+    show_address INTEGER DEFAULT 1,
+    category TEXT DEFAULT 'resident' CHECK(category IN ('resident', 'business', 'service', 'committee', 'emergency')),
+    sort_order INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Documents - מסמכים ונהלים
+CREATE TABLE IF NOT EXISTS documents (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    description TEXT,
+    category TEXT CHECK(category IN ('protocols', 'forms', 'regulations', 'financial', 'general', 'emergency')),
+    file_path TEXT NOT NULL,
+    file_type TEXT,
+    file_size INTEGER,
+    version TEXT DEFAULT '1.0',
+    is_public INTEGER DEFAULT 1,
+    requires_acknowledgment INTEGER DEFAULT 0,
+    download_count INTEGER DEFAULT 0,
+    created_by INTEGER REFERENCES users(id),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Document acknowledgments - אישורי קריאת מסמכים
+CREATE TABLE IF NOT EXISTS document_acknowledgments (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    document_id INTEGER REFERENCES documents(id) ON DELETE CASCADE,
+    user_id INTEGER REFERENCES users(id),
+    acknowledged_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(document_id, user_id)
+);
+
+-- Polls/Surveys - סקרים והצבעות
+CREATE TABLE IF NOT EXISTS polls (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    description TEXT,
+    poll_type TEXT DEFAULT 'poll' CHECK(poll_type IN ('poll', 'survey', 'vote')),
+    status TEXT DEFAULT 'draft' CHECK(status IN ('draft', 'active', 'closed', 'archived')),
+    start_date DATETIME,
+    end_date DATETIME,
+    is_anonymous INTEGER DEFAULT 0,
+    multiple_choice INTEGER DEFAULT 0,
+    show_results INTEGER DEFAULT 1,
+    min_selections INTEGER DEFAULT 1,
+    max_selections INTEGER,
+    target_audience TEXT DEFAULT 'all',
+    created_by INTEGER REFERENCES users(id),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Poll options - אפשרויות בסקר
+CREATE TABLE IF NOT EXISTS poll_options (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    poll_id INTEGER REFERENCES polls(id) ON DELETE CASCADE,
+    option_text TEXT NOT NULL,
+    description TEXT,
+    sort_order INTEGER DEFAULT 0
+);
+
+-- Poll votes - הצבעות
+CREATE TABLE IF NOT EXISTS poll_votes (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    poll_id INTEGER REFERENCES polls(id) ON DELETE CASCADE,
+    option_id INTEGER REFERENCES poll_options(id) ON DELETE CASCADE,
+    user_id INTEGER REFERENCES users(id),
+    voted_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Committee members - חברי וועד
+CREATE TABLE IF NOT EXISTS committee_members (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER REFERENCES users(id),
+    role TEXT NOT NULL,
+    title TEXT,
+    responsibilities TEXT,
+    contact_hours TEXT,
+    is_active INTEGER DEFAULT 1,
+    start_date DATE,
+    end_date DATE,
+    sort_order INTEGER DEFAULT 0,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Financial records - רשומות כספיות (תשלומי וועד)
+CREATE TABLE IF NOT EXISTS financial_records (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id INTEGER REFERENCES users(id),
+    record_type TEXT CHECK(record_type IN ('charge', 'payment', 'credit', 'refund')),
+    amount REAL NOT NULL,
+    description TEXT,
+    category TEXT CHECK(category IN ('committee_fee', 'water', 'electricity', 'event', 'facility', 'fine', 'other')),
+    due_date DATE,
+    paid_date DATE,
+    payment_method TEXT,
+    reference_number TEXT,
+    status TEXT DEFAULT 'pending' CHECK(status IN ('pending', 'paid', 'overdue', 'cancelled')),
+    notes TEXT,
+    created_by INTEGER REFERENCES users(id),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Maintenance tasks - משימות תחזוקה
+CREATE TABLE IF NOT EXISTS maintenance_tasks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    description TEXT,
+    task_type TEXT CHECK(task_type IN ('routine', 'repair', 'improvement', 'emergency')),
+    location TEXT,
+    priority TEXT DEFAULT 'normal' CHECK(priority IN ('low', 'normal', 'high', 'urgent')),
+    status TEXT DEFAULT 'pending' CHECK(status IN ('pending', 'in_progress', 'completed', 'cancelled')),
+    assigned_to TEXT,
+    estimated_cost REAL,
+    actual_cost REAL,
+    due_date DATE,
+    completed_date DATE,
+    notes TEXT,
+    created_by INTEGER REFERENCES users(id),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Emergency contacts - אנשי קשר לחירום
+CREATE TABLE IF NOT EXISTS emergency_contacts (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    role TEXT NOT NULL,
+    phone TEXT NOT NULL,
+    secondary_phone TEXT,
+    available_hours TEXT,
+    category TEXT CHECK(category IN ('security', 'medical', 'infrastructure', 'committee', 'external')),
+    notes TEXT,
+    sort_order INTEGER DEFAULT 0,
+    is_active INTEGER DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Quick links - קישורים מהירים
+CREATE TABLE IF NOT EXISTS quick_links (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    url TEXT NOT NULL,
+    icon TEXT,
+    description TEXT,
+    category TEXT,
+    sort_order INTEGER DEFAULT 0,
+    is_active INTEGER DEFAULT 1,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Indexes for new tables
+CREATE INDEX IF NOT EXISTS idx_events_start_date ON events(start_date);
+CREATE INDEX IF NOT EXISTS idx_events_status ON events(status);
+CREATE INDEX IF NOT EXISTS idx_event_registrations_event ON event_registrations(event_id);
+CREATE INDEX IF NOT EXISTS idx_announcements_publish_date ON announcements(publish_date DESC);
+CREATE INDEX IF NOT EXISTS idx_announcements_type ON announcements(type);
+CREATE INDEX IF NOT EXISTS idx_facility_bookings_date ON facility_bookings(booking_date);
+CREATE INDEX IF NOT EXISTS idx_facility_bookings_facility ON facility_bookings(facility_id);
+CREATE INDEX IF NOT EXISTS idx_directory_category ON directory_entries(category);
+CREATE INDEX IF NOT EXISTS idx_documents_category ON documents(category);
+CREATE INDEX IF NOT EXISTS idx_polls_status ON polls(status);
+CREATE INDEX IF NOT EXISTS idx_poll_votes_poll ON poll_votes(poll_id);
+CREATE INDEX IF NOT EXISTS idx_financial_records_user ON financial_records(user_id);
+CREATE INDEX IF NOT EXISTS idx_financial_records_status ON financial_records(status);
+CREATE INDEX IF NOT EXISTS idx_maintenance_tasks_status ON maintenance_tasks(status);
+
+-- Insert default event types
+INSERT OR IGNORE INTO settings (key, value, description) VALUES
+('event_types', 'general,community,kids,sports,culture,holiday,meeting,emergency', 'סוגי אירועים זמינים');
+
+-- Insert default facilities
+INSERT OR IGNORE INTO facilities (id, name, description, facility_type, capacity, requires_approval) VALUES
+(1, 'אולם הקהילה', 'אולם מרכזי לאירועים ופעילויות', 'hall', 150, 1),
+(2, 'חדר ישיבות', 'חדר ישיבות לפגישות וועד', 'room', 20, 0),
+(3, 'מגרש כדורגל', 'מגרש ספורט מרכזי', 'sports', 30, 0),
+(4, 'גינת המשחקים', 'גינה ציבורית עם מתקני משחק', 'playground', 50, 0);
+
+-- Insert default emergency contacts
+INSERT OR IGNORE INTO emergency_contacts (id, name, role, phone, category, sort_order) VALUES
+(1, 'קב"ט היישוב', 'אחראי ביטחון', '050-0000000', 'security', 1),
+(2, 'מוקד חירום', 'מוקד 24/7', '100', 'external', 2),
+(3, 'מד"א', 'שירותי רפואה', '101', 'medical', 3),
+(4, 'כיבוי אש', 'שירותי כיבוי', '102', 'external', 4),
+(5, 'משטרה', 'משטרת ישראל', '100', 'external', 5);
+
+-- Insert default document categories
+INSERT OR IGNORE INTO settings (key, value, description) VALUES
+('document_categories', 'protocols,forms,regulations,financial,general,emergency', 'קטגוריות מסמכים');
+
+-- Insert quick links defaults
+INSERT OR IGNORE INTO quick_links (id, title, url, icon, category, sort_order) VALUES
+(1, 'אתר המועצה', 'https://council.gov.il', '🏛️', 'external', 1),
+(2, 'דואר ישראל', 'https://israelpost.co.il', '📮', 'services', 2),
+(3, 'חברת חשמל', 'https://iec.co.il', '⚡', 'services', 3);

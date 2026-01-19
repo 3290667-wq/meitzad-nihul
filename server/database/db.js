@@ -63,6 +63,38 @@ console.log('Database schema initialized');
 // Initialize schema (kept for backwards compatibility, but no longer needed)
 function initializeDatabase() {
   console.log('Database already initialized');
+
+  // Create super admin if doesn't exist
+  initializeSuperAdmin();
+}
+
+// Create super admin if doesn't exist
+function initializeSuperAdmin() {
+  const bcrypt = require('bcryptjs');
+  const superAdminEmail = '3290667@gmail.com';
+
+  // Check if super admin exists
+  const existingAdmin = db.prepare('SELECT * FROM users WHERE email = ?').get(superAdminEmail);
+
+  if (!existingAdmin) {
+    // Create super admin with a default password (should be changed!)
+    const salt = bcrypt.genSaltSync(10);
+    const hashedPassword = bcrypt.hashSync('Admin123!', salt);
+
+    db.prepare(`
+      INSERT INTO users (email, password, name, phone, role, is_active)
+      VALUES (?, ?, ?, ?, 'super_admin', 1)
+    `).run(superAdminEmail, hashedPassword, 'מנהל ראשי', '', );
+
+    console.log('✓ Super admin created: ' + superAdminEmail);
+    console.log('⚠️ Default password: Admin123! - Please change it immediately!');
+  } else if (existingAdmin.role !== 'super_admin') {
+    // Upgrade existing user to super_admin
+    db.prepare('UPDATE users SET role = ? WHERE email = ?').run('super_admin', superAdminEmail);
+    console.log('✓ User upgraded to super_admin: ' + superAdminEmail);
+  } else {
+    console.log('✓ Super admin already exists: ' + superAdminEmail);
+  }
 }
 
 // Generate unique request number

@@ -3,10 +3,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>לוח בקרה - מערכת ניהול מיצד</title>
+  <title>לוח בקרה - מערכת ניהול יישוב מיצד</title>
   <link rel="stylesheet" href="/css/styles.css">
   <link rel="stylesheet" href="/admin/admin.css">
-  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 </head>
 <body>
   <div class="admin-layout">
@@ -14,27 +14,80 @@
     <aside class="admin-sidebar">
       <div class="sidebar-header">
         <h2>מיצד</h2>
-        <span>מערכת ניהול</span>
+        <span>מערכת ניהול יישוב</span>
       </div>
 
       <nav class="sidebar-nav">
-        <a href="/admin/dashboard.html" class="nav-item active">
-          <span class="nav-icon">📊</span>
-          <span class="nav-text">לוח בקרה</span>
-        </a>
-        <a href="/admin/requests.html" class="nav-item">
-          <span class="nav-icon">📬</span>
-          <span class="nav-text">פניות</span>
-          <span class="nav-badge" id="newRequestsBadge">0</span>
-        </a>
-        <a href="/admin/users.html" class="nav-item">
-          <span class="nav-icon">👥</span>
-          <span class="nav-text">משתמשים</span>
-        </a>
-        <a href="/admin/settings.html" class="nav-item">
-          <span class="nav-icon">⚙️</span>
-          <span class="nav-text">הגדרות</span>
-        </a>
+        <div class="nav-section">
+          <span class="nav-section-title">ראשי</span>
+          <a href="/admin/dashboard.html" class="nav-item active">
+            <span class="nav-icon">📊</span>
+            <span class="nav-text">לוח בקרה</span>
+          </a>
+          <a href="/admin/requests.html" class="nav-item">
+            <span class="nav-icon">📬</span>
+            <span class="nav-text">פניות תושבים</span>
+            <span class="nav-badge" id="newRequestsBadge">0</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <span class="nav-section-title">קהילה</span>
+          <a href="/admin/events.html" class="nav-item">
+            <span class="nav-icon">📅</span>
+            <span class="nav-text">לוח אירועים</span>
+          </a>
+          <a href="/admin/announcements.html" class="nav-item">
+            <span class="nav-icon">📢</span>
+            <span class="nav-text">הודעות והכרזות</span>
+            <span class="nav-badge urgent" id="urgentAnnouncementsBadge" style="display:none">!</span>
+          </a>
+          <a href="/admin/directory.html" class="nav-item">
+            <span class="nav-icon">📖</span>
+            <span class="nav-text">ספר טלפונים</span>
+          </a>
+          <a href="/admin/polls.html" class="nav-item">
+            <span class="nav-icon">🗳️</span>
+            <span class="nav-text">סקרים והצבעות</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <span class="nav-section-title">משאבים</span>
+          <a href="/admin/facilities.html" class="nav-item">
+            <span class="nav-icon">🏛️</span>
+            <span class="nav-text">הזמנת מתקנים</span>
+            <span class="nav-badge" id="pendingBookingsBadge" style="display:none">0</span>
+          </a>
+          <a href="/admin/documents.html" class="nav-item">
+            <span class="nav-icon">📄</span>
+            <span class="nav-text">מסמכים ונהלים</span>
+          </a>
+          <a href="/admin/maintenance.html" class="nav-item">
+            <span class="nav-icon">🔧</span>
+            <span class="nav-text">תחזוקה</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <span class="nav-section-title">ניהול</span>
+          <a href="/admin/users.html" class="nav-item">
+            <span class="nav-icon">👥</span>
+            <span class="nav-text">משתמשים</span>
+          </a>
+          <a href="/admin/committee.html" class="nav-item">
+            <span class="nav-icon">🏅</span>
+            <span class="nav-text">חברי וועד</span>
+          </a>
+          <a href="/admin/finance.html" class="nav-item">
+            <span class="nav-icon">💰</span>
+            <span class="nav-text">כספים ותשלומים</span>
+          </a>
+          <a href="/admin/settings.html" class="nav-item">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-text">הגדרות</span>
+          </a>
+        </div>
       </nav>
 
       <div class="sidebar-footer">
@@ -49,37 +102,82 @@
       </div>
     </aside>
 
+    <!-- Mobile Menu Toggle -->
+    <button class="admin-menu-toggle" onclick="toggleSidebar()">☰</button>
+
     <!-- Main Content -->
     <main class="admin-main">
       <header class="admin-header">
-        <h1>לוח בקרה</h1>
-        <div class="header-user">
-          <span id="userName">שלום</span>
+        <div class="header-right">
+          <h1>לוח בקרה</h1>
+          <span class="header-date" id="currentDate"></span>
+        </div>
+        <div class="header-left">
+          <div class="header-notifications" onclick="showNotificationsPanel()">
+            <span class="notification-icon">🔔</span>
+            <span class="notification-count" id="notificationCount" style="display:none">0</span>
+          </div>
+          <div class="header-user">
+            <span id="userName">שלום</span>
+          </div>
         </div>
       </header>
 
       <div class="admin-content">
-        <!-- Stats Cards -->
+        <!-- Welcome Banner -->
+        <section class="welcome-banner">
+          <div class="welcome-content">
+            <h2 id="welcomeMessage">בוקר טוב!</h2>
+            <p>ברוכים הבאים למערכת ניהול יישוב מיצד</p>
+          </div>
+          <div class="quick-actions">
+            <button class="quick-action-btn" onclick="createNewAnnouncement()">
+              <span>📢</span> הודעה חדשה
+            </button>
+            <button class="quick-action-btn" onclick="createNewEvent()">
+              <span>📅</span> אירוע חדש
+            </button>
+            <button class="quick-action-btn" onclick="window.location.href='/admin/requests.html'">
+              <span>📬</span> צפה בפניות
+            </button>
+          </div>
+        </section>
+
+        <!-- Stats Grid -->
         <section class="stats-grid">
-          <div class="stat-card">
+          <div class="stat-card clickable" onclick="window.location.href='/admin/requests.html?status=new'">
             <div class="stat-icon new">📥</div>
             <div class="stat-info">
               <span class="stat-value" id="statNew">0</span>
               <span class="stat-label">פניות חדשות</span>
             </div>
           </div>
-          <div class="stat-card">
+          <div class="stat-card clickable" onclick="window.location.href='/admin/requests.html?status=in_progress'">
             <div class="stat-icon progress">⏳</div>
             <div class="stat-info">
               <span class="stat-value" id="statInProgress">0</span>
-              <span class="stat-label">בטיפול</span>
+              <span class="stat-label">פניות בטיפול</span>
             </div>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon resolved">✓</div>
+          <div class="stat-card clickable" onclick="window.location.href='/admin/events.html'">
+            <div class="stat-icon events">📅</div>
             <div class="stat-info">
-              <span class="stat-value" id="statResolved">0</span>
-              <span class="stat-label">נפתרו</span>
+              <span class="stat-value" id="statUpcomingEvents">0</span>
+              <span class="stat-label">אירועים קרובים</span>
+            </div>
+          </div>
+          <div class="stat-card clickable" onclick="window.location.href='/admin/facilities.html?status=pending'">
+            <div class="stat-icon bookings">🏛️</div>
+            <div class="stat-info">
+              <span class="stat-value" id="statPendingBookings">0</span>
+              <span class="stat-label">הזמנות ממתינות</span>
+            </div>
+          </div>
+          <div class="stat-card clickable" onclick="window.location.href='/admin/polls.html?status=active'">
+            <div class="stat-icon polls">🗳️</div>
+            <div class="stat-info">
+              <span class="stat-value" id="statActivePolls">0</span>
+              <span class="stat-label">סקרים פעילים</span>
             </div>
           </div>
           <div class="stat-card">
@@ -91,51 +189,127 @@
           </div>
         </section>
 
-        <!-- Recent Requests -->
-        <section class="dashboard-section">
-          <div class="section-header">
-            <h2>פניות אחרונות</h2>
-            <a href="/admin/requests.html" class="btn btn-secondary btn-sm">צפייה בכל הפניות</a>
-          </div>
+        <!-- Main Dashboard Grid -->
+        <div class="dashboard-grid">
+          <!-- Recent Announcements -->
+          <section class="dashboard-section announcements-section">
+            <div class="section-header">
+              <h2>📢 הודעות אחרונות</h2>
+              <a href="/admin/announcements.html" class="btn btn-secondary btn-sm">ניהול הודעות</a>
+            </div>
+            <div class="announcements-list" id="recentAnnouncements">
+              <div class="loading-placeholder">טוען...</div>
+            </div>
+          </section>
 
-          <div class="table-container">
-            <table class="data-table">
-              <thead>
-                <tr>
-                  <th>מספר</th>
-                  <th>נושא</th>
-                  <th>קטגוריה</th>
-                  <th>מגיש</th>
-                  <th>סטטוס</th>
-                  <th>תאריך</th>
-                  <th>פעולות</th>
-                </tr>
-              </thead>
-              <tbody id="recentRequestsTable">
-                <tr>
-                  <td colspan="7" class="loading">טוען...</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        </section>
+          <!-- Upcoming Events -->
+          <section class="dashboard-section events-section">
+            <div class="section-header">
+              <h2>📅 אירועים קרובים</h2>
+              <a href="/admin/events.html" class="btn btn-secondary btn-sm">לוח אירועים</a>
+            </div>
+            <div class="events-list" id="upcomingEvents">
+              <div class="loading-placeholder">טוען...</div>
+            </div>
+          </section>
 
-        <!-- Categories Stats -->
-        <section class="dashboard-section">
-          <div class="section-header">
-            <h2>פניות לפי קטגוריה</h2>
-          </div>
+          <!-- Recent Requests -->
+          <section class="dashboard-section requests-section full-width">
+            <div class="section-header">
+              <h2>📬 פניות אחרונות</h2>
+              <a href="/admin/requests.html" class="btn btn-secondary btn-sm">כל הפניות</a>
+            </div>
+            <div class="table-container">
+              <table class="data-table">
+                <thead>
+                  <tr>
+                    <th>מספר</th>
+                    <th>נושא</th>
+                    <th>קטגוריה</th>
+                    <th>מגיש</th>
+                    <th>סטטוס</th>
+                    <th>תאריך</th>
+                    <th>פעולות</th>
+                  </tr>
+                </thead>
+                <tbody id="recentRequestsTable">
+                  <tr>
+                    <td colspan="7" class="loading">טוען...</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+          </section>
 
-          <div class="categories-stats" id="categoriesStats">
-            <!-- Loaded dynamically -->
-          </div>
-        </section>
+          <!-- Categories & Facility Bookings -->
+          <section class="dashboard-section categories-section">
+            <div class="section-header">
+              <h2>📊 פניות לפי קטגוריה</h2>
+            </div>
+            <div class="categories-stats" id="categoriesStats">
+              <!-- Loaded dynamically -->
+            </div>
+          </section>
+
+          <!-- Pending Bookings -->
+          <section class="dashboard-section bookings-section">
+            <div class="section-header">
+              <h2>🏛️ הזמנות ממתינות לאישור</h2>
+              <a href="/admin/facilities.html" class="btn btn-secondary btn-sm">ניהול מתקנים</a>
+            </div>
+            <div class="bookings-list" id="pendingBookings">
+              <div class="loading-placeholder">טוען...</div>
+            </div>
+          </section>
+
+          <!-- Active Polls -->
+          <section class="dashboard-section polls-section">
+            <div class="section-header">
+              <h2>🗳️ סקרים פעילים</h2>
+              <a href="/admin/polls.html" class="btn btn-secondary btn-sm">ניהול סקרים</a>
+            </div>
+            <div class="polls-list" id="activePolls">
+              <div class="loading-placeholder">טוען...</div>
+            </div>
+          </section>
+
+          <!-- Emergency Contacts -->
+          <section class="dashboard-section emergency-section">
+            <div class="section-header">
+              <h2>🚨 אנשי קשר לחירום</h2>
+            </div>
+            <div class="emergency-contacts" id="emergencyContacts">
+              <div class="loading-placeholder">טוען...</div>
+            </div>
+          </section>
+
+          <!-- Quick Links -->
+          <section class="dashboard-section links-section">
+            <div class="section-header">
+              <h2>🔗 קישורים מהירים</h2>
+            </div>
+            <div class="quick-links" id="quickLinks">
+              <div class="loading-placeholder">טוען...</div>
+            </div>
+          </section>
+        </div>
       </div>
     </main>
   </div>
 
   <!-- Toast -->
   <div id="toast" class="toast hidden"></div>
+
+  <!-- Notification Panel -->
+  <div id="notificationPanel" class="notification-panel hidden">
+    <div class="notification-panel-header">
+      <h3>התראות</h3>
+      <button onclick="closeNotificationPanel()">&times;</button>
+    </div>
+    <div class="notification-panel-content" id="notificationPanelContent">
+      <div class="empty-notifications">אין התראות חדשות</div>
+    </div>
+  </div>
 
   <script src="/js/admin.js"></script>
 </body>

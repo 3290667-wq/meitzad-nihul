@@ -2,6 +2,19 @@
 
 **שם קוד: meitzad-nihul**
 
+## AUTO-DEPLOY RULE (CRITICAL)
+**After ANY code changes in this project, Claude MUST automatically run `/meitzad-deploy` to push changes to GitHub and trigger Render deployment.**
+
+This includes changes to:
+- Any file in `public/`
+- Any file in `server/`
+- `package.json`
+- Any other code files
+
+No explicit user command is needed - deploy automatically after completing the task.
+
+---
+
 ## תיאור הפרויקט
 אתר ניהולי מקיף ליישוב מיצד המשמש כמרכז שליטה ובקרה לוועד היישוב.
 

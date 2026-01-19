@@ -17,6 +17,7 @@ const { startBackupScheduler } = require('./services/backup');
 const authRoutes = require('./routes/auth');
 const requestRoutes = require('./routes/requests');
 const userRoutes = require('./routes/users');
+const communityRoutes = require('./routes/community');
 
 // Initialize Express app
 const app = express();
@@ -40,6 +41,9 @@ app.use(express.static(path.join(__dirname, '../public')));
 app.use('/api/auth', authRoutes);
 app.use('/api/requests', requestRoutes);
 app.use('/api/users', userRoutes);
+
+// Community management routes
+app.use('/api', communityRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {

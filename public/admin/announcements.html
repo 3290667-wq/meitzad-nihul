@@ -1,0 +1,311 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>הודעות והכרזות - מערכת ניהול יישוב מיצד</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/admin/admin.css">
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="admin-layout">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+      <div class="sidebar-header">
+        <h2>מיצד</h2>
+        <span>מערכת ניהול יישוב</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <span class="nav-section-title">ראשי</span>
+          <a href="/admin/dashboard.html" class="nav-item">
+            <span class="nav-icon">📊</span>
+            <span class="nav-text">לוח בקרה</span>
+          </a>
+          <a href="/admin/requests.html" class="nav-item">
+            <span class="nav-icon">📬</span>
+            <span class="nav-text">פניות תושבים</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <span class="nav-section-title">קהילה</span>
+          <a href="/admin/events.html" class="nav-item">
+            <span class="nav-icon">📅</span>
+            <span class="nav-text">לוח אירועים</span>
+          </a>
+          <a href="/admin/announcements.html" class="nav-item active">
+            <span class="nav-icon">📢</span>
+            <span class="nav-text">הודעות והכרזות</span>
+          </a>
+          <a href="/admin/directory.html" class="nav-item">
+            <span class="nav-icon">📖</span>
+            <span class="nav-text">ספר טלפונים</span>
+          </a>
+          <a href="/admin/polls.html" class="nav-item">
+            <span class="nav-icon">🗳️</span>
+            <span class="nav-text">סקרים והצבעות</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <span class="nav-section-title">משאבים</span>
+          <a href="/admin/facilities.html" class="nav-item">
+            <span class="nav-icon">🏛️</span>
+            <span class="nav-text">הזמנת מתקנים</span>
+          </a>
+          <a href="/admin/documents.html" class="nav-item">
+            <span class="nav-icon">📄</span>
+            <span class="nav-text">מסמכים ונהלים</span>
+          </a>
+          <a href="/admin/maintenance.html" class="nav-item">
+            <span class="nav-icon">🔧</span>
+            <span class="nav-text">תחזוקה</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <span class="nav-section-title">ניהול</span>
+          <a href="/admin/users.html" class="nav-item">
+            <span class="nav-icon">👥</span>
+            <span class="nav-text">משתמשים</span>
+          </a>
+          <a href="/admin/committee.html" class="nav-item">
+            <span class="nav-icon">🏅</span>
+            <span class="nav-text">חברי וועד</span>
+          </a>
+          <a href="/admin/finance.html" class="nav-item">
+            <span class="nav-icon">💰</span>
+            <span class="nav-text">כספים ותשלומים</span>
+          </a>
+          <a href="/admin/settings.html" class="nav-item">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-text">הגדרות</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <a href="/" class="nav-item">
+          <span class="nav-icon">🏠</span>
+          <span class="nav-text">לאתר הראשי</span>
+        </a>
+        <a href="#" class="nav-item" onclick="logout()">
+          <span class="nav-icon">🚪</span>
+          <span class="nav-text">התנתקות</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Mobile Menu Toggle -->
+    <button class="admin-menu-toggle" onclick="toggleSidebar()">☰</button>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+      <header class="admin-header">
+        <div class="header-right">
+          <h1>📢 הודעות והכרזות</h1>
+        </div>
+        <div class="header-left">
+          <button class="btn btn-primary" onclick="showCreateAnnouncementModal()">
+            <span>+</span> הודעה חדשה
+          </button>
+        </div>
+      </header>
+
+      <div class="admin-content">
+        <!-- Stats Cards -->
+        <section class="stats-grid small">
+          <div class="stat-card mini">
+            <div class="stat-icon info">📋</div>
+            <div class="stat-info">
+              <span class="stat-value" id="statTotal">0</span>
+              <span class="stat-label">סה"כ הודעות</span>
+            </div>
+          </div>
+          <div class="stat-card mini">
+            <div class="stat-icon new">🆕</div>
+            <div class="stat-info">
+              <span class="stat-value" id="statActive">0</span>
+              <span class="stat-label">פעילות</span>
+            </div>
+          </div>
+          <div class="stat-card mini">
+            <div class="stat-icon urgent">🚨</div>
+            <div class="stat-info">
+              <span class="stat-value" id="statUrgent">0</span>
+              <span class="stat-label">דחופות</span>
+            </div>
+          </div>
+          <div class="stat-card mini">
+            <div class="stat-icon pinned">📌</div>
+            <div class="stat-info">
+              <span class="stat-value" id="statPinned">0</span>
+              <span class="stat-label">נעוצות</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Filters -->
+        <div class="filters-bar">
+          <div class="filter-group">
+            <label>סוג:</label>
+            <select id="filterType" onchange="filterAnnouncements()">
+              <option value="">הכל</option>
+              <option value="info">מידע</option>
+              <option value="important">חשוב</option>
+              <option value="urgent">דחוף</option>
+              <option value="warning">אזהרה</option>
+              <option value="celebration">חגיגה</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>קהל יעד:</label>
+            <select id="filterAudience" onchange="filterAnnouncements()">
+              <option value="">הכל</option>
+              <option value="all">כל התושבים</option>
+              <option value="residents">תושבים בלבד</option>
+              <option value="committee">חברי וועד</option>
+              <option value="parents">הורים</option>
+              <option value="youth">נוער</option>
+              <option value="elderly">קשישים</option>
+            </select>
+          </div>
+          <div class="filter-group">
+            <label>מיון:</label>
+            <select id="sortBy" onchange="filterAnnouncements()">
+              <option value="date_desc">חדש לישן</option>
+              <option value="date_asc">ישן לחדש</option>
+              <option value="priority">לפי עדיפות</option>
+              <option value="views">לפי צפיות</option>
+            </select>
+          </div>
+          <div class="filter-group search">
+            <input type="text" id="searchQuery" placeholder="חיפוש..." onkeyup="filterAnnouncements()">
+          </div>
+        </div>
+
+        <!-- Announcements List -->
+        <section class="dashboard-section">
+          <div class="announcements-grid" id="announcementsList">
+            <div class="loading-placeholder">טוען הודעות...</div>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Create/Edit Announcement Modal -->
+  <div id="announcementModal" class="modal-overlay hidden">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h3 id="announcementModalTitle">יצירת הודעה חדשה</h3>
+        <button class="modal-close" onclick="closeAnnouncementModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="announcementForm" onsubmit="saveAnnouncement(event)">
+          <input type="hidden" id="announcementId">
+
+          <div class="form-row">
+            <div class="form-group full">
+              <label for="announcementTitle">כותרת *</label>
+              <input type="text" id="announcementTitle" required placeholder="כותרת ההודעה">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="announcementType">סוג הודעה</label>
+              <select id="announcementType">
+                <option value="info">ℹ️ מידע</option>
+                <option value="important">⚠️ חשוב</option>
+                <option value="urgent">🚨 דחוף</option>
+                <option value="warning">⚡ אזהרה</option>
+                <option value="celebration">🎉 חגיגה</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label for="announcementAudience">קהל יעד</label>
+              <select id="announcementAudience">
+                <option value="all">כל התושבים</option>
+                <option value="residents">תושבים בלבד</option>
+                <option value="committee">חברי וועד</option>
+                <option value="parents">הורים</option>
+                <option value="youth">נוער</option>
+                <option value="elderly">קשישים</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group full">
+              <label for="announcementContent">תוכן ההודעה *</label>
+              <textarea id="announcementContent" rows="6" required placeholder="תוכן ההודעה..."></textarea>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="announcementPublishDate">תאריך פרסום</label>
+              <input type="datetime-local" id="announcementPublishDate">
+              <small>השאר ריק לפרסום מיידי</small>
+            </div>
+            <div class="form-group">
+              <label for="announcementExpireDate">תאריך תפוגה</label>
+              <input type="datetime-local" id="announcementExpireDate">
+              <small>השאר ריק לללא תפוגה</small>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label for="announcementPriority">עדיפות (1-10)</label>
+              <input type="number" id="announcementPriority" min="0" max="10" value="0">
+            </div>
+          </div>
+
+          <div class="form-row checkboxes">
+            <div class="form-group checkbox-group">
+              <input type="checkbox" id="announcementPinned">
+              <label for="announcementPinned">📌 נעוץ בראש הרשימה</label>
+            </div>
+            <div class="form-group checkbox-group">
+              <input type="checkbox" id="announcementSendNotification" checked>
+              <label for="announcementSendNotification">🔔 שלח התראה לתושבים</label>
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" onclick="closeAnnouncementModal()">ביטול</button>
+        <button type="submit" form="announcementForm" class="btn btn-primary">פרסם הודעה</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- View Announcement Modal -->
+  <div id="viewAnnouncementModal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="viewAnnouncementTitle">הודעה</h3>
+        <button class="modal-close" onclick="closeViewAnnouncementModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="viewAnnouncementContent">
+        <!-- Content will be rendered here -->
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeViewAnnouncementModal()">סגור</button>
+        <button class="btn btn-warning" id="editAnnouncementBtn" onclick="editAnnouncementFromView()">עריכה</button>
+        <button class="btn btn-error" id="deleteAnnouncementBtn" onclick="deleteAnnouncementFromView()">מחיקה</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="/js/announcements.js"></script>
+</body>
+</html>
