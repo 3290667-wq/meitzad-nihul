@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ניהול תקציב - מערכת ניהול יישוב מיצד</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/admin/admin.css">
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="admin-layout">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+      <div class="sidebar-header">
+        <h2>מיצד</h2>
+        <span>מערכת ניהול יישוב</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <span class="nav-section-title">ראשי</span>
+          <a href="/admin/dashboard.html" class="nav-item">
+            <span class="nav-icon">📊</span>
+            <span class="nav-text">לוח בקרה</span>
+          </a>
+          <a href="/admin/requests.html" class="nav-item">
+            <span class="nav-icon">📬</span>
+            <span class="nav-text">פניות תושבים</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <span class="nav-section-title">קהילה</span>
+          <a href="/admin/events.html" class="nav-item">
+            <span class="nav-icon">📅</span>
+            <span class="nav-text">לוח אירועים</span>
+          </a>
+          <a href="/admin/announcements.html" class="nav-item">
+            <span class="nav-icon">📢</span>
+            <span class="nav-text">הודעות והכרזות</span>
+          </a>
+          <a href="/admin/directory.html" class="nav-item">
+            <span class="nav-icon">📖</span>
+            <span class="nav-text">ספר טלפונים</span>
+          </a>
+          <a href="/admin/polls.html" class="nav-item">
+            <span class="nav-icon">🗳️</span>
+            <span class="nav-text">סקרים והצבעות</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <span class="nav-section-title">משאבים</span>
+          <a href="/admin/facilities.html" class="nav-item">
+            <span class="nav-icon">🏛️</span>
+            <span class="nav-text">הזמנת מתקנים</span>
+          </a>
+          <a href="/admin/documents.html" class="nav-item">
+            <span class="nav-icon">📄</span>
+            <span class="nav-text">מסמכים ונהלים</span>
+          </a>
+          <a href="/admin/maintenance.html" class="nav-item">
+            <span class="nav-icon">🔧</span>
+            <span class="nav-text">תחזוקה</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <span class="nav-section-title">ניהול</span>
+          <a href="/admin/employees.html" class="nav-item">
+            <span class="nav-icon">👥</span>
+            <span class="nav-text">ניהול עובדים</span>
+          </a>
+          <a href="/admin/budget.html" class="nav-item active">
+            <span class="nav-icon">💰</span>
+            <span class="nav-text">ניהול תקציב</span>
+          </a>
+          <a href="/admin/infrastructure.html" class="nav-item">
+            <span class="nav-icon">🏗️</span>
+            <span class="nav-text">ניהול תשתיות</span>
+          </a>
+          <a href="/admin/planning.html" class="nav-item">
+            <span class="nav-icon">📋</span>
+            <span class="nav-text">תכנון לטווח ארוך</span>
+          </a>
+          <a href="/admin/settings.html" class="nav-item">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-text">הגדרות</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <a href="/" class="nav-item">
+          <span class="nav-icon">🏠</span>
+          <span class="nav-text">לאתר הראשי</span>
+        </a>
+        <a href="#" class="nav-item" onclick="logout()">
+          <span class="nav-icon">🚪</span>
+          <span class="nav-text">התנתקות</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Mobile Menu Toggle -->
+    <button class="admin-menu-toggle" onclick="toggleSidebar()">☰</button>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+      <header class="admin-header">
+        <div class="header-right">
+          <h1>ניהול תקציב</h1>
+          <select id="yearSelect" class="year-select" onchange="loadBudgetData()">
+            <option value="2026">2026</option>
+            <option value="2025">2025</option>
+            <option value="2024">2024</option>
+          </select>
+        </div>
+        <div class="header-left">
+          <button class="btn btn-secondary" onclick="exportReport()">
+            <span>📥</span> ייצוא דו"ח
+          </button>
+          <button class="btn btn-primary" onclick="showAddTransactionModal()">
+            <span>➕</span> הוספת תנועה
+          </button>
+          <div class="header-user">
+            <span id="userName">שלום</span>
+          </div>
+        </div>
+      </header>
+
+      <div class="admin-content">
+        <!-- Budget Overview Cards -->
+        <section class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);">📈</div>
+            <div class="stat-info">
+              <span class="stat-value" id="totalIncome">₪0</span>
+              <span class="stat-label">הכנסות</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #ffebee 0%, #ffcdd2 100%);">📉</div>
+            <div class="stat-info">
+              <span class="stat-value" id="totalExpenses">₪0</span>
+              <span class="stat-label">הוצאות</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);">💵</div>
+            <div class="stat-info">
+              <span class="stat-value" id="balance">₪0</span>
+              <span class="stat-label">יתרה</span>
+            </div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);">📊</div>
+            <div class="stat-info">
+              <span class="stat-value" id="budgetUsed">0%</span>
+              <span class="stat-label">ניצול תקציב</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Charts Section -->
+        <div class="charts-grid">
+          <section class="dashboard-section">
+            <div class="section-header">
+              <h2>📊 הוצאות לפי קטגוריה</h2>
+            </div>
+            <div class="chart-container">
+              <canvas id="expensesPieChart"></canvas>
+            </div>
+          </section>
+
+          <section class="dashboard-section">
+            <div class="section-header">
+              <h2>📈 מגמות חודשיות</h2>
+            </div>
+            <div class="chart-container">
+              <canvas id="monthlyTrendChart"></canvas>
+            </div>
+          </section>
+        </div>
+
+        <!-- Budget Categories -->
+        <section class="dashboard-section">
+          <div class="section-header">
+            <h2>💰 תקציב לפי קטגוריה</h2>
+            <button class="btn btn-secondary btn-sm" onclick="showBudgetAllocationModal()">עריכת הקצאות</button>
+          </div>
+          <div class="budget-categories" id="budgetCategories">
+            <!-- Loaded dynamically -->
+          </div>
+        </section>
+
+        <!-- Recent Transactions -->
+        <section class="dashboard-section">
+          <div class="section-header">
+            <h2>📝 תנועות אחרונות</h2>
+            <a href="#" class="btn btn-secondary btn-sm" onclick="showAllTransactions()">כל התנועות</a>
+          </div>
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>תאריך</th>
+                  <th>תיאור</th>
+                  <th>קטגוריה</th>
+                  <th>סוג</th>
+                  <th>סכום</th>
+                  <th>פעולות</th>
+                </tr>
+              </thead>
+              <tbody id="transactionsTable">
+                <tr>
+                  <td colspan="6" class="loading">טוען...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Transaction Modal -->
+  <div id="transactionModal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h3 id="modalTitle">הוספת תנועה</h3>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="transactionForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label>סוג תנועה *</label>
+              <select id="transType" name="type" required onchange="updateCategoryOptions()">
+                <option value="expense">הוצאה</option>
+                <option value="income">הכנסה</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>תאריך *</label>
+              <input type="date" id="transDate" name="date" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>קטגוריה *</label>
+              <select id="transCategory" name="category" required>
+                <option value="">בחר קטגוריה</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>סכום (₪) *</label>
+              <input type="number" id="transAmount" name="amount" min="0" step="0.01" required>
+            </div>
+          </div>
+          <div class="form-group full">
+            <label>תיאור *</label>
+            <input type="text" id="transDescription" name="description" required>
+          </div>
+          <div class="form-group full">
+            <label>הערות</label>
+            <textarea id="transNotes" name="notes" rows="2"></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>ספק / מקור</label>
+              <input type="text" id="transVendor" name="vendor">
+            </div>
+            <div class="form-group">
+              <label>מספר חשבונית</label>
+              <input type="text" id="transInvoice" name="invoice_number">
+            </div>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal()">ביטול</button>
+        <button class="btn btn-primary" onclick="saveTransaction()">שמירה</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="/js/budget.js"></script>
+</body>
+</html>

@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ניהול עובדים - מערכת ניהול יישוב מיצד</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/admin/admin.css">
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="admin-layout">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+      <div class="sidebar-header">
+        <h2>מיצד</h2>
+        <span>מערכת ניהול יישוב</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <span class="nav-section-title">ראשי</span>
+          <a href="/admin/dashboard.html" class="nav-item">
+            <span class="nav-icon">📊</span>
+            <span class="nav-text">לוח בקרה</span>
+          </a>
+          <a href="/admin/requests.html" class="nav-item">
+            <span class="nav-icon">📬</span>
+            <span class="nav-text">פניות תושבים</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <span class="nav-section-title">קהילה</span>
+          <a href="/admin/events.html" class="nav-item">
+            <span class="nav-icon">📅</span>
+            <span class="nav-text">לוח אירועים</span>
+          </a>
+          <a href="/admin/announcements.html" class="nav-item">
+            <span class="nav-icon">📢</span>
+            <span class="nav-text">הודעות והכרזות</span>
+          </a>
+          <a href="/admin/directory.html" class="nav-item">
+            <span class="nav-icon">📖</span>
+            <span class="nav-text">ספר טלפונים</span>
+          </a>
+          <a href="/admin/polls.html" class="nav-item">
+            <span class="nav-icon">🗳️</span>
+            <span class="nav-text">סקרים והצבעות</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <span class="nav-section-title">משאבים</span>
+          <a href="/admin/facilities.html" class="nav-item">
+            <span class="nav-icon">🏛️</span>
+            <span class="nav-text">הזמנת מתקנים</span>
+          </a>
+          <a href="/admin/documents.html" class="nav-item">
+            <span class="nav-icon">📄</span>
+            <span class="nav-text">מסמכים ונהלים</span>
+          </a>
+          <a href="/admin/maintenance.html" class="nav-item">
+            <span class="nav-icon">🔧</span>
+            <span class="nav-text">תחזוקה</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <span class="nav-section-title">ניהול</span>
+          <a href="/admin/employees.html" class="nav-item active">
+            <span class="nav-icon">👥</span>
+            <span class="nav-text">ניהול עובדים</span>
+          </a>
+          <a href="/admin/budget.html" class="nav-item">
+            <span class="nav-icon">💰</span>
+            <span class="nav-text">ניהול תקציב</span>
+          </a>
+          <a href="/admin/infrastructure.html" class="nav-item">
+            <span class="nav-icon">🏗️</span>
+            <span class="nav-text">ניהול תשתיות</span>
+          </a>
+          <a href="/admin/planning.html" class="nav-item">
+            <span class="nav-icon">📋</span>
+            <span class="nav-text">תכנון לטווח ארוך</span>
+          </a>
+          <a href="/admin/settings.html" class="nav-item">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-text">הגדרות</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <a href="/" class="nav-item">
+          <span class="nav-icon">🏠</span>
+          <span class="nav-text">לאתר הראשי</span>
+        </a>
+        <a href="#" class="nav-item" onclick="logout()">
+          <span class="nav-icon">🚪</span>
+          <span class="nav-text">התנתקות</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Mobile Menu Toggle -->
+    <button class="admin-menu-toggle" onclick="toggleSidebar()">☰</button>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+      <header class="admin-header">
+        <div class="header-right">
+          <h1>ניהול עובדים</h1>
+        </div>
+        <div class="header-left">
+          <button class="btn btn-primary" onclick="showAddEmployeeModal()">
+            <span>➕</span> עובד חדש
+          </button>
+          <div class="header-user">
+            <span id="userName">שלום</span>
+          </div>
+        </div>
+      </header>
+
+      <div class="admin-content">
+        <!-- Stats -->
+        <section class="stats-grid small">
+          <div class="stat-card mini">
+            <div class="stat-icon info">👥</div>
+            <div class="stat-info">
+              <span class="stat-value" id="totalEmployees">0</span>
+              <span class="stat-label">סה"כ עובדים</span>
+            </div>
+          </div>
+          <div class="stat-card mini">
+            <div class="stat-icon progress">✅</div>
+            <div class="stat-info">
+              <span class="stat-value" id="activeEmployees">0</span>
+              <span class="stat-label">פעילים</span>
+            </div>
+          </div>
+          <div class="stat-card mini">
+            <div class="stat-icon resolved">🏢</div>
+            <div class="stat-info">
+              <span class="stat-value" id="totalDepartments">0</span>
+              <span class="stat-label">מחלקות</span>
+            </div>
+          </div>
+          <div class="stat-card mini">
+            <div class="stat-icon time">💰</div>
+            <div class="stat-info">
+              <span class="stat-value" id="totalSalary">₪0</span>
+              <span class="stat-label">משכורות חודשי</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Department Tabs -->
+        <div class="tabs-container">
+          <button class="tab-btn active" data-department="all" onclick="filterByDepartment('all')">כל העובדים</button>
+          <button class="tab-btn" data-department="management" onclick="filterByDepartment('management')">הנהלה</button>
+          <button class="tab-btn" data-department="maintenance" onclick="filterByDepartment('maintenance')">תחזוקה</button>
+          <button class="tab-btn" data-department="security" onclick="filterByDepartment('security')">ביטחון</button>
+          <button class="tab-btn" data-department="education" onclick="filterByDepartment('education')">חינוך</button>
+          <button class="tab-btn" data-department="admin" onclick="filterByDepartment('admin')">מנהלה</button>
+        </div>
+
+        <!-- Employees Grid -->
+        <section class="employees-grid" id="employeesGrid">
+          <!-- Loaded dynamically -->
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Employee Modal -->
+  <div id="employeeModal" class="modal-overlay hidden">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h3 id="modalTitle">עובד חדש</h3>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="modalBody">
+        <form id="employeeForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label>שם מלא *</label>
+              <input type="text" id="empName" name="name" required>
+            </div>
+            <div class="form-group">
+              <label>תעודת זהות *</label>
+              <input type="text" id="empIdNumber" name="id_number" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>תפקיד *</label>
+              <input type="text" id="empPosition" name="position" required>
+            </div>
+            <div class="form-group">
+              <label>מחלקה *</label>
+              <select id="empDepartment" name="department" required>
+                <option value="">בחר מחלקה</option>
+                <option value="management">הנהלה</option>
+                <option value="maintenance">תחזוקה</option>
+                <option value="security">ביטחון</option>
+                <option value="education">חינוך</option>
+                <option value="admin">מנהלה</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>טלפון</label>
+              <input type="tel" id="empPhone" name="phone">
+            </div>
+            <div class="form-group">
+              <label>אימייל</label>
+              <input type="email" id="empEmail" name="email">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>תאריך התחלה *</label>
+              <input type="date" id="empStartDate" name="start_date" required>
+            </div>
+            <div class="form-group">
+              <label>סוג העסקה</label>
+              <select id="empType" name="employment_type">
+                <option value="full_time">משרה מלאה</option>
+                <option value="part_time">משרה חלקית</option>
+                <option value="contract">קבלן</option>
+                <option value="volunteer">מתנדב</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>שכר חודשי (₪)</label>
+              <input type="number" id="empSalary" name="salary" min="0">
+            </div>
+            <div class="form-group">
+              <label>סטטוס</label>
+              <select id="empStatus" name="status">
+                <option value="active">פעיל</option>
+                <option value="inactive">לא פעיל</option>
+                <option value="on_leave">בחופשה</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group full">
+            <label>הערות</label>
+            <textarea id="empNotes" name="notes" rows="3"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal()">ביטול</button>
+        <button class="btn btn-primary" onclick="saveEmployee()">שמירה</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="/js/employees.js"></script>
+</body>
+</html>

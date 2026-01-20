@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>הזמנת מתקנים - מערכת ניהול יישוב מיצד</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/admin/admin.css">
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <div class="sidebar-header"><h2>מיצד</h2><span>מערכת ניהול יישוב</span></div>
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <span class="nav-section-title">ראשי</span>
+          <a href="/admin/dashboard.html" class="nav-item"><span class="nav-icon">📊</span><span class="nav-text">לוח בקרה</span></a>
+          <a href="/admin/requests.html" class="nav-item"><span class="nav-icon">📬</span><span class="nav-text">פניות תושבים</span></a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-section-title">קהילה</span>
+          <a href="/admin/events.html" class="nav-item"><span class="nav-icon">📅</span><span class="nav-text">לוח אירועים</span></a>
+          <a href="/admin/announcements.html" class="nav-item"><span class="nav-icon">📢</span><span class="nav-text">הודעות והכרזות</span></a>
+          <a href="/admin/directory.html" class="nav-item"><span class="nav-icon">📖</span><span class="nav-text">ספר טלפונים</span></a>
+          <a href="/admin/polls.html" class="nav-item"><span class="nav-icon">🗳️</span><span class="nav-text">סקרים והצבעות</span></a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-section-title">משאבים</span>
+          <a href="/admin/facilities.html" class="nav-item active"><span class="nav-icon">🏛️</span><span class="nav-text">הזמנת מתקנים</span></a>
+          <a href="/admin/documents.html" class="nav-item"><span class="nav-icon">📄</span><span class="nav-text">מסמכים ונהלים</span></a>
+          <a href="/admin/maintenance.html" class="nav-item"><span class="nav-icon">🔧</span><span class="nav-text">תחזוקה</span></a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-section-title">ניהול</span>
+          <a href="/admin/employees.html" class="nav-item"><span class="nav-icon">👥</span><span class="nav-text">ניהול עובדים</span></a>
+          <a href="/admin/budget.html" class="nav-item"><span class="nav-icon">💰</span><span class="nav-text">ניהול תקציב</span></a>
+          <a href="/admin/infrastructure.html" class="nav-item"><span class="nav-icon">🏗️</span><span class="nav-text">ניהול תשתיות</span></a>
+          <a href="/admin/planning.html" class="nav-item"><span class="nav-icon">📋</span><span class="nav-text">תכנון לטווח ארוך</span></a>
+          <a href="/admin/settings.html" class="nav-item"><span class="nav-icon">⚙️</span><span class="nav-text">הגדרות</span></a>
+        </div>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="/" class="nav-item"><span class="nav-icon">🏠</span><span class="nav-text">לאתר הראשי</span></a>
+        <a href="#" class="nav-item" onclick="logout()"><span class="nav-icon">🚪</span><span class="nav-text">התנתקות</span></a>
+      </div>
+    </aside>
+
+    <button class="admin-menu-toggle" onclick="toggleSidebar()">☰</button>
+
+    <main class="admin-main">
+      <header class="admin-header">
+        <div class="header-right"><h1>🏛️ הזמנת מתקנים</h1></div>
+        <div class="header-left">
+          <button class="btn btn-primary" onclick="showAddFacility()">➕ מתקן חדש</button>
+        </div>
+      </header>
+
+      <div class="admin-content">
+        <section class="dashboard-section">
+          <div class="section-header"><h2>מתקנים זמינים להזמנה</h2></div>
+          <div class="facilities-grid" id="facilitiesGrid"></div>
+        </section>
+
+        <section class="dashboard-section">
+          <div class="section-header">
+            <h2>📅 הזמנות ממתינות לאישור</h2>
+          </div>
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr><th>מתקן</th><th>תאריך</th><th>שעות</th><th>מבקש</th><th>מטרה</th><th>פעולות</th></tr>
+              </thead>
+              <tbody id="pendingBookings"></tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script>
+    const facilities = [
+      { id: 1, name: 'אולם אירועים', icon: '🎉', capacity: 200, hourly_rate: 150 },
+      { id: 2, name: 'חדר ישיבות', icon: '💼', capacity: 20, hourly_rate: 50 },
+      { id: 3, name: 'מגרש כדורגל', icon: '⚽', capacity: 30, hourly_rate: 0 },
+      { id: 4, name: 'חדר חוגים', icon: '🎨', capacity: 15, hourly_rate: 30 },
+      { id: 5, name: 'מועדון נוער', icon: '🎮', capacity: 40, hourly_rate: 0 }
+    ];
+
+    const bookings = [
+      { id: 1, facility: 'אולם אירועים', date: '2026-02-10', time: '18:00-22:00', requester: 'משפחת כהן', purpose: 'בר מצווה', status: 'pending' },
+      { id: 2, facility: 'חדר ישיבות', date: '2026-02-05', time: '20:00-22:00', requester: 'וועדת תרבות', purpose: 'ישיבת תכנון', status: 'pending' }
+    ];
+
+    function renderFacilities() {
+      const grid = document.getElementById('facilitiesGrid');
+      grid.innerHTML = facilities.map(f => `
+        <div class="facility-card">
+          <div class="facility-icon">${f.icon}</div>
+          <h3>${f.name}</h3>
+          <p>קיבולת: ${f.capacity} אנשים</p>
+          <p>${f.hourly_rate > 0 ? `₪${f.hourly_rate} לשעה` : 'ללא תשלום'}</p>
+          <button class="btn btn-primary btn-sm" onclick="bookFacility(${f.id})">הזמנה</button>
+        </div>
+      `).join('');
+    }
+
+    function renderBookings() {
+      const tbody = document.getElementById('pendingBookings');
+      if (bookings.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="loading">אין הזמנות ממתינות</td></tr>';
+        return;
+      }
+      tbody.innerHTML = bookings.map(b => `
+        <tr>
+          <td>${b.facility}</td>
+          <td>${new Date(b.date).toLocaleDateString('he-IL')}</td>
+          <td>${b.time}</td>
+          <td>${b.requester}</td>
+          <td>${b.purpose}</td>
+          <td>
+            <button class="action-btn" onclick="approveBooking(${b.id})" title="אישור">✅</button>
+            <button class="action-btn" onclick="rejectBooking(${b.id})" title="דחייה">❌</button>
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function bookFacility(id) { showToast('הזמנת מתקן - בקרוב', 'info'); }
+    function approveBooking(id) { showToast('ההזמנה אושרה', 'success'); }
+    function rejectBooking(id) { showToast('ההזמנה נדחתה', 'info'); }
+    function showAddFacility() { showToast('הוספת מתקן - בקרוב', 'info'); }
+    function toggleSidebar() { document.querySelector('.admin-sidebar').classList.toggle('open'); }
+    function logout() { localStorage.removeItem('authToken'); window.location.href = '/#login'; }
+    function showToast(message, type = 'info') {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = `toast ${type}`;
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 4000);
+    }
+
+    renderFacilities();
+    renderBookings();
+  </script>
+
+  <style>
+    .facilities-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: var(--space-4); }
+    .facility-card { background: var(--gray-50); border-radius: var(--radius-lg); padding: var(--space-5); text-align: center; transition: all var(--transition-fast); }
+    .facility-card:hover { background: white; box-shadow: var(--shadow-md); }
+    .facility-icon { font-size: 3rem; margin-bottom: var(--space-3); }
+    .facility-card h3 { margin-bottom: var(--space-2); }
+    .facility-card p { color: var(--gray-600); font-size: 0.9rem; margin-bottom: var(--space-2); }
+  </style>
+</body>
+</html>

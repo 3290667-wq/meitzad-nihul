@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>מסמכים ונהלים - מערכת ניהול יישוב מיצד</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/admin/admin.css">
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <div class="sidebar-header"><h2>מיצד</h2><span>מערכת ניהול יישוב</span></div>
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <span class="nav-section-title">ראשי</span>
+          <a href="/admin/dashboard.html" class="nav-item"><span class="nav-icon">📊</span><span class="nav-text">לוח בקרה</span></a>
+          <a href="/admin/requests.html" class="nav-item"><span class="nav-icon">📬</span><span class="nav-text">פניות תושבים</span></a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-section-title">קהילה</span>
+          <a href="/admin/events.html" class="nav-item"><span class="nav-icon">📅</span><span class="nav-text">לוח אירועים</span></a>
+          <a href="/admin/announcements.html" class="nav-item"><span class="nav-icon">📢</span><span class="nav-text">הודעות והכרזות</span></a>
+          <a href="/admin/directory.html" class="nav-item"><span class="nav-icon">📖</span><span class="nav-text">ספר טלפונים</span></a>
+          <a href="/admin/polls.html" class="nav-item"><span class="nav-icon">🗳️</span><span class="nav-text">סקרים והצבעות</span></a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-section-title">משאבים</span>
+          <a href="/admin/facilities.html" class="nav-item"><span class="nav-icon">🏛️</span><span class="nav-text">הזמנת מתקנים</span></a>
+          <a href="/admin/documents.html" class="nav-item active"><span class="nav-icon">📄</span><span class="nav-text">מסמכים ונהלים</span></a>
+          <a href="/admin/maintenance.html" class="nav-item"><span class="nav-icon">🔧</span><span class="nav-text">תחזוקה</span></a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-section-title">ניהול</span>
+          <a href="/admin/employees.html" class="nav-item"><span class="nav-icon">👥</span><span class="nav-text">ניהול עובדים</span></a>
+          <a href="/admin/budget.html" class="nav-item"><span class="nav-icon">💰</span><span class="nav-text">ניהול תקציב</span></a>
+          <a href="/admin/infrastructure.html" class="nav-item"><span class="nav-icon">🏗️</span><span class="nav-text">ניהול תשתיות</span></a>
+          <a href="/admin/planning.html" class="nav-item"><span class="nav-icon">📋</span><span class="nav-text">תכנון לטווח ארוך</span></a>
+          <a href="/admin/settings.html" class="nav-item"><span class="nav-icon">⚙️</span><span class="nav-text">הגדרות</span></a>
+        </div>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="/" class="nav-item"><span class="nav-icon">🏠</span><span class="nav-text">לאתר הראשי</span></a>
+        <a href="#" class="nav-item" onclick="logout()"><span class="nav-icon">🚪</span><span class="nav-text">התנתקות</span></a>
+      </div>
+    </aside>
+
+    <button class="admin-menu-toggle" onclick="toggleSidebar()">☰</button>
+
+    <main class="admin-main">
+      <header class="admin-header">
+        <div class="header-right"><h1>📄 מסמכים ונהלים</h1></div>
+        <div class="header-left">
+          <button class="btn btn-primary" onclick="uploadDocument()">📤 העלאת מסמך</button>
+        </div>
+      </header>
+
+      <div class="admin-content">
+        <div class="documents-categories">
+          <div class="doc-category" onclick="filterDocs('regulations')">
+            <span class="cat-icon">📜</span>
+            <h3>תקנון ונהלים</h3>
+            <span class="doc-count">5 מסמכים</span>
+          </div>
+          <div class="doc-category" onclick="filterDocs('forms')">
+            <span class="cat-icon">📝</span>
+            <h3>טפסים</h3>
+            <span class="doc-count">12 מסמכים</span>
+          </div>
+          <div class="doc-category" onclick="filterDocs('protocols')">
+            <span class="cat-icon">📋</span>
+            <h3>פרוטוקולים</h3>
+            <span class="doc-count">24 מסמכים</span>
+          </div>
+          <div class="doc-category" onclick="filterDocs('reports')">
+            <span class="cat-icon">📊</span>
+            <h3>דוחות</h3>
+            <span class="doc-count">8 מסמכים</span>
+          </div>
+        </div>
+
+        <section class="dashboard-section">
+          <div class="section-header"><h2>מסמכים אחרונים</h2></div>
+          <div class="documents-list" id="documentsList"></div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script>
+    const documents = [
+      { id: 1, name: 'תקנון היישוב 2026', category: 'regulations', date: '2026-01-01', type: 'pdf' },
+      { id: 2, name: 'פרוטוקול ישיבת וועד - ינואר', category: 'protocols', date: '2026-01-15', type: 'pdf' },
+      { id: 3, name: 'טופס בקשה להזמנת מתקן', category: 'forms', date: '2025-06-01', type: 'doc' },
+      { id: 4, name: 'דו"ח תקציבי שנתי 2025', category: 'reports', date: '2026-01-10', type: 'xlsx' },
+      { id: 5, name: 'נוהל חירום יישובי', category: 'regulations', date: '2025-03-15', type: 'pdf' }
+    ];
+
+    const typeIcons = { pdf: '📕', doc: '📘', xlsx: '📗', jpg: '🖼️' };
+
+    function renderDocuments() {
+      const list = document.getElementById('documentsList');
+      list.innerHTML = documents.map(d => `
+        <div class="document-item">
+          <span class="doc-icon">${typeIcons[d.type] || '📄'}</span>
+          <div class="doc-info">
+            <h4>${d.name}</h4>
+            <span class="doc-date">עודכן: ${new Date(d.date).toLocaleDateString('he-IL')}</span>
+          </div>
+          <div class="doc-actions">
+            <button class="btn btn-secondary btn-sm" onclick="downloadDoc(${d.id})">📥 הורדה</button>
+            <button class="action-btn" onclick="editDoc(${d.id})">✏️</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function uploadDocument() { showToast('העלאת מסמך - בקרוב', 'info'); }
+    function downloadDoc(id) { showToast('מוריד מסמך...', 'info'); }
+    function editDoc(id) { showToast('עריכת מסמך - בקרוב', 'info'); }
+    function filterDocs(cat) { showToast(`מציג מסמכי ${cat}`, 'info'); }
+    function toggleSidebar() { document.querySelector('.admin-sidebar').classList.toggle('open'); }
+    function logout() { localStorage.removeItem('authToken'); window.location.href = '/#login'; }
+    function showToast(message, type = 'info') {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = `toast ${type}`;
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 4000);
+    }
+
+    renderDocuments();
+  </script>
+
+  <style>
+    .documents-categories { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: var(--space-4); margin-bottom: var(--space-8); }
+    .doc-category { background: white; border-radius: var(--radius-lg); padding: var(--space-6); text-align: center; cursor: pointer; transition: all var(--transition-fast); border: 2px solid transparent; }
+    .doc-category:hover { border-color: var(--primary-300); transform: translateY(-4px); box-shadow: var(--shadow-md); }
+    .cat-icon { font-size: 2.5rem; display: block; margin-bottom: var(--space-3); }
+    .doc-category h3 { margin-bottom: var(--space-2); }
+    .doc-count { color: var(--gray-500); font-size: 0.9rem; }
+    .documents-list { display: flex; flex-direction: column; gap: var(--space-3); }
+    .document-item { display: flex; align-items: center; gap: var(--space-4); padding: var(--space-4); background: var(--gray-50); border-radius: var(--radius-md); }
+    .document-item:hover { background: white; box-shadow: var(--shadow-sm); }
+    .doc-icon { font-size: 2rem; }
+    .doc-info { flex: 1; }
+    .doc-info h4 { margin-bottom: var(--space-1); }
+    .doc-date { color: var(--gray-500); font-size: 0.85rem; }
+    .doc-actions { display: flex; gap: var(--space-2); align-items: center; }
+  </style>
+</body>
+</html>

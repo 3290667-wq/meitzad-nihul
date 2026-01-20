@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ניהול תשתיות - מערכת ניהול יישוב מיצד</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/admin/admin.css">
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="admin-layout">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+      <div class="sidebar-header">
+        <h2>מיצד</h2>
+        <span>מערכת ניהול יישוב</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <span class="nav-section-title">ראשי</span>
+          <a href="/admin/dashboard.html" class="nav-item">
+            <span class="nav-icon">📊</span>
+            <span class="nav-text">לוח בקרה</span>
+          </a>
+          <a href="/admin/requests.html" class="nav-item">
+            <span class="nav-icon">📬</span>
+            <span class="nav-text">פניות תושבים</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <span class="nav-section-title">קהילה</span>
+          <a href="/admin/events.html" class="nav-item">
+            <span class="nav-icon">📅</span>
+            <span class="nav-text">לוח אירועים</span>
+          </a>
+          <a href="/admin/announcements.html" class="nav-item">
+            <span class="nav-icon">📢</span>
+            <span class="nav-text">הודעות והכרזות</span>
+          </a>
+          <a href="/admin/directory.html" class="nav-item">
+            <span class="nav-icon">📖</span>
+            <span class="nav-text">ספר טלפונים</span>
+          </a>
+          <a href="/admin/polls.html" class="nav-item">
+            <span class="nav-icon">🗳️</span>
+            <span class="nav-text">סקרים והצבעות</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <span class="nav-section-title">משאבים</span>
+          <a href="/admin/facilities.html" class="nav-item">
+            <span class="nav-icon">🏛️</span>
+            <span class="nav-text">הזמנת מתקנים</span>
+          </a>
+          <a href="/admin/documents.html" class="nav-item">
+            <span class="nav-icon">📄</span>
+            <span class="nav-text">מסמכים ונהלים</span>
+          </a>
+          <a href="/admin/maintenance.html" class="nav-item">
+            <span class="nav-icon">🔧</span>
+            <span class="nav-text">תחזוקה</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <span class="nav-section-title">ניהול</span>
+          <a href="/admin/employees.html" class="nav-item">
+            <span class="nav-icon">👥</span>
+            <span class="nav-text">ניהול עובדים</span>
+          </a>
+          <a href="/admin/budget.html" class="nav-item">
+            <span class="nav-icon">💰</span>
+            <span class="nav-text">ניהול תקציב</span>
+          </a>
+          <a href="/admin/infrastructure.html" class="nav-item active">
+            <span class="nav-icon">🏗️</span>
+            <span class="nav-text">ניהול תשתיות</span>
+          </a>
+          <a href="/admin/planning.html" class="nav-item">
+            <span class="nav-icon">📋</span>
+            <span class="nav-text">תכנון לטווח ארוך</span>
+          </a>
+          <a href="/admin/settings.html" class="nav-item">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-text">הגדרות</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <a href="/" class="nav-item">
+          <span class="nav-icon">🏠</span>
+          <span class="nav-text">לאתר הראשי</span>
+        </a>
+        <a href="#" class="nav-item" onclick="logout()">
+          <span class="nav-icon">🚪</span>
+          <span class="nav-text">התנתקות</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Mobile Menu Toggle -->
+    <button class="admin-menu-toggle" onclick="toggleSidebar()">☰</button>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+      <header class="admin-header">
+        <div class="header-right">
+          <h1>ניהול תשתיות</h1>
+        </div>
+        <div class="header-left">
+          <button class="btn btn-primary" onclick="showAddAssetModal()">
+            <span>➕</span> נכס חדש
+          </button>
+          <div class="header-user">
+            <span id="userName">שלום</span>
+          </div>
+        </div>
+      </header>
+
+      <div class="admin-content">
+        <!-- Stats -->
+        <section class="stats-grid small">
+          <div class="stat-card mini">
+            <div class="stat-icon info">🏢</div>
+            <div class="stat-info">
+              <span class="stat-value" id="totalAssets">0</span>
+              <span class="stat-label">נכסים</span>
+            </div>
+          </div>
+          <div class="stat-card mini">
+            <div class="stat-icon progress">✅</div>
+            <div class="stat-info">
+              <span class="stat-value" id="operationalAssets">0</span>
+              <span class="stat-label">תקינים</span>
+            </div>
+          </div>
+          <div class="stat-card mini">
+            <div class="stat-icon urgent">⚠️</div>
+            <div class="stat-info">
+              <span class="stat-value" id="needsMaintenance">0</span>
+              <span class="stat-label">דורשים טיפול</span>
+            </div>
+          </div>
+          <div class="stat-card mini">
+            <div class="stat-icon time">📅</div>
+            <div class="stat-info">
+              <span class="stat-value" id="scheduledMaintenance">0</span>
+              <span class="stat-label">טיפולים מתוכננים</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Category Tabs -->
+        <div class="tabs-container">
+          <button class="tab-btn active" data-category="all" onclick="filterByCategory('all')">כל הנכסים</button>
+          <button class="tab-btn" data-category="buildings" onclick="filterByCategory('buildings')">🏢 מבנים</button>
+          <button class="tab-btn" data-category="roads" onclick="filterByCategory('roads')">🛣️ כבישים</button>
+          <button class="tab-btn" data-category="water" onclick="filterByCategory('water')">💧 מים</button>
+          <button class="tab-btn" data-category="electricity" onclick="filterByCategory('electricity')">⚡ חשמל</button>
+          <button class="tab-btn" data-category="gardens" onclick="filterByCategory('gardens')">🌳 גינון</button>
+          <button class="tab-btn" data-category="equipment" onclick="filterByCategory('equipment')">🔧 ציוד</button>
+        </div>
+
+        <!-- Infrastructure Grid -->
+        <section class="infrastructure-grid" id="infrastructureGrid">
+          <!-- Loaded dynamically -->
+        </section>
+
+        <!-- Maintenance Schedule -->
+        <section class="dashboard-section">
+          <div class="section-header">
+            <h2>📅 לוח טיפולים מתוכננים</h2>
+            <button class="btn btn-secondary btn-sm" onclick="showAddMaintenanceModal()">הוספת טיפול</button>
+          </div>
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>תאריך</th>
+                  <th>נכס</th>
+                  <th>סוג טיפול</th>
+                  <th>אחראי</th>
+                  <th>סטטוס</th>
+                  <th>פעולות</th>
+                </tr>
+              </thead>
+              <tbody id="maintenanceTable">
+                <tr>
+                  <td colspan="6" class="loading">טוען...</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Asset Modal -->
+  <div id="assetModal" class="modal-overlay hidden">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h3 id="modalTitle">נכס חדש</h3>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="modalBody">
+        <form id="assetForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label>שם הנכס *</label>
+              <input type="text" id="assetName" name="name" required>
+            </div>
+            <div class="form-group">
+              <label>קטגוריה *</label>
+              <select id="assetCategory" name="category" required>
+                <option value="">בחר קטגוריה</option>
+                <option value="buildings">מבנים</option>
+                <option value="roads">כבישים ומדרכות</option>
+                <option value="water">תשתיות מים</option>
+                <option value="electricity">תשתיות חשמל</option>
+                <option value="gardens">גינון ושטחים ירוקים</option>
+                <option value="equipment">ציוד ומכונות</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>מיקום</label>
+              <input type="text" id="assetLocation" name="location">
+            </div>
+            <div class="form-group">
+              <label>מצב נוכחי *</label>
+              <select id="assetStatus" name="status" required>
+                <option value="operational">תקין</option>
+                <option value="needs_maintenance">דורש טיפול</option>
+                <option value="under_repair">בתיקון</option>
+                <option value="out_of_service">לא פעיל</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>תאריך התקנה</label>
+              <input type="date" id="assetInstallDate" name="install_date">
+            </div>
+            <div class="form-group">
+              <label>תאריך טיפול הבא</label>
+              <input type="date" id="assetNextMaintenance" name="next_maintenance">
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>שווי (₪)</label>
+              <input type="number" id="assetValue" name="value" min="0">
+            </div>
+            <div class="form-group">
+              <label>אחראי</label>
+              <input type="text" id="assetResponsible" name="responsible">
+            </div>
+          </div>
+          <div class="form-group full">
+            <label>תיאור</label>
+            <textarea id="assetDescription" name="description" rows="3"></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal()">ביטול</button>
+        <button class="btn btn-primary" onclick="saveAsset()">שמירה</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="/js/infrastructure.js"></script>
+</body>
+</html>

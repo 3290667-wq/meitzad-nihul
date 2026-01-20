@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>סקרים והצבעות - מערכת ניהול יישוב מיצד</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/admin/admin.css">
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <div class="sidebar-header"><h2>מיצד</h2><span>מערכת ניהול יישוב</span></div>
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <span class="nav-section-title">ראשי</span>
+          <a href="/admin/dashboard.html" class="nav-item"><span class="nav-icon">📊</span><span class="nav-text">לוח בקרה</span></a>
+          <a href="/admin/requests.html" class="nav-item"><span class="nav-icon">📬</span><span class="nav-text">פניות תושבים</span></a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-section-title">קהילה</span>
+          <a href="/admin/events.html" class="nav-item"><span class="nav-icon">📅</span><span class="nav-text">לוח אירועים</span></a>
+          <a href="/admin/announcements.html" class="nav-item"><span class="nav-icon">📢</span><span class="nav-text">הודעות והכרזות</span></a>
+          <a href="/admin/directory.html" class="nav-item"><span class="nav-icon">📖</span><span class="nav-text">ספר טלפונים</span></a>
+          <a href="/admin/polls.html" class="nav-item active"><span class="nav-icon">🗳️</span><span class="nav-text">סקרים והצבעות</span></a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-section-title">משאבים</span>
+          <a href="/admin/facilities.html" class="nav-item"><span class="nav-icon">🏛️</span><span class="nav-text">הזמנת מתקנים</span></a>
+          <a href="/admin/documents.html" class="nav-item"><span class="nav-icon">📄</span><span class="nav-text">מסמכים ונהלים</span></a>
+          <a href="/admin/maintenance.html" class="nav-item"><span class="nav-icon">🔧</span><span class="nav-text">תחזוקה</span></a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-section-title">ניהול</span>
+          <a href="/admin/employees.html" class="nav-item"><span class="nav-icon">👥</span><span class="nav-text">ניהול עובדים</span></a>
+          <a href="/admin/budget.html" class="nav-item"><span class="nav-icon">💰</span><span class="nav-text">ניהול תקציב</span></a>
+          <a href="/admin/infrastructure.html" class="nav-item"><span class="nav-icon">🏗️</span><span class="nav-text">ניהול תשתיות</span></a>
+          <a href="/admin/planning.html" class="nav-item"><span class="nav-icon">📋</span><span class="nav-text">תכנון לטווח ארוך</span></a>
+          <a href="/admin/settings.html" class="nav-item"><span class="nav-icon">⚙️</span><span class="nav-text">הגדרות</span></a>
+        </div>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="/" class="nav-item"><span class="nav-icon">🏠</span><span class="nav-text">לאתר הראשי</span></a>
+        <a href="#" class="nav-item" onclick="logout()"><span class="nav-icon">🚪</span><span class="nav-text">התנתקות</span></a>
+      </div>
+    </aside>
+
+    <button class="admin-menu-toggle" onclick="toggleSidebar()">☰</button>
+
+    <main class="admin-main">
+      <header class="admin-header">
+        <div class="header-right"><h1>🗳️ סקרים והצבעות</h1></div>
+        <div class="header-left">
+          <button class="btn btn-primary" onclick="showCreatePoll()">➕ סקר חדש</button>
+        </div>
+      </header>
+
+      <div class="admin-content">
+        <section class="stats-grid small">
+          <div class="stat-card mini"><div class="stat-icon info">📊</div><div class="stat-info"><span class="stat-value" id="totalPolls">3</span><span class="stat-label">סה"כ סקרים</span></div></div>
+          <div class="stat-card mini"><div class="stat-icon progress">✅</div><div class="stat-info"><span class="stat-value" id="activePolls">2</span><span class="stat-label">פעילים</span></div></div>
+          <div class="stat-card mini"><div class="stat-icon resolved">👥</div><div class="stat-info"><span class="stat-value" id="totalVotes">156</span><span class="stat-label">הצבעות</span></div></div>
+          <div class="stat-card mini"><div class="stat-icon time">📈</div><div class="stat-info"><span class="stat-value" id="avgParticipation">68%</span><span class="stat-label">השתתפות ממוצעת</span></div></div>
+        </section>
+
+        <div class="polls-container" id="pollsContainer">
+          <!-- Polls loaded here -->
+        </div>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script>
+    const polls = [
+      {
+        id: 1,
+        title: 'בחירת מיקום לגן משחקים חדש',
+        status: 'active',
+        end_date: '2026-02-15',
+        total_votes: 78,
+        options: [
+          { text: 'ליד בית הקהילה', votes: 35 },
+          { text: 'בשכונה הצפונית', votes: 28 },
+          { text: 'ליד בית הספר', votes: 15 }
+        ]
+      },
+      {
+        id: 2,
+        title: 'העדפת תאריך לאירוע שבועות',
+        status: 'active',
+        end_date: '2026-02-28',
+        total_votes: 45,
+        options: [
+          { text: 'יום שישי בערב', votes: 22 },
+          { text: 'שבת בצהריים', votes: 18 },
+          { text: 'שבת בערב', votes: 5 }
+        ]
+      },
+      {
+        id: 3,
+        title: 'סקר שביעות רצון 2025',
+        status: 'closed',
+        end_date: '2025-12-31',
+        total_votes: 112,
+        options: [
+          { text: 'מרוצה מאוד', votes: 45 },
+          { text: 'מרוצה', votes: 42 },
+          { text: 'פחות מרוצה', votes: 20 },
+          { text: 'לא מרוצה', votes: 5 }
+        ]
+      }
+    ];
+
+    function renderPolls() {
+      const container = document.getElementById('pollsContainer');
+
+      container.innerHTML = polls.map(poll => {
+        const maxVotes = Math.max(...poll.options.map(o => o.votes));
+
+        return `
+          <div class="poll-card ${poll.status}">
+            <div class="poll-header">
+              <h3>${poll.title}</h3>
+              <span class="poll-status status-badge status-${poll.status === 'active' ? 'in_progress' : 'closed'}">
+                ${poll.status === 'active' ? 'פעיל' : 'הסתיים'}
+              </span>
+            </div>
+            <div class="poll-options">
+              ${poll.options.map(opt => {
+                const percentage = poll.total_votes > 0 ? Math.round((opt.votes / poll.total_votes) * 100) : 0;
+                return `
+                  <div class="poll-option">
+                    <div class="option-header">
+                      <span class="option-text">${opt.text}</span>
+                      <span class="option-votes">${opt.votes} (${percentage}%)</span>
+                    </div>
+                    <div class="option-bar">
+                      <div class="option-fill" style="width: ${percentage}%"></div>
+                    </div>
+                  </div>
+                `;
+              }).join('')}
+            </div>
+            <div class="poll-footer">
+              <span>📊 ${poll.total_votes} הצבעות</span>
+              <span>📅 ${poll.status === 'active' ? 'מסתיים' : 'הסתיים'}: ${new Date(poll.end_date).toLocaleDateString('he-IL')}</span>
+            </div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function showCreatePoll() {
+      showToast('יצירת סקר - בקרוב', 'info');
+    }
+
+    function toggleSidebar() {
+      document.querySelector('.admin-sidebar').classList.toggle('open');
+    }
+
+    function logout() {
+      localStorage.removeItem('authToken');
+      window.location.href = '/#login';
+    }
+
+    function showToast(message, type = 'info') {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = `toast ${type}`;
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 4000);
+    }
+
+    renderPolls();
+  </script>
+
+  <style>
+    .polls-container { display: flex; flex-direction: column; gap: var(--space-6); }
+    .poll-card { background: white; border-radius: var(--radius-xl); padding: var(--space-6); border: 1px solid var(--gray-100); }
+    .poll-card.closed { opacity: 0.8; }
+    .poll-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-5); }
+    .poll-header h3 { font-size: 1.2rem; font-weight: 700; }
+    .poll-options { display: flex; flex-direction: column; gap: var(--space-3); margin-bottom: var(--space-4); }
+    .poll-option { }
+    .option-header { display: flex; justify-content: space-between; margin-bottom: var(--space-1); font-size: 0.9rem; }
+    .option-votes { color: var(--gray-500); font-weight: 600; }
+    .option-bar { height: 24px; background: var(--gray-100); border-radius: var(--radius-full); overflow: hidden; }
+    .option-fill { height: 100%; background: var(--gradient-primary); border-radius: var(--radius-full); transition: width 0.5s ease; }
+    .poll-footer { display: flex; gap: var(--space-6); color: var(--gray-500); font-size: 0.85rem; padding-top: var(--space-4); border-top: 1px solid var(--gray-100); }
+  </style>
+</body>
+</html>

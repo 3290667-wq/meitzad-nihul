@@ -1,0 +1,318 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>תכנון לטווח ארוך - מערכת ניהול יישוב מיצד</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/admin/admin.css">
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+  <div class="admin-layout">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+      <div class="sidebar-header">
+        <h2>מיצד</h2>
+        <span>מערכת ניהול יישוב</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <span class="nav-section-title">ראשי</span>
+          <a href="/admin/dashboard.html" class="nav-item">
+            <span class="nav-icon">📊</span>
+            <span class="nav-text">לוח בקרה</span>
+          </a>
+          <a href="/admin/requests.html" class="nav-item">
+            <span class="nav-icon">📬</span>
+            <span class="nav-text">פניות תושבים</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <span class="nav-section-title">קהילה</span>
+          <a href="/admin/events.html" class="nav-item">
+            <span class="nav-icon">📅</span>
+            <span class="nav-text">לוח אירועים</span>
+          </a>
+          <a href="/admin/announcements.html" class="nav-item">
+            <span class="nav-icon">📢</span>
+            <span class="nav-text">הודעות והכרזות</span>
+          </a>
+          <a href="/admin/directory.html" class="nav-item">
+            <span class="nav-icon">📖</span>
+            <span class="nav-text">ספר טלפונים</span>
+          </a>
+          <a href="/admin/polls.html" class="nav-item">
+            <span class="nav-icon">🗳️</span>
+            <span class="nav-text">סקרים והצבעות</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <span class="nav-section-title">משאבים</span>
+          <a href="/admin/facilities.html" class="nav-item">
+            <span class="nav-icon">🏛️</span>
+            <span class="nav-text">הזמנת מתקנים</span>
+          </a>
+          <a href="/admin/documents.html" class="nav-item">
+            <span class="nav-icon">📄</span>
+            <span class="nav-text">מסמכים ונהלים</span>
+          </a>
+          <a href="/admin/maintenance.html" class="nav-item">
+            <span class="nav-icon">🔧</span>
+            <span class="nav-text">תחזוקה</span>
+          </a>
+        </div>
+
+        <div class="nav-section">
+          <span class="nav-section-title">ניהול</span>
+          <a href="/admin/employees.html" class="nav-item">
+            <span class="nav-icon">👥</span>
+            <span class="nav-text">ניהול עובדים</span>
+          </a>
+          <a href="/admin/budget.html" class="nav-item">
+            <span class="nav-icon">💰</span>
+            <span class="nav-text">ניהול תקציב</span>
+          </a>
+          <a href="/admin/infrastructure.html" class="nav-item">
+            <span class="nav-icon">🏗️</span>
+            <span class="nav-text">ניהול תשתיות</span>
+          </a>
+          <a href="/admin/planning.html" class="nav-item active">
+            <span class="nav-icon">📋</span>
+            <span class="nav-text">תכנון לטווח ארוך</span>
+          </a>
+          <a href="/admin/settings.html" class="nav-item">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-text">הגדרות</span>
+          </a>
+        </div>
+      </nav>
+
+      <div class="sidebar-footer">
+        <a href="/" class="nav-item">
+          <span class="nav-icon">🏠</span>
+          <span class="nav-text">לאתר הראשי</span>
+        </a>
+        <a href="#" class="nav-item" onclick="logout()">
+          <span class="nav-icon">🚪</span>
+          <span class="nav-text">התנתקות</span>
+        </a>
+      </div>
+    </aside>
+
+    <!-- Mobile Menu Toggle -->
+    <button class="admin-menu-toggle" onclick="toggleSidebar()">☰</button>
+
+    <!-- Main Content -->
+    <main class="admin-main">
+      <header class="admin-header">
+        <div class="header-right">
+          <h1>תכנון אסטרטגי לטווח ארוך</h1>
+        </div>
+        <div class="header-left">
+          <button class="btn btn-primary" onclick="showAddProjectModal()">
+            <span>➕</span> פרויקט חדש
+          </button>
+          <div class="header-user">
+            <span id="userName">שלום</span>
+          </div>
+        </div>
+      </header>
+
+      <div class="admin-content">
+        <!-- Vision Statement -->
+        <section class="dashboard-section vision-section">
+          <div class="section-header">
+            <h2>🎯 חזון יישוב מיצד</h2>
+            <button class="btn btn-secondary btn-sm" onclick="editVision()">עריכה</button>
+          </div>
+          <div class="vision-content" id="visionContent">
+            <p>יישוב מיצד שואף להיות קהילה מובילה, בטוחה ומקיימת, המציעה איכות חיים גבוהה לכל תושביה תוך שמירה על ערכי סביבה, חינוך וקהילתיות.</p>
+          </div>
+        </section>
+
+        <!-- Key Goals -->
+        <section class="stats-grid">
+          <div class="stat-card clickable" onclick="filterByGoal('growth')">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #e8f5e9 0%, #c8e6c9 100%);">📈</div>
+            <div class="stat-info">
+              <span class="stat-value" id="growthProjects">0</span>
+              <span class="stat-label">פרויקטי צמיחה</span>
+            </div>
+          </div>
+          <div class="stat-card clickable" onclick="filterByGoal('infrastructure')">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #e3f2fd 0%, #bbdefb 100%);">🏗️</div>
+            <div class="stat-info">
+              <span class="stat-value" id="infraProjects">0</span>
+              <span class="stat-label">פרויקטי תשתיות</span>
+            </div>
+          </div>
+          <div class="stat-card clickable" onclick="filterByGoal('community')">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);">👨‍👩‍👧‍👦</div>
+            <div class="stat-info">
+              <span class="stat-value" id="communityProjects">0</span>
+              <span class="stat-label">פרויקטי קהילה</span>
+            </div>
+          </div>
+          <div class="stat-card clickable" onclick="filterByGoal('environment')">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #e8f5e9 0%, #a5d6a7 100%);">🌱</div>
+            <div class="stat-info">
+              <span class="stat-value" id="envProjects">0</span>
+              <span class="stat-label">פרויקטי סביבה</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Timeline View -->
+        <section class="dashboard-section">
+          <div class="section-header">
+            <h2>📅 ציר זמן - תוכנית רב שנתית</h2>
+            <div class="timeline-controls">
+              <button class="btn btn-secondary btn-sm active" onclick="setTimelineView('5year')">5 שנים</button>
+              <button class="btn btn-secondary btn-sm" onclick="setTimelineView('3year')">3 שנים</button>
+              <button class="btn btn-secondary btn-sm" onclick="setTimelineView('1year')">שנה</button>
+            </div>
+          </div>
+          <div class="timeline-container" id="timelineContainer">
+            <!-- Timeline rendered dynamically -->
+          </div>
+        </section>
+
+        <!-- Projects List -->
+        <section class="dashboard-section">
+          <div class="section-header">
+            <h2>📋 רשימת פרויקטים</h2>
+            <div class="filter-buttons">
+              <button class="filter-btn active" data-status="all" onclick="filterProjects('all')">הכל</button>
+              <button class="filter-btn" data-status="planning" onclick="filterProjects('planning')">בתכנון</button>
+              <button class="filter-btn" data-status="in_progress" onclick="filterProjects('in_progress')">בביצוע</button>
+              <button class="filter-btn" data-status="completed" onclick="filterProjects('completed')">הושלמו</button>
+            </div>
+          </div>
+          <div class="projects-grid" id="projectsGrid">
+            <!-- Projects loaded dynamically -->
+          </div>
+        </section>
+
+        <!-- Budget Forecast -->
+        <section class="dashboard-section">
+          <div class="section-header">
+            <h2>💰 תחזית תקציבית</h2>
+          </div>
+          <div class="chart-container">
+            <canvas id="budgetForecastChart"></canvas>
+          </div>
+        </section>
+
+        <!-- KPIs -->
+        <section class="dashboard-section">
+          <div class="section-header">
+            <h2>📊 מדדי ביצוע מפתח (KPIs)</h2>
+          </div>
+          <div class="kpis-grid" id="kpisGrid">
+            <!-- KPIs loaded dynamically -->
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Project Modal -->
+  <div id="projectModal" class="modal-overlay hidden">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h3 id="modalTitle">פרויקט חדש</h3>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <div class="modal-body" id="modalBody">
+        <form id="projectForm">
+          <div class="form-row">
+            <div class="form-group">
+              <label>שם הפרויקט *</label>
+              <input type="text" id="projName" name="name" required>
+            </div>
+            <div class="form-group">
+              <label>קטגוריה *</label>
+              <select id="projCategory" name="category" required>
+                <option value="">בחר קטגוריה</option>
+                <option value="growth">צמיחה ופיתוח</option>
+                <option value="infrastructure">תשתיות</option>
+                <option value="community">קהילה וחברה</option>
+                <option value="environment">סביבה וקיימות</option>
+                <option value="education">חינוך</option>
+                <option value="security">ביטחון</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-group full">
+            <label>תיאור הפרויקט *</label>
+            <textarea id="projDescription" name="description" rows="3" required></textarea>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>תאריך התחלה מתוכנן *</label>
+              <input type="date" id="projStartDate" name="start_date" required>
+            </div>
+            <div class="form-group">
+              <label>תאריך סיום מתוכנן *</label>
+              <input type="date" id="projEndDate" name="end_date" required>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>תקציב משוער (₪)</label>
+              <input type="number" id="projBudget" name="budget" min="0">
+            </div>
+            <div class="form-group">
+              <label>עדיפות</label>
+              <select id="projPriority" name="priority">
+                <option value="low">נמוכה</option>
+                <option value="medium">בינונית</option>
+                <option value="high">גבוהה</option>
+                <option value="critical">קריטית</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>סטטוס</label>
+              <select id="projStatus" name="status">
+                <option value="idea">רעיון</option>
+                <option value="planning">בתכנון</option>
+                <option value="approved">מאושר</option>
+                <option value="in_progress">בביצוע</option>
+                <option value="completed">הושלם</option>
+                <option value="on_hold">מושהה</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>אחראי</label>
+              <input type="text" id="projOwner" name="owner">
+            </div>
+          </div>
+          <div class="form-section">
+            <h4>אבני דרך</h4>
+            <div id="milestonesContainer">
+              <!-- Milestones added dynamically -->
+            </div>
+            <button type="button" class="btn btn-secondary btn-sm" onclick="addMilestone()">+ הוסף אבן דרך</button>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeModal()">ביטול</button>
+        <button class="btn btn-primary" onclick="saveProject()">שמירה</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden"></div>
+
+  <script src="/js/planning.js"></script>
+</body>
+</html>

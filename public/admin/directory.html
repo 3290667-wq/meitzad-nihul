@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ספר טלפונים - מערכת ניהול יישוב מיצד</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/admin/admin.css">
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="admin-layout">
+    <aside class="admin-sidebar">
+      <div class="sidebar-header">
+        <h2>מיצד</h2>
+        <span>מערכת ניהול יישוב</span>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <span class="nav-section-title">ראשי</span>
+          <a href="/admin/dashboard.html" class="nav-item"><span class="nav-icon">📊</span><span class="nav-text">לוח בקרה</span></a>
+          <a href="/admin/requests.html" class="nav-item"><span class="nav-icon">📬</span><span class="nav-text">פניות תושבים</span></a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-section-title">קהילה</span>
+          <a href="/admin/events.html" class="nav-item"><span class="nav-icon">📅</span><span class="nav-text">לוח אירועים</span></a>
+          <a href="/admin/announcements.html" class="nav-item"><span class="nav-icon">📢</span><span class="nav-text">הודעות והכרזות</span></a>
+          <a href="/admin/directory.html" class="nav-item active"><span class="nav-icon">📖</span><span class="nav-text">ספר טלפונים</span></a>
+          <a href="/admin/polls.html" class="nav-item"><span class="nav-icon">🗳️</span><span class="nav-text">סקרים והצבעות</span></a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-section-title">משאבים</span>
+          <a href="/admin/facilities.html" class="nav-item"><span class="nav-icon">🏛️</span><span class="nav-text">הזמנת מתקנים</span></a>
+          <a href="/admin/documents.html" class="nav-item"><span class="nav-icon">📄</span><span class="nav-text">מסמכים ונהלים</span></a>
+          <a href="/admin/maintenance.html" class="nav-item"><span class="nav-icon">🔧</span><span class="nav-text">תחזוקה</span></a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-section-title">ניהול</span>
+          <a href="/admin/employees.html" class="nav-item"><span class="nav-icon">👥</span><span class="nav-text">ניהול עובדים</span></a>
+          <a href="/admin/budget.html" class="nav-item"><span class="nav-icon">💰</span><span class="nav-text">ניהול תקציב</span></a>
+          <a href="/admin/infrastructure.html" class="nav-item"><span class="nav-icon">🏗️</span><span class="nav-text">ניהול תשתיות</span></a>
+          <a href="/admin/planning.html" class="nav-item"><span class="nav-icon">📋</span><span class="nav-text">תכנון לטווח ארוך</span></a>
+          <a href="/admin/settings.html" class="nav-item"><span class="nav-icon">⚙️</span><span class="nav-text">הגדרות</span></a>
+        </div>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="/" class="nav-item"><span class="nav-icon">🏠</span><span class="nav-text">לאתר הראשי</span></a>
+        <a href="#" class="nav-item" onclick="logout()"><span class="nav-icon">🚪</span><span class="nav-text">התנתקות</span></a>
+      </div>
+    </aside>
+
+    <button class="admin-menu-toggle" onclick="toggleSidebar()">☰</button>
+
+    <main class="admin-main">
+      <header class="admin-header">
+        <div class="header-right">
+          <h1>📖 ספר טלפונים</h1>
+        </div>
+        <div class="header-left">
+          <button class="btn btn-primary" onclick="showAddContact()">➕ איש קשר חדש</button>
+        </div>
+      </header>
+
+      <div class="admin-content">
+        <div class="filters-bar">
+          <div class="filter-group">
+            <input type="text" id="searchInput" placeholder="חיפוש לפי שם או טלפון..." onkeyup="filterContacts()">
+          </div>
+          <div class="filter-group">
+            <select id="categoryFilter" onchange="filterContacts()">
+              <option value="">כל הקטגוריות</option>
+              <option value="emergency">חירום</option>
+              <option value="committee">חברי וועד</option>
+              <option value="services">שירותים</option>
+              <option value="residents">תושבים</option>
+            </select>
+          </div>
+        </div>
+
+        <section class="dashboard-section">
+          <div class="contacts-grid" id="contactsGrid">
+            <!-- Contacts loaded here -->
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <div id="toast" class="toast hidden"></div>
+
+  <script>
+    const authToken = localStorage.getItem('authToken');
+
+    const contacts = [
+      { id: 1, name: 'קב"ט היישוב', phone: '050-1234567', category: 'emergency', icon: '🔒' },
+      { id: 2, name: 'מזכיר היישוב', phone: '050-2345678', category: 'committee', icon: '👤' },
+      { id: 3, name: 'רכזת חינוך', phone: '050-3456789', category: 'committee', icon: '📚' },
+      { id: 4, name: 'מד"א', phone: '101', category: 'emergency', icon: '🚑' },
+      { id: 5, name: 'משטרה', phone: '100', category: 'emergency', icon: '🚔' },
+      { id: 6, name: 'כיבוי אש', phone: '102', category: 'emergency', icon: '🚒' },
+      { id: 7, name: 'חברת החשמל', phone: '103', category: 'services', icon: '⚡' },
+      { id: 8, name: 'מוקד מים', phone: '*8455', category: 'services', icon: '💧' },
+      { id: 9, name: 'גנן היישוב', phone: '050-4567890', category: 'services', icon: '🌳' },
+      { id: 10, name: 'תחזוקה', phone: '050-5678901', category: 'services', icon: '🔧' }
+    ];
+
+    function filterContacts() {
+      const search = document.getElementById('searchInput').value.toLowerCase();
+      const category = document.getElementById('categoryFilter').value;
+
+      const filtered = contacts.filter(c => {
+        const matchSearch = c.name.toLowerCase().includes(search) || c.phone.includes(search);
+        const matchCategory = !category || c.category === category;
+        return matchSearch && matchCategory;
+      });
+
+      renderContacts(filtered);
+    }
+
+    function renderContacts(list) {
+      const grid = document.getElementById('contactsGrid');
+
+      if (list.length === 0) {
+        grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📖</div><p>לא נמצאו אנשי קשר</p></div>';
+        return;
+      }
+
+      grid.innerHTML = list.map(c => `
+        <div class="contact-card">
+          <div class="contact-icon">${c.icon}</div>
+          <div class="contact-info">
+            <h3>${c.name}</h3>
+            <a href="tel:${c.phone}" class="contact-phone">${c.phone}</a>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function showAddContact() {
+      showToast('הוספת איש קשר - בקרוב', 'info');
+    }
+
+    function toggleSidebar() {
+      document.querySelector('.admin-sidebar').classList.toggle('open');
+    }
+
+    function logout() {
+      localStorage.removeItem('authToken');
+      window.location.href = '/#login';
+    }
+
+    function showToast(message, type = 'info') {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = `toast ${type}`;
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 4000);
+    }
+
+    // Initialize
+    renderContacts(contacts);
+  </script>
+
+  <style>
+    .contacts-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: var(--space-4);
+    }
+    .contact-card {
+      display: flex;
+      align-items: center;
+      gap: var(--space-4);
+      padding: var(--space-5);
+      background: white;
+      border-radius: var(--radius-lg);
+      border: 1px solid var(--gray-100);
+      transition: all var(--transition-fast);
+    }
+    .contact-card:hover {
+      box-shadow: var(--shadow-md);
+      transform: translateY(-2px);
+    }
+    .contact-icon {
+      width: 50px;
+      height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--primary-50);
+      border-radius: var(--radius-md);
+      font-size: 1.5rem;
+    }
+    .contact-info h3 {
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: var(--space-1);
+    }
+    .contact-phone {
+      color: var(--primary-600);
+      font-weight: 600;
+      font-size: 1.1rem;
+      direction: ltr;
+      display: inline-block;
+    }
+  </style>
+</body>
+</html>
