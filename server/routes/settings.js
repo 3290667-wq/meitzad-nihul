@@ -377,4 +377,173 @@ router.post('/test-whatsapp', authenticateToken, requireRole(['super_admin', 'ad
   }
 });
 
+// ========== DATABASE RESET ==========
+
+// Reset all data except users and basic settings
+router.post('/reset-data', authenticateToken, requireRole(['super_admin']), (req, res) => {
+  try {
+    const db = getDb();
+
+    // Create backup first
+    createBackup(true);
+
+    // Tables to clear (keep users, categories, settings, facilities, emergency_contacts, quick_links)
+    const tablesToClear = [
+      'requests',
+      'request_updates',
+      'attachments',
+      'events',
+      'event_registrations',
+      'announcements',
+      'announcement_reads',
+      'polls',
+      'poll_options',
+      'poll_votes',
+      'facility_bookings',
+      'documents',
+      'document_acknowledgments',
+      'directory_entries',
+      'meetings',
+      'protocols',
+      'projects',
+      'maintenance_tasks',
+      'employees',
+      'attendance',
+      'financial_records',
+      'transactions',
+      'committee_members',
+      'notifications',
+      'audit_log',
+      'inquiries',
+      'inquiry_updates'
+    ];
+
+    const clearTransaction = db.transaction(() => {
+      for (const table of tablesToClear) {
+        try {
+          db.exec(`DELETE FROM ${table}`);
+          console.log(`Cleared table: ${table}`);
+        } catch (e) {
+          console.log(`Table ${table} might not exist:`, e.message);
+        }
+      }
+    });
+
+    clearTransaction();
+
+    res.json({ success: true, message: 'הנתונים אופסו בהצלחה (חוץ ממשתמשים והגדרות בסיסיות)' });
+  } catch (error) {
+    console.error('Reset data error:', error);
+    res.status(500).json({ error: 'שגיאה באיפוס נתונים' });
+  }
+});
+
+// ========== DIRECTORY (PHONE BOOK) ==========
+
+// Get all directory entries
+router.get('/directory', authenticateToken, (req, res) => {
+  try {
+    const db = getDb();
+    const entries = db.prepare(`
+      SELECT * FROM directory_entries
+      WHERE is_public = 1
+      ORDER BY category, sort_order, display_name
+    `).all();
+    res.json(entries);
+  } catch (error) {
+    console.error('Get directory error:', error);
+    res.status(500).json({ error: 'שגיאה בטעינת ספר טלפונים' });
+  }
+});
+
+// Add directory entry
+router.post('/directory', authenticateToken, requireRole(['super_admin', 'admin']), (req, res) => {
+  try {
+    const db = getDb();
+    const { display_name, phone, mobile, email, occupation, category, bio, sort_order } = req.body;
+
+    const result = db.prepare(`
+      INSERT INTO directory_entries (display_name, phone, mobile, email, occupation, category, bio, sort_order, is_public)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, 1)
+    `).run(display_name, phone || null, mobile || null, email || null, occupation || null, category || 'service', bio || null, sort_order || 999);
+
+    res.json({ success: true, id: result.lastInsertRowid });
+  } catch (error) {
+    console.error('Add directory entry error:', error);
+    res.status(500).json({ error: 'שגיאה בהוספת איש קשר' });
+  }
+});
+
+// Bulk add directory entries
+router.post('/directory/bulk', authenticateToken, requireRole(['super_admin', 'admin']), (req, res) => {
+  try {
+    const db = getDb();
+    const { entries } = req.body;
+
+    if (!entries || !Array.isArray(entries)) {
+      return res.status(400).json({ error: 'נדרשת רשימת אנשי קשר' });
+    }
+
+    const insert = db.prepare(`
+      INSERT INTO directory_entries (display_name, phone, mobile, email, occupation, category, bio, sort_order, is_public)
+      VALUES (@display_name, @phone, @mobile, @email, @occupation, @category, @bio, @sort_order, 1)
+    `);
+
+    const bulkInsert = db.transaction((items) => {
+      let count = 0;
+      for (const item of items) {
+        insert.run({
+          display_name: item.display_name || item.name,
+          phone: item.phone || null,
+          mobile: item.mobile || null,
+          email: item.email || null,
+          occupation: item.occupation || item.role || null,
+          category: item.category || 'service',
+          bio: item.bio || item.notes || null,
+          sort_order: item.sort_order || 999
+        });
+        count++;
+      }
+      return count;
+    });
+
+    const count = bulkInsert(entries);
+    res.json({ success: true, count, message: `נוספו ${count} אנשי קשר` });
+  } catch (error) {
+    console.error('Bulk add directory error:', error);
+    res.status(500).json({ error: 'שגיאה בהוספת אנשי קשר' });
+  }
+});
+
+// Update directory entry
+router.put('/directory/:id', authenticateToken, requireRole(['super_admin', 'admin']), (req, res) => {
+  try {
+    const db = getDb();
+    const { display_name, phone, mobile, email, occupation, category, bio, sort_order, is_public } = req.body;
+
+    db.prepare(`
+      UPDATE directory_entries
+      SET display_name = ?, phone = ?, mobile = ?, email = ?, occupation = ?, category = ?, bio = ?, sort_order = ?, is_public = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).run(display_name, phone, mobile, email, occupation, category, bio, sort_order, is_public !== false ? 1 : 0, req.params.id);
+
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Update directory entry error:', error);
+    res.status(500).json({ error: 'שגיאה בעדכון איש קשר' });
+  }
+});
+
+// Delete directory entry
+router.delete('/directory/:id', authenticateToken, requireRole(['super_admin', 'admin']), (req, res) => {
+  try {
+    const db = getDb();
+    db.prepare('DELETE FROM directory_entries WHERE id = ?').run(req.params.id);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Delete directory entry error:', error);
+    res.status(500).json({ error: 'שגיאה במחיקת איש קשר' });
+  }
+});
+
 module.exports = router;

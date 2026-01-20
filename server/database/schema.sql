@@ -626,3 +626,81 @@ CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status);
 CREATE INDEX IF NOT EXISTS idx_projects_category ON projects(category);
 CREATE INDEX IF NOT EXISTS idx_inquiries_status ON inquiries(status);
 CREATE INDEX IF NOT EXISTS idx_inquiries_category ON inquiries(category);
+
+-- =====================================================
+-- METZAD PHONE DIRECTORY - ספר טלפונים מיצד
+-- =====================================================
+
+-- Clear existing directory entries
+DELETE FROM directory_entries;
+
+-- Insert phone directory entries
+INSERT OR IGNORE INTO directory_entries (display_name, phone, mobile, email, occupation, category, bio, sort_order, is_public) VALUES
+-- הנהלה וועד
+('מזכירות הישוב', '02-9938395', NULL, NULL, 'מזכירות', 'committee', 'פקס: 02-9938394', 1, 1),
+('הרב ישראל גולדשטיין', '02-9934330', '050-9934330', NULL, 'מרא דאתרא', 'committee', NULL, 2, 1),
+('מנחם שבתאי', NULL, '053-4440650', NULL, 'מזכיר הישוב', 'committee', NULL, 3, 1),
+('אסתר טנץ', NULL, '050-4124805', NULL, 'רכזת קהילה', 'committee', NULL, 4, 1),
+
+-- נוער
+('שמואל קוויטני', NULL, '052-7117675', NULL, 'רכז נוער בוגרים', 'service', NULL, 10, 1),
+('אלחנן ניר', NULL, '052-7683927', NULL, 'רכז נוער צעירים', 'service', NULL, 11, 1),
+('חיה בן נון', NULL, '052-7602925', NULL, 'רכזת נוער צעירות', 'service', NULL, 12, 1),
+('אסתר טנץ', NULL, '050-4124805', NULL, 'רכזת נוער בוגרות', 'service', NULL, 13, 1),
+
+-- מקוואות
+('מקווה נשים', '02-9938861', '052-7703380', NULL, 'מקווה', 'service', 'כניסה מהרחבה ליד גינת הקראוונים', 20, 1),
+('מקווה גברים', NULL, '053-3166135', NULL, 'מקווה', 'service', NULL, 21, 1),
+
+-- חינוך
+('מעון בשבילי החינוך', '02-9309569', NULL, NULL, 'מעון', 'service', NULL, 30, 1),
+('גן בנות חבר - גן שירה', '02-9934182', NULL, NULL, 'גן ילדים', 'service', NULL, 31, 1),
+('גן בנות שקמה - גן מימי', '02-9933215', NULL, NULL, 'גן ילדים', 'service', NULL, 32, 1),
+('ת"ת דובר שלום - גן בנים', '02-9933215', NULL, NULL, 'גן ילדים', 'service', NULL, 33, 1),
+('ת"ת דובר שלום - ר'' אליהו קוק', '02-5434767', '058-3206451', NULL, 'תלמוד תורה', 'service', NULL, 34, 1),
+('ישיבת נחלת יאיר', '02-5702699', '050-4124585', NULL, 'ישיבה', 'service', NULL, 35, 1),
+('ישיבה ר'' רפאל קוק', NULL, NULL, NULL, 'ישיבה', 'service', NULL, 36, 1),
+
+-- שירותים קהילתיים
+('ספריה', '02-9922397', NULL, NULL, 'ספריה', 'service', NULL, 40, 1),
+('חדר פעילות / בנות נוער', '02-9938969', NULL, NULL, 'מתקן קהילתי', 'service', NULL, 41, 1),
+('מכולת', '02-6247117', NULL, NULL, 'מכולת', 'business', 'שעות פתיחה: 8:00-10:00, 16:00-20:00', 42, 1),
+
+-- רפואה
+('מרפאה כללית מיצד', NULL, '053-3171000', NULL, 'מרפאה', 'service', NULL, 50, 1),
+('מרכז חירום רפואי אפרת', '02-9932211', NULL, NULL, 'מרכז חירום', 'emergency', 'א-ה: 19:00-23:00, שבת: 9:00-23:00', 51, 1),
+('ציונה גולדשטיין', NULL, '053-2224763', NULL, 'רפואה', 'service', NULL, 52, 1),
+('נחמיה כובאני', NULL, '050-6755464', NULL, 'רפואה', 'service', NULL, 53, 1),
+('משה יעקובס', NULL, '052-7679736', NULL, 'רפואה', 'service', NULL, 54, 1),
+('אבישי משמור', NULL, '054-5754600', NULL, 'רפואה', 'service', NULL, 55, 1),
+('מרדכי איטח', NULL, '058-7624595', NULL, 'רפואה', 'service', NULL, 56, 1),
+
+-- ביטחון וחירום
+('יהודה המברסטון', NULL, '052-6260404', NULL, 'רבש"צ - קו ביטחון', 'emergency', NULL, 60, 1),
+('אלי רוזנברג', NULL, '052-5833181', NULL, 'יו"ר צח"י', 'emergency', NULL, 61, 1),
+('שעיה סהר - יד שרה', NULL, '058-3212212', NULL, 'יד שרה', 'service', 'מיקום: ברחבה ליד האולם', 62, 1),
+('חמ"ל צבאי', '02-9309497', NULL, NULL, 'חמ"ל', 'emergency', NULL, 63, 1),
+('מוקד הגוש', '1208', NULL, NULL, 'מוקד חירום', 'emergency', NULL, 64, 1),
+
+-- תקשורת קהילתית
+('קבוצת מייל - מיצד הנהלה', NULL, NULL, 'metzad-hanhala@googlegroups.com', 'רשימת תפוצה', 'service', 'להצטרפות: פנו למזכיר 053-4440650', 70, 1),
+('קבוצת מייל - מיצד חברה', NULL, NULL, 'metzad-chevra@googlegroups.com', 'רשימת תפוצה', 'service', 'להצטרפות: פנו למזכיר 053-4440650', 71, 1),
+('קו הודעות קהילה', '03-5501187', NULL, NULL, 'קו הודעות', 'service', 'להצטרפות: פנו לאסתר טנץ 050-4124805', 72, 1),
+('קו טרמפים', NULL, '079-9335004', NULL, 'קו טרמפים', 'service', NULL, 73, 1),
+
+-- גופים חיצוניים
+('מועצה אזורית גוש-עציון', '02-9939933', NULL, NULL, 'מועצה אזורית', 'service', 'מוקד: 106', 80, 1),
+('החברה לפיתוח גוש-עציון', '02-9931387', NULL, NULL, 'חברה לפיתוח', 'service', 'נוסף: 02-9931388', 81, 1),
+('תחבורה אלקטרה אפיקים', '*3133', NULL, NULL, 'תחבורה ציבורית', 'service', NULL, 82, 1);
+
+-- Update emergency contacts with real data
+DELETE FROM emergency_contacts;
+INSERT INTO emergency_contacts (id, name, role, phone, category, sort_order) VALUES
+(1, 'רבש"צ - יהודה המברסטון', 'קו ביטחון', '052-6260404', 'security', 1),
+(2, 'חמ"ל צבאי', 'חמ"ל', '02-9309497', 'security', 2),
+(3, 'מוקד הגוש', 'מוקד חירום', '1208', 'external', 3),
+(4, 'מרכז חירום רפואי אפרת', 'חירום רפואי', '02-9932211', 'medical', 4),
+(5, 'מד"א', 'אמבולנס', '101', 'medical', 5),
+(6, 'משטרה', 'משטרת ישראל', '100', 'external', 6),
+(7, 'כיבוי אש', 'שירותי כיבוי', '102', 'external', 7),
+(8, 'יו"ר צח"י - אלי רוזנברג', 'צח"י', '052-5833181', 'security', 8);
