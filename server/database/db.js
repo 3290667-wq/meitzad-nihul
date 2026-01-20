@@ -81,24 +81,23 @@ function initializeSuperAdmin() {
   // Check if super admin exists
   const existingAdmin = db.prepare('SELECT * FROM users WHERE email = ?').get(superAdminEmail);
 
-  if (!existingAdmin) {
-    // Create super admin with a default password (should be changed!)
-    const salt = bcrypt.genSaltSync(10);
-    const hashedPassword = bcrypt.hashSync('Admin123!', salt);
+  const defaultPassword = '12345678';
+  const salt = bcrypt.genSaltSync(10);
+  const hashedPassword = bcrypt.hashSync(defaultPassword, salt);
 
+  if (!existingAdmin) {
+    // Create super admin
     db.prepare(`
       INSERT INTO users (email, password, name, phone, role, is_active)
       VALUES (?, ?, ?, ?, 'super_admin', 1)
-    `).run(superAdminEmail, hashedPassword, 'מנהל ראשי', '', );
+    `).run(superAdminEmail, hashedPassword, 'מנהל ראשי', '');
 
     console.log('✓ Super admin created: ' + superAdminEmail);
-    console.log('⚠️ Default password: Admin123! - Please change it immediately!');
-  } else if (existingAdmin.role !== 'super_admin') {
-    // Upgrade existing user to super_admin
-    db.prepare('UPDATE users SET role = ? WHERE email = ?').run('super_admin', superAdminEmail);
-    console.log('✓ User upgraded to super_admin: ' + superAdminEmail);
   } else {
-    console.log('✓ Super admin already exists: ' + superAdminEmail);
+    // Update existing admin - ensure role and password are correct
+    db.prepare('UPDATE users SET role = ?, password = ?, is_active = 1 WHERE email = ?')
+      .run('super_admin', hashedPassword, superAdminEmail);
+    console.log('✓ Super admin updated: ' + superAdminEmail);
   }
 }
 
