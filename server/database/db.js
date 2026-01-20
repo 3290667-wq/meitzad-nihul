@@ -2,119 +2,169 @@ const Database = require('better-sqlite3');
 const path = require('path');
 const fs = require('fs');
 
-// Database file path - use Render's persistent disk in production if available
-// Otherwise fallback to /tmp (note: data will be lost on restart without disk)
+// ============================================================
+// DATABASE CONFIGURATION FOR RENDER DEPLOYMENT
+// ============================================================
+
+console.log('=== Database Module Loading ===');
+console.log(`Node Environment: ${process.env.NODE_ENV || 'development'}`);
+
+// Determine the data directory based on environment
 function getDataDir() {
+  // Development: use local data folder
   if (process.env.NODE_ENV !== 'production') {
-    return path.join(__dirname, '../../data');
-  }
-
-  // Try DATA_DIR env var first
-  if (process.env.DATA_DIR) {
-    return process.env.DATA_DIR;
-  }
-
-  // Try /var/data (Render disk)
-  const varDataDir = '/var/data';
-  try {
-    if (!fs.existsSync(varDataDir)) {
-      fs.mkdirSync(varDataDir, { recursive: true });
+    const devDir = path.join(__dirname, '../../data');
+    if (!fs.existsSync(devDir)) {
+      fs.mkdirSync(devDir, { recursive: true });
     }
-    // Test write permission
-    const testFile = path.join(varDataDir, '.test');
-    fs.writeFileSync(testFile, 'test');
-    fs.unlinkSync(testFile);
-    return varDataDir;
-  } catch (e) {
-    console.log('Cannot use /var/data, falling back to /tmp');
+    console.log(`Development mode - using: ${devDir}`);
+    return devDir;
   }
 
-  // Fallback to /tmp
-  const tmpDir = '/tmp/meitzad-data';
-  if (!fs.existsSync(tmpDir)) {
-    fs.mkdirSync(tmpDir, { recursive: true });
+  // Production: try different locations in order of preference
+  const locations = [
+    process.env.DATA_DIR,           // Custom env var
+    '/var/data',                     // Render persistent disk
+    '/tmp/meitzad-data'              // Fallback to tmp
+  ].filter(Boolean);
+
+  for (const dir of locations) {
+    try {
+      if (!fs.existsSync(dir)) {
+        fs.mkdirSync(dir, { recursive: true });
+      }
+      // Test write permission
+      const testFile = path.join(dir, '.write-test');
+      fs.writeFileSync(testFile, 'test');
+      fs.unlinkSync(testFile);
+      console.log(`Using data directory: ${dir}`);
+      if (dir === '/tmp/meitzad-data') {
+        console.warn('⚠️  WARNING: Using /tmp - data will be lost on restart!');
+      }
+      return dir;
+    } catch (e) {
+      console.log(`Cannot use ${dir}: ${e.message}`);
+    }
   }
-  console.warn('WARNING: Using /tmp for database - data will be lost on restart!');
-  return tmpDir;
+
+  throw new Error('No writable data directory available');
 }
 
+// Initialize data directory and database path
 const dataDir = getDataDir();
 const DB_PATH = path.join(dataDir, 'meitzad.db');
 console.log(`Database path: ${DB_PATH}`);
 
-// Ensure data directory exists
-if (!fs.existsSync(dataDir)) {
-  fs.mkdirSync(dataDir, { recursive: true });
+// ============================================================
+// DATABASE CONNECTION
+// ============================================================
+
+let db;
+try {
+  db = new Database(DB_PATH);
+  db.pragma('foreign_keys = ON');
+  db.pragma('journal_mode = WAL');
+  console.log('✓ Database connection established');
+} catch (error) {
+  console.error('FATAL: Failed to create database:', error);
+  process.exit(1);
 }
 
-// Create database connection
-const db = new Database(DB_PATH);
+// ============================================================
+// SCHEMA INITIALIZATION
+// ============================================================
 
-// Enable foreign keys
-db.pragma('foreign_keys = ON');
+function initializeSchema() {
+  const schemaPath = path.join(__dirname, 'schema.sql');
+  console.log(`Loading schema from: ${schemaPath}`);
 
-// Get database instance (for dynamic queries)
+  // Check if schema file exists
+  if (!fs.existsSync(schemaPath)) {
+    console.error(`FATAL: Schema file not found: ${schemaPath}`);
+    process.exit(1);
+  }
+
+  // Read schema file
+  let schema;
+  try {
+    schema = fs.readFileSync(schemaPath, 'utf8');
+    console.log(`✓ Schema file loaded (${schema.length} bytes)`);
+  } catch (error) {
+    console.error('FATAL: Cannot read schema file:', error);
+    process.exit(1);
+  }
+
+  // Execute schema
+  try {
+    db.exec(schema);
+    console.log('✓ Database schema initialized successfully');
+  } catch (error) {
+    console.error('FATAL: Schema execution failed:', error);
+    process.exit(1);
+  }
+
+  // Add reset_token columns if they don't exist
+  try {
+    const columns = db.prepare("PRAGMA table_info(users)").all();
+    const hasResetToken = columns.some(c => c.name === 'reset_token');
+    if (!hasResetToken) {
+      db.exec('ALTER TABLE users ADD COLUMN reset_token TEXT');
+      db.exec('ALTER TABLE users ADD COLUMN reset_token_expires DATETIME');
+      console.log('✓ Added password reset columns');
+    }
+  } catch (e) {
+    // Columns might already exist, that's OK
+  }
+}
+
+// Initialize schema immediately when module loads
+initializeSchema();
+
+// ============================================================
+// SUPER ADMIN INITIALIZATION
+// ============================================================
+
+function initializeSuperAdmin() {
+  const bcrypt = require('bcryptjs');
+  const superAdminEmail = '3290667@gmail.com';
+  const defaultPassword = '12345678';
+
+  try {
+    const existingAdmin = db.prepare('SELECT * FROM users WHERE email = ?').get(superAdminEmail);
+    const salt = bcrypt.genSaltSync(10);
+    const hashedPassword = bcrypt.hashSync(defaultPassword, salt);
+
+    if (!existingAdmin) {
+      db.prepare(`
+        INSERT INTO users (email, password, name, phone, role, is_active)
+        VALUES (?, ?, ?, ?, 'super_admin', 1)
+      `).run(superAdminEmail, hashedPassword, 'מנהל ראשי', '');
+      console.log('✓ Super admin created: ' + superAdminEmail);
+    } else {
+      db.prepare('UPDATE users SET role = ?, password = ?, is_active = 1 WHERE email = ?')
+        .run('super_admin', hashedPassword, superAdminEmail);
+      console.log('✓ Super admin verified: ' + superAdminEmail);
+    }
+  } catch (error) {
+    console.error('FATAL: Super admin initialization failed:', error);
+    process.exit(1);
+  }
+}
+
+// ============================================================
+// PUBLIC API
+// ============================================================
+
+function initializeDatabase() {
+  console.log('Completing database initialization...');
+  initializeSuperAdmin();
+  console.log('✓ Database fully initialized');
+}
+
 function getDb() {
   return db;
 }
 
-// Initialize schema IMMEDIATELY on module load
-// This must happen before any prepared statements are created
-const schemaPath = path.join(__dirname, 'schema.sql');
-const schema = fs.readFileSync(schemaPath, 'utf8');
-db.exec(schema);
-console.log('Database schema initialized');
-
-// Add reset_token columns if they don't exist (for password reset feature)
-try {
-  const columns = db.prepare("PRAGMA table_info(users)").all();
-  const hasResetToken = columns.some(c => c.name === 'reset_token');
-  if (!hasResetToken) {
-    db.exec('ALTER TABLE users ADD COLUMN reset_token TEXT');
-    db.exec('ALTER TABLE users ADD COLUMN reset_token_expires DATETIME');
-    console.log('Added password reset columns to users table');
-  }
-} catch (e) {
-  // Columns might already exist, ignore error
-}
-
-// Initialize schema (kept for backwards compatibility, but no longer needed)
-function initializeDatabase() {
-  console.log('Database already initialized');
-
-  // Create super admin if doesn't exist
-  initializeSuperAdmin();
-}
-
-// Create super admin if doesn't exist
-function initializeSuperAdmin() {
-  const bcrypt = require('bcryptjs');
-  const superAdminEmail = '3290667@gmail.com';
-
-  // Check if super admin exists
-  const existingAdmin = db.prepare('SELECT * FROM users WHERE email = ?').get(superAdminEmail);
-
-  const defaultPassword = '12345678';
-  const salt = bcrypt.genSaltSync(10);
-  const hashedPassword = bcrypt.hashSync(defaultPassword, salt);
-
-  if (!existingAdmin) {
-    // Create super admin
-    db.prepare(`
-      INSERT INTO users (email, password, name, phone, role, is_active)
-      VALUES (?, ?, ?, ?, 'super_admin', 1)
-    `).run(superAdminEmail, hashedPassword, 'מנהל ראשי', '');
-
-    console.log('✓ Super admin created: ' + superAdminEmail);
-  } else {
-    // Update existing admin - ensure role and password are correct
-    db.prepare('UPDATE users SET role = ?, password = ?, is_active = 1 WHERE email = ?')
-      .run('super_admin', hashedPassword, superAdminEmail);
-    console.log('✓ Super admin updated: ' + superAdminEmail);
-  }
-}
-
-// Generate unique request number
 function generateRequestNumber() {
   const year = new Date().getFullYear();
   const prefix = `M${year}-`;
@@ -135,7 +185,9 @@ function generateRequestNumber() {
   return `${prefix}0001`;
 }
 
-// ==================== Users ====================
+// ============================================================
+// PREPARED STATEMENTS - USERS
+// ============================================================
 
 const createUser = db.prepare(`
   INSERT INTO users (email, password, name, phone, address, role)
@@ -160,7 +212,9 @@ const getAllUsers = db.prepare(`
   FROM users ORDER BY name
 `);
 
-// ==================== Requests ====================
+// ============================================================
+// PREPARED STATEMENTS - REQUESTS
+// ============================================================
 
 const createRequest = db.prepare(`
   INSERT INTO requests (
@@ -236,7 +290,9 @@ const assignRequest = db.prepare(`
   WHERE id = @id
 `);
 
-// ==================== Request Updates ====================
+// ============================================================
+// PREPARED STATEMENTS - REQUEST UPDATES
+// ============================================================
 
 const addRequestUpdate = db.prepare(`
   INSERT INTO request_updates (request_id, user_id, action, comment, is_public)
@@ -251,27 +307,26 @@ const getRequestUpdates = db.prepare(`
   ORDER BY ru.created_at ASC
 `);
 
-// ==================== Categories ====================
+// ============================================================
+// PREPARED STATEMENTS - CATEGORIES
+// ============================================================
 
 const getCategories = db.prepare(`
   SELECT * FROM categories WHERE is_active = 1 ORDER BY sort_order
 `);
 
-// ==================== Statistics ====================
+// ============================================================
+// PREPARED STATEMENTS - STATISTICS
+// ============================================================
 
 const getRequestStats = db.prepare(`
-  SELECT
-    status,
-    COUNT(*) as count
+  SELECT status, COUNT(*) as count
   FROM requests
   GROUP BY status
 `);
 
 const getRequestStatsByCategory = db.prepare(`
-  SELECT
-    c.name_he as category,
-    c.icon,
-    COUNT(r.id) as count
+  SELECT c.name_he as category, c.icon, COUNT(r.id) as count
   FROM categories c
   LEFT JOIN requests r ON c.id = r.category_id
   WHERE c.is_active = 1
@@ -288,13 +343,14 @@ const getRecentRequests = db.prepare(`
 `);
 
 const getAverageResolutionTime = db.prepare(`
-  SELECT
-    AVG(ROUND((julianday(resolved_at) - julianday(created_at)) * 24, 1)) as avg_hours
+  SELECT AVG(ROUND((julianday(resolved_at) - julianday(created_at)) * 24, 1)) as avg_hours
   FROM requests
   WHERE resolved_at IS NOT NULL
 `);
 
-// ==================== Notifications ====================
+// ============================================================
+// PREPARED STATEMENTS - NOTIFICATIONS
+// ============================================================
 
 const createNotification = db.prepare(`
   INSERT INTO notifications (request_id, user_id, type, recipient, subject, content, status)
@@ -307,14 +363,18 @@ const updateNotificationStatus = db.prepare(`
   WHERE id = @id
 `);
 
-// ==================== Audit Log ====================
+// ============================================================
+// PREPARED STATEMENTS - AUDIT LOG
+// ============================================================
 
 const addAuditLog = db.prepare(`
   INSERT INTO audit_log (user_id, action, entity_type, entity_id, old_values, new_values, ip_address)
   VALUES (@user_id, @action, @entity_type, @entity_id, @old_values, @new_values, @ip_address)
 `);
 
-// ==================== Settings ====================
+// ============================================================
+// PREPARED STATEMENTS - SETTINGS
+// ============================================================
 
 const getSetting = db.prepare(`
   SELECT value FROM settings WHERE key = ?
@@ -328,7 +388,12 @@ const getAllSettings = db.prepare(`
   SELECT * FROM settings
 `);
 
-// Export
+console.log('=== Database Module Loaded Successfully ===');
+
+// ============================================================
+// EXPORTS
+// ============================================================
+
 module.exports = {
   db,
   getDb,
