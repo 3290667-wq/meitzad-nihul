@@ -1,0 +1,852 @@
+/* ============================================
+   MEITZAD MANAGEMENT SYSTEM - MODULES
+   Dashboard, Budget, Planning, Inquiries,
+   Meetings, Employees, Settings specific styles
+   ============================================ */
+
+/* ===== DASHBOARD MODULE ===== */
+.dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-5);
+}
+
+@media (max-width: 1200px) {
+  .dashboard-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 640px) {
+  .dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Budget Chart on Dashboard */
+.budget-chart {
+  height: 200px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.budget-chart canvas {
+  max-height: 100%;
+}
+
+/* Recent Inquiries List */
+.inquiries-list .inquiry-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  transition: background var(--transition-fast);
+  cursor: pointer;
+}
+
+.inquiries-list .inquiry-item:hover {
+  background: var(--color-bg-secondary);
+}
+
+.inquiry-item-icon {
+  width: 40px;
+  height: 40px;
+  background: var(--info-50);
+  border-radius: var(--radius-md);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.inquiry-item-icon .material-symbols-rounded {
+  font-size: 20px;
+  color: var(--info-600);
+}
+
+.inquiry-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.inquiry-item-title {
+  font-weight: var(--font-medium);
+  color: var(--color-text-primary);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-0-5);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.inquiry-item-meta {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+}
+
+/* Upcoming Meetings List */
+.meetings-list .meeting-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  transition: background var(--transition-fast);
+  cursor: pointer;
+}
+
+.meetings-list .meeting-item:hover {
+  background: var(--color-bg-secondary);
+}
+
+.meeting-item-date {
+  width: 48px;
+  height: 48px;
+  background: var(--primary-50);
+  border-radius: var(--radius-md);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border: 1px solid var(--primary-100);
+}
+
+.meeting-item-day {
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+  color: var(--primary-700);
+  line-height: 1;
+}
+
+.meeting-item-month {
+  font-size: var(--text-xs);
+  color: var(--primary-600);
+  text-transform: uppercase;
+}
+
+.meeting-item-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.meeting-item-title {
+  font-weight: var(--font-medium);
+  color: var(--color-text-primary);
+  font-size: var(--text-sm);
+  margin-bottom: var(--space-0-5);
+}
+
+.meeting-item-time {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+
+/* ===== BUDGET MODULE ===== */
+.budget-overview-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+@media (max-width: 768px) {
+  .budget-overview-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.budget-summary-card {
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+  display: flex;
+  align-items: center;
+  gap: var(--space-4);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border-primary);
+}
+
+.budget-summary-card .summary-icon {
+  width: 56px;
+  height: 56px;
+  border-radius: var(--radius-lg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.budget-summary-card .summary-icon .material-symbols-rounded {
+  font-size: 28px;
+  color: white;
+}
+
+.budget-summary-card.income .summary-icon {
+  background: var(--gradient-success);
+}
+
+.budget-summary-card.expenses .summary-icon {
+  background: var(--gradient-error);
+}
+
+.budget-summary-card.balance .summary-icon {
+  background: var(--gradient-primary);
+}
+
+.summary-content {
+  flex: 1;
+}
+
+.summary-label {
+  display: block;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-1);
+}
+
+.summary-value {
+  display: block;
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
+  color: var(--color-text-primary);
+}
+
+/* Budget Chart Section */
+.budget-chart-section {
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  margin-bottom: var(--space-6);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border-primary);
+}
+
+.budget-chart-section canvas {
+  width: 100% !important;
+  height: 300px !important;
+}
+
+/* Recent Transactions */
+.recent-transactions {
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border-primary);
+}
+
+.recent-transactions h3 {
+  font-size: var(--text-lg);
+  margin-bottom: var(--space-4);
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+/* Budget Reports Grid */
+.reports-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: var(--space-4);
+}
+
+@media (max-width: 1024px) {
+  .reports-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .reports-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+.report-card {
+  background: var(--color-bg-primary);
+  border: 2px solid var(--color-border-primary);
+  border-radius: var(--radius-xl);
+  padding: var(--space-8);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
+.report-card:hover {
+  border-color: var(--primary-400);
+  background: var(--primary-50);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.report-card .material-symbols-rounded {
+  font-size: 40px;
+  color: var(--primary-600);
+}
+
+.report-card span:last-child {
+  font-weight: var(--font-semibold);
+  color: var(--color-text-primary);
+}
+
+
+/* ===== PLANNING MODULE ===== */
+.projects-board {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+  min-height: 500px;
+}
+
+@media (max-width: 1024px) {
+  .projects-board {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+}
+
+.board-column {
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-xl);
+  padding: var(--space-4);
+  min-height: 300px;
+}
+
+.column-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: var(--space-4);
+  padding-bottom: var(--space-3);
+  border-bottom: 2px solid var(--color-border-primary);
+}
+
+.column-title {
+  font-weight: var(--font-bold);
+  color: var(--color-text-primary);
+}
+
+.column-count {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-secondary);
+  font-size: var(--text-xs);
+  font-weight: var(--font-bold);
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-full);
+}
+
+.board-column[data-status="planning"] .column-header {
+  border-color: var(--info-300);
+}
+
+.board-column[data-status="in-progress"] .column-header {
+  border-color: var(--warning-400);
+}
+
+.board-column[data-status="completed"] .column-header {
+  border-color: var(--success-400);
+}
+
+.column-content {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+
+/* Project Card */
+.project-card {
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border-primary);
+  cursor: grab;
+  transition: all var(--transition-fast);
+}
+
+.project-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.project-card.dragging {
+  opacity: 0.5;
+  cursor: grabbing;
+}
+
+.project-card-title {
+  font-weight: var(--font-semibold);
+  margin-bottom: var(--space-2);
+  color: var(--color-text-primary);
+}
+
+.project-card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+}
+
+.project-card-budget {
+  font-weight: var(--font-semibold);
+  color: var(--primary-600);
+}
+
+/* Planning Map */
+.planning-map-container {
+  background: var(--color-bg-secondary);
+  border-radius: var(--radius-xl);
+  height: 500px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 2px dashed var(--color-border-secondary);
+}
+
+
+/* ===== MEETINGS MODULE ===== */
+.meetings-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: var(--space-4);
+}
+
+.meeting-card {
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border-primary);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
+.meeting-card:hover {
+  box-shadow: var(--shadow-md);
+  border-color: var(--primary-200);
+}
+
+.meeting-card-header {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--space-4);
+  margin-bottom: var(--space-4);
+}
+
+.meeting-card-date {
+  width: 60px;
+  height: 60px;
+  background: var(--gradient-primary);
+  border-radius: var(--radius-lg);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: white;
+}
+
+.meeting-card-date .day {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
+  line-height: 1;
+}
+
+.meeting-card-date .month {
+  font-size: var(--text-xs);
+  text-transform: uppercase;
+  opacity: 0.9;
+}
+
+.meeting-card-info {
+  flex: 1;
+}
+
+.meeting-card-title {
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+  margin-bottom: var(--space-1);
+  color: var(--color-text-primary);
+}
+
+.meeting-card-time {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+}
+
+.meeting-card-time .material-symbols-rounded {
+  font-size: 16px;
+}
+
+.meeting-card-body {
+  margin-bottom: var(--space-4);
+}
+
+.meeting-card-agenda {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  line-height: 1.6;
+}
+
+.meeting-card-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--color-border-primary);
+}
+
+.meeting-card-participants {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.participant-avatar {
+  width: 28px;
+  height: 28px;
+  background: var(--gray-200);
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--text-xs);
+  font-weight: var(--font-bold);
+  color: var(--gray-600);
+  border: 2px solid var(--color-bg-primary);
+  margin-right: -8px;
+}
+
+.participant-avatar:last-child {
+  margin-right: 0;
+}
+
+.participant-count {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+  margin-right: var(--space-2);
+}
+
+/* Protocol Upload Zone */
+.protocol-upload-zone {
+  background: var(--color-bg-secondary);
+  border: 2px dashed var(--color-border-secondary);
+  border-radius: var(--radius-xl);
+  padding: var(--space-10);
+  text-align: center;
+  margin-bottom: var(--space-6);
+  transition: all var(--transition-fast);
+  cursor: pointer;
+}
+
+.protocol-upload-zone:hover {
+  border-color: var(--primary-400);
+  background: var(--primary-50);
+}
+
+.protocol-upload-zone.dragover {
+  border-color: var(--primary-500);
+  background: var(--primary-100);
+}
+
+.protocol-upload-zone .material-symbols-rounded {
+  font-size: 48px;
+  color: var(--primary-500);
+  margin-bottom: var(--space-3);
+}
+
+.protocol-upload-zone p {
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-1);
+}
+
+.protocol-upload-zone p.small {
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
+}
+
+
+/* ===== EMPLOYEES MODULE ===== */
+.employees-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: var(--space-4);
+}
+
+.employee-card {
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border-primary);
+  text-align: center;
+  transition: all var(--transition-fast);
+}
+
+.employee-card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.employee-avatar {
+  width: 80px;
+  height: 80px;
+  background: var(--gradient-primary);
+  border-radius: var(--radius-full);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto var(--space-4);
+}
+
+.employee-avatar .material-symbols-rounded {
+  font-size: 40px;
+  color: white;
+}
+
+.employee-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: var(--radius-full);
+}
+
+.employee-name {
+  font-size: var(--text-lg);
+  font-weight: var(--font-bold);
+  color: var(--color-text-primary);
+  margin-bottom: var(--space-1);
+}
+
+.employee-role {
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-3);
+}
+
+.employee-contact {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  font-size: var(--text-sm);
+  color: var(--color-text-tertiary);
+}
+
+.employee-contact .material-symbols-rounded {
+  font-size: 16px;
+}
+
+/* Attendance Header */
+.attendance-header {
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-xl);
+  padding: var(--space-4) var(--space-5);
+  margin-bottom: var(--space-4);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border-primary);
+  flex-wrap: wrap;
+  gap: var(--space-4);
+}
+
+.attendance-date-selector {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+}
+
+.attendance-date-selector span {
+  font-weight: var(--font-semibold);
+  color: var(--color-text-primary);
+  min-width: 100px;
+  text-align: center;
+}
+
+.attendance-summary {
+  display: flex;
+  gap: var(--space-6);
+}
+
+.attendance-summary .summary-item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.attendance-summary .summary-value {
+  font-size: var(--text-2xl);
+  font-weight: var(--font-bold);
+  color: var(--color-text-primary);
+}
+
+.attendance-summary .summary-label {
+  font-size: var(--text-xs);
+  color: var(--color-text-tertiary);
+}
+
+/* Payroll Summary Cards */
+.payroll-summary-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-4);
+  margin-bottom: var(--space-6);
+}
+
+@media (max-width: 768px) {
+  .payroll-summary-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+.payroll-card {
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-xl);
+  padding: var(--space-5);
+  text-align: center;
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border-primary);
+}
+
+.payroll-label {
+  display: block;
+  font-size: var(--text-sm);
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-2);
+}
+
+.payroll-value {
+  display: block;
+  font-size: var(--text-3xl);
+  font-weight: var(--font-bold);
+  color: var(--color-text-primary);
+}
+
+.payroll-value.paid {
+  color: var(--success-600);
+}
+
+.payroll-value.pending {
+  color: var(--warning-600);
+}
+
+/* Schedule Calendar */
+.schedule-calendar {
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-xl);
+  padding: var(--space-6);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border-primary);
+  min-height: 400px;
+}
+
+
+/* ===== SETTINGS MODULE ===== */
+.settings-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-5);
+}
+
+@media (max-width: 1024px) {
+  .settings-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* ===== DATA GRIDS ===== */
+.data-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: var(--space-4);
+}
+
+.data-grid-item {
+  background: var(--color-bg-primary);
+  border-radius: var(--radius-lg);
+  padding: var(--space-4);
+  box-shadow: var(--shadow-sm);
+  border: 1px solid var(--color-border-primary);
+}
+
+
+/* ===== ACTION BUTTONS IN TABLES ===== */
+.table-actions {
+  display: flex;
+  align-items: center;
+  gap: var(--space-1);
+}
+
+.table-action-btn {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-md);
+  color: var(--color-text-tertiary);
+  transition: all var(--transition-fast);
+}
+
+.table-action-btn:hover {
+  background: var(--color-bg-tertiary);
+  color: var(--color-text-primary);
+}
+
+.table-action-btn.view:hover {
+  background: var(--info-50);
+  color: var(--info-600);
+}
+
+.table-action-btn.edit:hover {
+  background: var(--warning-50);
+  color: var(--warning-600);
+}
+
+.table-action-btn.delete:hover {
+  background: var(--error-50);
+  color: var(--error-600);
+}
+
+.table-action-btn .material-symbols-rounded {
+  font-size: 18px;
+}
+
+
+/* ===== TRANSACTION ROW STYLING ===== */
+.transaction-amount {
+  font-weight: var(--font-semibold);
+}
+
+.transaction-amount.income {
+  color: var(--success-600);
+}
+
+.transaction-amount.expense {
+  color: var(--error-600);
+}
+
+.transaction-category {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
+  padding: var(--space-1) var(--space-2);
+  background: var(--color-bg-tertiary);
+  border-radius: var(--radius-md);
+  font-size: var(--text-xs);
+  font-weight: var(--font-medium);
+}

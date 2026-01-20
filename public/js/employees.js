@@ -1,479 +1,770 @@
-// API Base URL
-const API_BASE = '/api';
+// Employees Module for Meitzad Management System
 
-// State
-let currentUser = null;
-let authToken = localStorage.getItem('authToken');
-let employees = [];
-let currentEmployee = null;
-let currentDepartment = 'all';
+const Employees = {
+  init() {
+    this.setupEventListeners();
+  },
 
-// Department translations
-const DEPARTMENT_MAP = {
-  management: 'הנהלה',
-  maintenance: 'תחזוקה',
-  security: 'ביטחון',
-  education: 'חינוך',
-  admin: 'מנהלה'
-};
+  setupEventListeners() {
+    const addBtn = document.getElementById('add-employee-btn');
+    if (addBtn) {
+      addBtn.addEventListener('click', () => this.showAddEmployeeModal());
+    }
 
-const STATUS_MAP = {
-  active: 'פעיל',
-  inactive: 'לא פעיל',
-  on_leave: 'בחופשה'
-};
+    // Department filter
+    const deptFilter = document.getElementById('employee-department-filter');
+    if (deptFilter) {
+      deptFilter.addEventListener('change', (e) => this.loadEmployees(e.target.value));
+    }
+  },
 
-const TYPE_MAP = {
-  full_time: 'משרה מלאה',
-  part_time: 'משרה חלקית',
-  contract: 'קבלן',
-  volunteer: 'מתנדב'
-};
+  async load() {
+    Utils.showLoading();
+    try {
+      await Promise.all([
+        this.loadEmployees(),
+        this.loadAttendance(),
+        this.loadPayrollSummary()
+      ]);
+    } catch (error) {
+      console.error('Employees load error:', error);
+      Utils.toast('שגיאה בטעינת עובדים', 'error');
+    } finally {
+      Utils.hideLoading();
+    }
+  },
 
-// ==================== Initialization ====================
+  // Department translations
+  DEPARTMENTS: {
+    management: 'הנהלה',
+    maintenance: 'תחזוקה',
+    security: 'ביטחון',
+    education: 'חינוך',
+    admin: 'מנהלה'
+  },
 
-document.addEventListener('DOMContentLoaded', () => {
-  checkAuth();
-});
+  // Status translations
+  STATUSES: {
+    active: 'פעיל',
+    inactive: 'לא פעיל',
+    on_leave: 'בחופשה'
+  },
 
-// ==================== Authentication ====================
+  // Employment types
+  EMPLOYMENT_TYPES: {
+    full_time: 'משרה מלאה',
+    part_time: 'משרה חלקית',
+    contract: 'קבלן',
+    volunteer: 'מתנדב'
+  },
 
-async function checkAuth() {
-  if (!authToken) {
-    window.location.href = '/#login';
-    return;
-  }
+  async loadEmployees(department = 'all') {
+    const grid = document.getElementById('employees-grid');
+    if (!grid) return;
 
-  try {
-    const response = await fetch(`${API_BASE}/auth/me`, {
-      headers: { 'Authorization': `Bearer ${authToken}` }
-    });
+    try {
+      const snapshot = await firebaseDB.ref('employees')
+        .orderByChild('name')
+        .once('value');
 
-    if (response.ok) {
-      const data = await response.json();
-      currentUser = data.user;
+      const employees = snapshot.val();
 
-      if (!['super_admin', 'admin'].includes(currentUser.role)) {
-        showToast('אין לך הרשאת גישה לניהול עובדים', 'error');
-        window.location.href = '/admin/dashboard.html';
+      if (!employees) {
+        grid.innerHTML = `
+          <div class="empty-state">
+            <span class="material-symbols-rounded">group_off</span>
+            <p>אין עובדים במערכת</p>
+          </div>
+        `;
         return;
       }
 
-      document.getElementById('userName').textContent = `שלום, ${currentUser.name}`;
-      loadEmployees();
-    } else {
-      logout();
+      let employeesArray = Object.entries(employees)
+        .map(([id, data]) => ({ id, ...data }))
+        .filter(e => e.status !== 'deleted');
+
+      // Filter by department if specified
+      if (department !== 'all') {
+        employeesArray = employeesArray.filter(e => e.department === department);
+      }
+
+      // Sort by name
+      employeesArray.sort((a, b) => a.name.localeCompare(b.name, 'he'));
+
+      grid.innerHTML = employeesArray.map(employee => this.renderEmployeeCard(employee)).join('');
+
+      // Update stats
+      this.updateStats(Object.values(employees).filter(e => e.status !== 'deleted'));
+
+    } catch (error) {
+      console.error('Error loading employees:', error);
     }
-  } catch (error) {
-    console.error('Auth check error:', error);
-    // For demo, load sample data
-    loadSampleData();
-  }
-}
+  },
 
-function logout() {
-  localStorage.removeItem('authToken');
-  window.location.href = '/#login';
-}
+  renderEmployeeCard(employee) {
+    const initials = this.getInitials(employee.name);
+    const dept = this.DEPARTMENTS[employee.department] || employee.department;
+    const status = this.STATUSES[employee.status] || employee.status;
 
-// ==================== Data Loading ====================
-
-async function loadEmployees() {
-  try {
-    const response = await fetch(`${API_BASE}/employees`, {
-      headers: { 'Authorization': `Bearer ${authToken}` }
-    });
-
-    if (response.ok) {
-      employees = await response.json();
-    } else {
-      loadSampleData();
-    }
-  } catch (error) {
-    console.error('Load employees error:', error);
-    loadSampleData();
-  }
-
-  updateStats();
-  renderEmployees();
-}
-
-function loadSampleData() {
-  employees = [
-    {
-      id: 1,
-      name: 'יוסי כהן',
-      id_number: '123456789',
-      position: 'מזכיר היישוב',
-      department: 'management',
-      phone: '050-1234567',
-      email: 'yosi@meitzad.org.il',
-      start_date: '2020-01-15',
-      employment_type: 'full_time',
-      salary: 15000,
-      status: 'active',
-      notes: ''
-    },
-    {
-      id: 2,
-      name: 'דוד לוי',
-      id_number: '987654321',
-      position: 'מנהל תחזוקה',
-      department: 'maintenance',
-      phone: '050-2345678',
-      email: 'david@meitzad.org.il',
-      start_date: '2019-06-01',
-      employment_type: 'full_time',
-      salary: 12000,
-      status: 'active',
-      notes: ''
-    },
-    {
-      id: 3,
-      name: 'משה אברהם',
-      id_number: '456789123',
-      position: 'קב"ט',
-      department: 'security',
-      phone: '050-3456789',
-      email: 'moshe@meitzad.org.il',
-      start_date: '2021-03-10',
-      employment_type: 'full_time',
-      salary: 14000,
-      status: 'active',
-      notes: ''
-    },
-    {
-      id: 4,
-      name: 'שרה ישראלי',
-      id_number: '321654987',
-      position: 'רכזת חינוך',
-      department: 'education',
-      phone: '050-4567890',
-      email: 'sara@meitzad.org.il',
-      start_date: '2022-09-01',
-      employment_type: 'part_time',
-      salary: 8000,
-      status: 'active',
-      notes: ''
-    },
-    {
-      id: 5,
-      name: 'רחל גולן',
-      id_number: '654987321',
-      position: 'מנהלת משרד',
-      department: 'admin',
-      phone: '050-5678901',
-      email: 'rachel@meitzad.org.il',
-      start_date: '2018-02-20',
-      employment_type: 'full_time',
-      salary: 10000,
-      status: 'active',
-      notes: ''
-    },
-    {
-      id: 6,
-      name: 'אבי מזרחי',
-      id_number: '789321654',
-      position: 'עובד תחזוקה',
-      department: 'maintenance',
-      phone: '050-6789012',
-      email: 'avi@meitzad.org.il',
-      start_date: '2023-01-05',
-      employment_type: 'full_time',
-      salary: 9000,
-      status: 'active',
-      notes: ''
-    }
-  ];
-
-  updateStats();
-  renderEmployees();
-}
-
-// ==================== Stats ====================
-
-function updateStats() {
-  const total = employees.length;
-  const active = employees.filter(e => e.status === 'active').length;
-  const departments = new Set(employees.map(e => e.department)).size;
-  const totalSalary = employees.filter(e => e.status === 'active').reduce((sum, e) => sum + (e.salary || 0), 0);
-
-  document.getElementById('totalEmployees').textContent = total;
-  document.getElementById('activeEmployees').textContent = active;
-  document.getElementById('totalDepartments').textContent = departments;
-  document.getElementById('totalSalary').textContent = `₪${totalSalary.toLocaleString()}`;
-}
-
-// ==================== Rendering ====================
-
-function renderEmployees() {
-  const grid = document.getElementById('employeesGrid');
-  let filtered = employees;
-
-  if (currentDepartment !== 'all') {
-    filtered = employees.filter(e => e.department === currentDepartment);
-  }
-
-  if (filtered.length === 0) {
-    grid.innerHTML = `
-      <div class="empty-state">
-        <div class="empty-state-icon">👥</div>
-        <h3>אין עובדים</h3>
-        <p>לחץ על "עובד חדש" להוספת עובד ראשון</p>
+    return `
+      <div class="employee-card" onclick="Employees.viewEmployee('${employee.id}')">
+        <div class="employee-card-header">
+          <div class="employee-avatar">
+            ${employee.photo ? `<img src="${employee.photo}" alt="${employee.name}">` : `<span>${initials}</span>`}
+          </div>
+          <div class="employee-info">
+            <h4 class="employee-name">${employee.name}</h4>
+            <p class="employee-position">${employee.position || ''}</p>
+            <span class="employee-department">${dept}</span>
+          </div>
+        </div>
+        <div class="employee-card-body">
+          <div class="employee-contact">
+            ${employee.phone ? `
+              <a href="tel:${employee.phone}" class="contact-link" onclick="event.stopPropagation()">
+                <span class="material-symbols-rounded">phone</span>
+                ${employee.phone}
+              </a>
+            ` : ''}
+          </div>
+        </div>
+        <div class="employee-card-footer">
+          <span class="status-badge status-${employee.status}">${status}</span>
+          <div class="employee-actions">
+            <button class="table-action-btn" onclick="event.stopPropagation(); Employees.sendWhatsApp('${employee.phone}')" title="שלח ווצאפ">
+              <span class="material-symbols-rounded">chat</span>
+            </button>
+            <button class="table-action-btn" onclick="event.stopPropagation(); Employees.editEmployee('${employee.id}')" title="עריכה">
+              <span class="material-symbols-rounded">edit</span>
+            </button>
+          </div>
+        </div>
       </div>
     `;
-    return;
-  }
+  },
 
-  grid.innerHTML = filtered.map(emp => `
-    <div class="employee-card" onclick="viewEmployee(${emp.id})">
-      <div class="employee-avatar">${getInitials(emp.name)}</div>
-      <div class="employee-info">
-        <h3 class="employee-name">${emp.name}</h3>
-        <p class="employee-position">${emp.position}</p>
-        <span class="employee-department">${DEPARTMENT_MAP[emp.department] || emp.department}</span>
-      </div>
-      <div class="employee-contact">
-        ${emp.phone ? `<a href="tel:${emp.phone}" class="contact-link" onclick="event.stopPropagation()">📞 ${emp.phone}</a>` : ''}
-        ${emp.email ? `<a href="mailto:${emp.email}" class="contact-link" onclick="event.stopPropagation()">📧</a>` : ''}
-      </div>
-      <div class="employee-status status-${emp.status}">${STATUS_MAP[emp.status]}</div>
-      <div class="employee-actions">
-        <button class="action-btn" onclick="event.stopPropagation(); editEmployee(${emp.id})" title="עריכה">✏️</button>
-        <button class="action-btn" onclick="event.stopPropagation(); deleteEmployee(${emp.id})" title="מחיקה">🗑️</button>
-      </div>
-    </div>
-  `).join('');
-}
+  getInitials(name) {
+    if (!name) return '?';
+    return name.split(' ').map(n => n[0]).slice(0, 2).join('');
+  },
 
-function getInitials(name) {
-  return name.split(' ').map(n => n[0]).slice(0, 2).join('');
-}
+  updateStats(employees) {
+    const total = employees.length;
+    const active = employees.filter(e => e.status === 'active').length;
+    const departments = new Set(employees.map(e => e.department)).size;
+    const totalSalary = employees
+      .filter(e => e.status === 'active')
+      .reduce((sum, e) => sum + (e.salary || 0), 0);
 
-// ==================== Department Filter ====================
+    const totalEl = document.getElementById('total-employees');
+    const activeEl = document.getElementById('active-employees');
+    const deptEl = document.getElementById('total-departments');
+    const salaryEl = document.getElementById('total-salary');
 
-function filterByDepartment(department) {
-  currentDepartment = department;
+    if (totalEl) totalEl.textContent = total;
+    if (activeEl) activeEl.textContent = active;
+    if (deptEl) deptEl.textContent = departments;
+    if (salaryEl) salaryEl.textContent = Utils.formatCurrency(totalSalary);
+  },
 
-  // Update tab buttons
-  document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.classList.toggle('active', btn.dataset.department === department);
-  });
+  async loadAttendance() {
+    const tbody = document.getElementById('attendance-body');
+    if (!tbody) return;
 
-  renderEmployees();
-}
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    const todayStr = today.toISOString().split('T')[0];
 
-// ==================== Employee Actions ====================
+    try {
+      // Get today's attendance records
+      const snapshot = await firebaseDB.ref('attendance')
+        .orderByChild('date')
+        .equalTo(todayStr)
+        .once('value');
 
-function showAddEmployeeModal() {
-  currentEmployee = null;
-  document.getElementById('modalTitle').textContent = 'עובד חדש';
-  document.getElementById('employeeForm').reset();
-  document.getElementById('empStartDate').value = new Date().toISOString().split('T')[0];
-  document.getElementById('employeeModal').classList.remove('hidden');
-}
+      const attendance = snapshot.val();
 
-function viewEmployee(id) {
-  const emp = employees.find(e => e.id === id);
-  if (!emp) return;
+      // Get all active employees
+      const empSnapshot = await firebaseDB.ref('employees')
+        .orderByChild('status')
+        .equalTo('active')
+        .once('value');
 
-  currentEmployee = emp;
-  document.getElementById('modalTitle').textContent = emp.name;
+      const employees = empSnapshot.val() || {};
 
-  const modalBody = document.getElementById('modalBody');
-  modalBody.innerHTML = `
-    <div class="employee-view">
-      <div class="employee-header">
-        <div class="employee-avatar large">${getInitials(emp.name)}</div>
-        <div>
-          <h2>${emp.name}</h2>
-          <p>${emp.position}</p>
-        </div>
-      </div>
-      <div class="detail-group">
-        <div class="detail-item">
-          <label>תעודת זהות</label>
-          <span>${emp.id_number}</span>
-        </div>
-        <div class="detail-item">
-          <label>מחלקה</label>
-          <span>${DEPARTMENT_MAP[emp.department] || emp.department}</span>
-        </div>
-        <div class="detail-item">
-          <label>טלפון</label>
-          <span>${emp.phone || '-'}</span>
-        </div>
-        <div class="detail-item">
-          <label>אימייל</label>
-          <span>${emp.email || '-'}</span>
-        </div>
-        <div class="detail-item">
-          <label>תאריך התחלה</label>
-          <span>${formatDate(emp.start_date)}</span>
-        </div>
-        <div class="detail-item">
-          <label>סוג העסקה</label>
-          <span>${TYPE_MAP[emp.employment_type] || emp.employment_type}</span>
-        </div>
-        <div class="detail-item">
-          <label>שכר חודשי</label>
-          <span>₪${(emp.salary || 0).toLocaleString()}</span>
-        </div>
-        <div class="detail-item">
-          <label>סטטוס</label>
-          <span class="status-badge status-${emp.status}">${STATUS_MAP[emp.status]}</span>
-        </div>
-      </div>
-      ${emp.notes ? `
-        <div class="detail-item full">
-          <label>הערות</label>
-          <p>${emp.notes}</p>
-        </div>
-      ` : ''}
-    </div>
-  `;
+      const attendanceMap = {};
+      if (attendance) {
+        Object.values(attendance).forEach(record => {
+          attendanceMap[record.employeeId] = record;
+        });
+      }
 
-  // Restore form for editing
-  setTimeout(() => {
-    modalBody.innerHTML = document.querySelector('#employeeModal .modal-body').innerHTML;
-  }, 0);
+      // Render attendance table
+      const rows = Object.entries(employees).map(([empId, emp]) => {
+        const record = attendanceMap[empId];
+        const status = record ? (record.checkOut ? 'completed' : 'present') : 'absent';
+        const statusText = record ? (record.checkOut ? 'סיים' : 'נוכח') : 'לא הגיע';
 
-  document.getElementById('employeeModal').classList.remove('hidden');
-}
+        return `
+          <tr>
+            <td>${emp.name}</td>
+            <td>${record?.checkIn ? Utils.formatTime(new Date(record.checkIn).getTime()) : '-'}</td>
+            <td>${record?.checkOut ? Utils.formatTime(new Date(record.checkOut).getTime()) : '-'}</td>
+            <td>
+              <span class="status-badge status-${status}">${statusText}</span>
+            </td>
+            <td>
+              <div class="table-actions">
+                ${!record ? `
+                  <button class="table-action-btn" onclick="Employees.recordCheckIn('${empId}')" title="רישום כניסה">
+                    <span class="material-symbols-rounded">login</span>
+                  </button>
+                ` : !record.checkOut ? `
+                  <button class="table-action-btn" onclick="Employees.recordCheckOut('${empId}')" title="רישום יציאה">
+                    <span class="material-symbols-rounded">logout</span>
+                  </button>
+                ` : ''}
+              </div>
+            </td>
+          </tr>
+        `;
+      }).join('');
 
-function editEmployee(id) {
-  const emp = employees.find(e => e.id === id);
-  if (!emp) return;
+      if (rows) {
+        tbody.innerHTML = rows;
+      } else {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" class="empty-state small">
+              <span class="material-symbols-rounded">event_busy</span>
+              <p>אין עובדים פעילים</p>
+            </td>
+          </tr>
+        `;
+      }
 
-  currentEmployee = emp;
-  document.getElementById('modalTitle').textContent = `עריכת ${emp.name}`;
+      // Update attendance summary
+      const present = Object.values(attendanceMap).length;
+      const absent = Object.keys(employees).length - present;
 
-  document.getElementById('empName').value = emp.name;
-  document.getElementById('empIdNumber').value = emp.id_number;
-  document.getElementById('empPosition').value = emp.position;
-  document.getElementById('empDepartment').value = emp.department;
-  document.getElementById('empPhone').value = emp.phone || '';
-  document.getElementById('empEmail').value = emp.email || '';
-  document.getElementById('empStartDate').value = emp.start_date;
-  document.getElementById('empType').value = emp.employment_type;
-  document.getElementById('empSalary').value = emp.salary || '';
-  document.getElementById('empStatus').value = emp.status;
-  document.getElementById('empNotes').value = emp.notes || '';
+      const presentEl = document.getElementById('present-count');
+      const absentEl = document.getElementById('absent-count');
 
-  document.getElementById('employeeModal').classList.remove('hidden');
-}
+      if (presentEl) presentEl.textContent = present;
+      if (absentEl) absentEl.textContent = absent;
 
-async function saveEmployee() {
-  const formData = {
-    name: document.getElementById('empName').value,
-    id_number: document.getElementById('empIdNumber').value,
-    position: document.getElementById('empPosition').value,
-    department: document.getElementById('empDepartment').value,
-    phone: document.getElementById('empPhone').value,
-    email: document.getElementById('empEmail').value,
-    start_date: document.getElementById('empStartDate').value,
-    employment_type: document.getElementById('empType').value,
-    salary: parseFloat(document.getElementById('empSalary').value) || 0,
-    status: document.getElementById('empStatus').value,
-    notes: document.getElementById('empNotes').value
-  };
-
-  if (!formData.name || !formData.id_number || !formData.position || !formData.department) {
-    showToast('נא למלא את כל השדות הנדרשים', 'error');
-    return;
-  }
-
-  try {
-    const url = currentEmployee ? `${API_BASE}/employees/${currentEmployee.id}` : `${API_BASE}/employees`;
-    const method = currentEmployee ? 'PUT' : 'POST';
-
-    const response = await fetch(url, {
-      method,
-      headers: {
-        'Authorization': `Bearer ${authToken}`,
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(formData)
-    });
-
-    if (response.ok) {
-      showToast(currentEmployee ? 'העובד עודכן בהצלחה' : 'העובד נוסף בהצלחה', 'success');
-      closeModal();
-      loadEmployees();
-    } else {
-      throw new Error('Save failed');
+    } catch (error) {
+      console.error('Error loading attendance:', error);
     }
-  } catch (error) {
-    // For demo, update local data
-    if (currentEmployee) {
-      Object.assign(currentEmployee, formData);
-    } else {
-      formData.id = Math.max(...employees.map(e => e.id), 0) + 1;
-      employees.push(formData);
+  },
+
+  async recordCheckIn(employeeId) {
+    const today = new Date().toISOString().split('T')[0];
+    const now = new Date().toISOString();
+
+    try {
+      await firebaseDB.ref('attendance').push({
+        employeeId,
+        date: today,
+        checkIn: now,
+        createdBy: Auth.getUid()
+      });
+
+      Utils.toast('כניסה נרשמה בהצלחה', 'success');
+      this.loadAttendance();
+
+      // Send WhatsApp notification if configured
+      const empSnapshot = await firebaseDB.ref(`employees/${employeeId}`).once('value');
+      const emp = empSnapshot.val();
+      if (emp?.phone && emp?.sendAttendanceNotifications) {
+        Utils.sendWhatsApp(emp.phone, `שלום ${emp.name}, כניסתך לעבודה נרשמה בשעה ${Utils.formatTime(Date.now())}`);
+      }
+
+    } catch (error) {
+      console.error('Error recording check-in:', error);
+      Utils.toast('שגיאה ברישום כניסה', 'error');
     }
-    showToast(currentEmployee ? 'העובד עודכן בהצלחה' : 'העובד נוסף בהצלחה', 'success');
-    closeModal();
-    updateStats();
-    renderEmployees();
-  }
-}
+  },
 
-async function deleteEmployee(id) {
-  if (!confirm('האם אתה בטוח שברצונך למחוק את העובד?')) return;
+  async recordCheckOut(employeeId) {
+    const today = new Date().toISOString().split('T')[0];
+    const now = new Date().toISOString();
 
-  try {
-    const response = await fetch(`${API_BASE}/employees/${id}`, {
-      method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${authToken}` }
-    });
+    try {
+      // Find today's attendance record for this employee
+      const snapshot = await firebaseDB.ref('attendance')
+        .orderByChild('employeeId')
+        .equalTo(employeeId)
+        .once('value');
 
-    if (response.ok) {
-      showToast('העובד נמחק בהצלחה', 'success');
-      loadEmployees();
-    } else {
-      throw new Error('Delete failed');
+      const records = snapshot.val();
+      if (!records) {
+        Utils.toast('לא נמצא רישום כניסה להיום', 'error');
+        return;
+      }
+
+      // Find today's record
+      const todayRecord = Object.entries(records).find(([id, r]) => r.date === today && !r.checkOut);
+
+      if (!todayRecord) {
+        Utils.toast('לא נמצא רישום כניסה להיום', 'error');
+        return;
+      }
+
+      await firebaseDB.ref(`attendance/${todayRecord[0]}`).update({
+        checkOut: now,
+        updatedBy: Auth.getUid()
+      });
+
+      Utils.toast('יציאה נרשמה בהצלחה', 'success');
+      this.loadAttendance();
+
+      // Send WhatsApp notification if configured
+      const empSnapshot = await firebaseDB.ref(`employees/${employeeId}`).once('value');
+      const emp = empSnapshot.val();
+      if (emp?.phone && emp?.sendAttendanceNotifications) {
+        Utils.sendWhatsApp(emp.phone, `שלום ${emp.name}, יציאתך מהעבודה נרשמה בשעה ${Utils.formatTime(Date.now())}`);
+      }
+
+    } catch (error) {
+      console.error('Error recording check-out:', error);
+      Utils.toast('שגיאה ברישום יציאה', 'error');
     }
-  } catch (error) {
-    // For demo, update local data
-    employees = employees.filter(e => e.id !== id);
-    showToast('העובד נמחק בהצלחה', 'success');
-    updateStats();
-    renderEmployees();
-  }
-}
+  },
 
-function closeModal() {
-  document.getElementById('employeeModal').classList.add('hidden');
-}
+  async loadPayrollSummary() {
+    const container = document.getElementById('payroll-summary-container');
+    if (!container) return;
 
-// ==================== Sidebar ====================
+    try {
+      const currentMonth = new Date().getMonth() + 1;
+      const currentYear = new Date().getFullYear();
 
-function toggleSidebar() {
-  document.querySelector('.admin-sidebar').classList.toggle('open');
-}
+      // Get all active employees
+      const empSnapshot = await firebaseDB.ref('employees')
+        .orderByChild('status')
+        .equalTo('active')
+        .once('value');
 
-// ==================== Utilities ====================
+      const employees = empSnapshot.val() || {};
+      const employeesArray = Object.values(employees);
 
-function formatDate(dateString) {
-  if (!dateString) return '-';
-  return new Date(dateString).toLocaleDateString('he-IL');
-}
+      const totalSalary = employeesArray.reduce((sum, e) => sum + (e.salary || 0), 0);
+      const socialCosts = totalSalary * 0.185; // 18.5% for social benefits
+      const totalCost = totalSalary + socialCosts;
 
-function showToast(message, type = 'info') {
-  const toast = document.getElementById('toast');
-  toast.textContent = message;
-  toast.className = `toast ${type}`;
-  toast.classList.remove('hidden');
-  setTimeout(() => toast.classList.add('hidden'), 4000);
-}
+      container.innerHTML = `
+        <div class="payroll-summary-cards">
+          <div class="summary-card">
+            <div class="summary-icon income">
+              <span class="material-symbols-rounded">payments</span>
+            </div>
+            <div class="summary-details">
+              <span class="summary-label">סה"כ שכר ברוטו</span>
+              <span class="summary-value">${Utils.formatCurrency(totalSalary)}</span>
+            </div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-icon expense">
+              <span class="material-symbols-rounded">account_balance</span>
+            </div>
+            <div class="summary-details">
+              <span class="summary-label">עלויות סוציאליות</span>
+              <span class="summary-value">${Utils.formatCurrency(socialCosts)}</span>
+            </div>
+          </div>
+          <div class="summary-card">
+            <div class="summary-icon total">
+              <span class="material-symbols-rounded">calculate</span>
+            </div>
+            <div class="summary-details">
+              <span class="summary-label">עלות מעביד כוללת</span>
+              <span class="summary-value">${Utils.formatCurrency(totalCost)}</span>
+            </div>
+          </div>
+        </div>
+        <p class="payroll-note">* חישוב משוער. העלויות הסוציאליות כוללות הפרשות לפנסיה, ביטוח לאומי והבראה.</p>
+      `;
 
-// Global functions
-window.showAddEmployeeModal = showAddEmployeeModal;
-window.viewEmployee = viewEmployee;
-window.editEmployee = editEmployee;
-window.deleteEmployee = deleteEmployee;
-window.saveEmployee = saveEmployee;
-window.closeModal = closeModal;
-window.filterByDepartment = filterByDepartment;
-window.toggleSidebar = toggleSidebar;
-window.logout = logout;
+    } catch (error) {
+      console.error('Error loading payroll summary:', error);
+    }
+  },
+
+  showAddEmployeeModal(employee = null) {
+    const isEdit = !!employee;
+
+    const content = `
+      <form id="employee-form">
+        <div class="form-row">
+          <div class="form-group">
+            <label for="emp-name">שם מלא *</label>
+            <input type="text" id="emp-name" name="name" required value="${employee?.name || ''}" placeholder="ישראל ישראלי">
+          </div>
+          <div class="form-group">
+            <label for="emp-id-number">תעודת זהות *</label>
+            <input type="text" id="emp-id-number" name="id_number" required value="${employee?.id_number || ''}" placeholder="123456789">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="emp-position">תפקיד *</label>
+            <input type="text" id="emp-position" name="position" required value="${employee?.position || ''}" placeholder="מנהל תחזוקה">
+          </div>
+          <div class="form-group">
+            <label for="emp-department">מחלקה *</label>
+            <select id="emp-department" name="department" required>
+              <option value="">בחר מחלקה</option>
+              <option value="management" ${employee?.department === 'management' ? 'selected' : ''}>הנהלה</option>
+              <option value="maintenance" ${employee?.department === 'maintenance' ? 'selected' : ''}>תחזוקה</option>
+              <option value="security" ${employee?.department === 'security' ? 'selected' : ''}>ביטחון</option>
+              <option value="education" ${employee?.department === 'education' ? 'selected' : ''}>חינוך</option>
+              <option value="admin" ${employee?.department === 'admin' ? 'selected' : ''}>מנהלה</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="emp-phone">טלפון</label>
+            <input type="tel" id="emp-phone" name="phone" value="${employee?.phone || ''}" placeholder="050-1234567">
+          </div>
+          <div class="form-group">
+            <label for="emp-email">אימייל</label>
+            <input type="email" id="emp-email" name="email" value="${employee?.email || ''}" placeholder="israel@meitzad.org.il">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="emp-start-date">תאריך התחלה</label>
+            <input type="date" id="emp-start-date" name="start_date" value="${employee?.start_date || new Date().toISOString().split('T')[0]}">
+          </div>
+          <div class="form-group">
+            <label for="emp-type">סוג העסקה</label>
+            <select id="emp-type" name="employment_type">
+              <option value="full_time" ${employee?.employment_type === 'full_time' ? 'selected' : ''}>משרה מלאה</option>
+              <option value="part_time" ${employee?.employment_type === 'part_time' ? 'selected' : ''}>משרה חלקית</option>
+              <option value="contract" ${employee?.employment_type === 'contract' ? 'selected' : ''}>קבלן</option>
+              <option value="volunteer" ${employee?.employment_type === 'volunteer' ? 'selected' : ''}>מתנדב</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label for="emp-salary">שכר חודשי (₪)</label>
+            <input type="number" id="emp-salary" name="salary" value="${employee?.salary || ''}" placeholder="10000">
+          </div>
+          <div class="form-group">
+            <label for="emp-status">סטטוס</label>
+            <select id="emp-status" name="status">
+              <option value="active" ${employee?.status === 'active' ? 'selected' : ''}>פעיל</option>
+              <option value="on_leave" ${employee?.status === 'on_leave' ? 'selected' : ''}>בחופשה</option>
+              <option value="inactive" ${employee?.status === 'inactive' ? 'selected' : ''}>לא פעיל</option>
+            </select>
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="toggle-label">
+            <input type="checkbox" id="emp-attendance-notifications" name="sendAttendanceNotifications" ${employee?.sendAttendanceNotifications ? 'checked' : ''}>
+            <span class="toggle-switch"></span>
+            שלח התראות נוכחות בווצאפ
+          </label>
+        </div>
+        <div class="form-group">
+          <label for="emp-notes">הערות</label>
+          <textarea id="emp-notes" name="notes" rows="3" placeholder="הערות נוספות...">${employee?.notes || ''}</textarea>
+        </div>
+      </form>
+    `;
+
+    const footer = `
+      <button class="btn btn-secondary" onclick="Utils.closeModal()">ביטול</button>
+      <button class="btn btn-primary" onclick="Employees.saveEmployee('${employee?.id || ''}')">${isEdit ? 'שמור שינויים' : 'הוסף עובד'}</button>
+    `;
+
+    Utils.openModal(isEdit ? 'עריכת עובד' : 'עובד חדש', content, footer);
+  },
+
+  async saveEmployee(existingId = '') {
+    const form = document.getElementById('employee-form');
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
+
+    const formData = new FormData(form);
+    const data = {
+      name: formData.get('name'),
+      id_number: formData.get('id_number'),
+      position: formData.get('position'),
+      department: formData.get('department'),
+      phone: formData.get('phone'),
+      email: formData.get('email'),
+      start_date: formData.get('start_date'),
+      employment_type: formData.get('employment_type'),
+      salary: parseFloat(formData.get('salary')) || 0,
+      status: formData.get('status'),
+      sendAttendanceNotifications: form.querySelector('#emp-attendance-notifications').checked,
+      notes: formData.get('notes'),
+      updatedAt: Date.now(),
+      updatedBy: Auth.getUid()
+    };
+
+    if (!existingId) {
+      data.createdAt = Date.now();
+      data.createdBy = Auth.getUid();
+    }
+
+    try {
+      if (existingId) {
+        await firebaseDB.ref(`employees/${existingId}`).update(data);
+        Utils.toast('העובד עודכן בהצלחה', 'success');
+      } else {
+        await firebaseDB.ref('employees').push(data);
+        Utils.toast('העובד נוסף בהצלחה', 'success');
+      }
+
+      Utils.closeModal();
+      this.load();
+    } catch (error) {
+      console.error('Error saving employee:', error);
+      Utils.toast('שגיאה בשמירת העובד', 'error');
+    }
+  },
+
+  async viewEmployee(id) {
+    try {
+      const snapshot = await firebaseDB.ref(`employees/${id}`).once('value');
+      const employee = snapshot.val();
+
+      if (!employee) {
+        Utils.toast('העובד לא נמצא', 'error');
+        return;
+      }
+
+      const dept = this.DEPARTMENTS[employee.department] || employee.department;
+      const status = this.STATUSES[employee.status] || employee.status;
+      const empType = this.EMPLOYMENT_TYPES[employee.employment_type] || employee.employment_type;
+      const initials = this.getInitials(employee.name);
+
+      const content = `
+        <div class="employee-detail">
+          <div class="employee-detail-header">
+            <div class="employee-avatar large">
+              ${employee.photo ? `<img src="${employee.photo}" alt="${employee.name}">` : `<span>${initials}</span>`}
+            </div>
+            <div class="employee-detail-info">
+              <h2>${employee.name}</h2>
+              <p>${employee.position}</p>
+              <span class="status-badge status-${employee.status}">${status}</span>
+            </div>
+          </div>
+
+          <div class="detail-grid">
+            <div class="detail-item">
+              <span class="material-symbols-rounded">badge</span>
+              <div>
+                <label>תעודת זהות</label>
+                <span>${employee.id_number || '-'}</span>
+              </div>
+            </div>
+            <div class="detail-item">
+              <span class="material-symbols-rounded">business</span>
+              <div>
+                <label>מחלקה</label>
+                <span>${dept}</span>
+              </div>
+            </div>
+            <div class="detail-item">
+              <span class="material-symbols-rounded">phone</span>
+              <div>
+                <label>טלפון</label>
+                <span>${employee.phone || '-'}</span>
+              </div>
+            </div>
+            <div class="detail-item">
+              <span class="material-symbols-rounded">mail</span>
+              <div>
+                <label>אימייל</label>
+                <span>${employee.email || '-'}</span>
+              </div>
+            </div>
+            <div class="detail-item">
+              <span class="material-symbols-rounded">event</span>
+              <div>
+                <label>תאריך התחלה</label>
+                <span>${employee.start_date ? Utils.formatDate(new Date(employee.start_date).getTime()) : '-'}</span>
+              </div>
+            </div>
+            <div class="detail-item">
+              <span class="material-symbols-rounded">work</span>
+              <div>
+                <label>סוג העסקה</label>
+                <span>${empType}</span>
+              </div>
+            </div>
+            <div class="detail-item">
+              <span class="material-symbols-rounded">payments</span>
+              <div>
+                <label>שכר חודשי</label>
+                <span>${Utils.formatCurrency(employee.salary || 0)}</span>
+              </div>
+            </div>
+          </div>
+
+          ${employee.notes ? `
+            <div class="detail-notes">
+              <label>הערות</label>
+              <p>${employee.notes}</p>
+            </div>
+          ` : ''}
+        </div>
+      `;
+
+      const footer = `
+        <button class="btn btn-secondary" onclick="Utils.closeModal()">סגור</button>
+        ${employee.phone ? `<button class="btn btn-outline" onclick="Employees.sendWhatsApp('${employee.phone}')"><span class="material-symbols-rounded">chat</span> ווצאפ</button>` : ''}
+        <button class="btn btn-primary" onclick="Employees.editEmployee('${id}')"><span class="material-symbols-rounded">edit</span> עריכה</button>
+      `;
+
+      Utils.openModal(employee.name, content, footer);
+
+    } catch (error) {
+      console.error('Error viewing employee:', error);
+      Utils.toast('שגיאה בטעינת פרטי העובד', 'error');
+    }
+  },
+
+  async editEmployee(id) {
+    try {
+      const snapshot = await firebaseDB.ref(`employees/${id}`).once('value');
+      const employee = snapshot.val();
+
+      if (!employee) {
+        Utils.toast('העובד לא נמצא', 'error');
+        return;
+      }
+
+      Utils.closeModal();
+      setTimeout(() => {
+        this.showAddEmployeeModal({ id, ...employee });
+      }, 300);
+
+    } catch (error) {
+      console.error('Error editing employee:', error);
+      Utils.toast('שגיאה בטעינת פרטי העובד', 'error');
+    }
+  },
+
+  async deleteEmployee(id) {
+    if (!confirm('האם אתה בטוח שברצונך למחוק את העובד?')) return;
+
+    try {
+      // Soft delete - just mark as deleted
+      await firebaseDB.ref(`employees/${id}`).update({
+        status: 'deleted',
+        deletedAt: Date.now(),
+        deletedBy: Auth.getUid()
+      });
+
+      Utils.toast('העובד נמחק בהצלחה', 'success');
+      Utils.closeModal();
+      this.load();
+    } catch (error) {
+      console.error('Error deleting employee:', error);
+      Utils.toast('שגיאה במחיקת העובד', 'error');
+    }
+  },
+
+  sendWhatsApp(phone) {
+    if (!phone) {
+      Utils.toast('אין מספר טלפון', 'error');
+      return;
+    }
+    Utils.sendWhatsApp(phone, '');
+  },
+
+  async generatePayrollReport() {
+    Utils.toast('מפיק דו"ח משכורות...', 'info');
+
+    try {
+      const snapshot = await firebaseDB.ref('employees')
+        .orderByChild('status')
+        .equalTo('active')
+        .once('value');
+
+      const employees = snapshot.val();
+      if (!employees) {
+        Utils.toast('אין עובדים פעילים', 'warning');
+        return;
+      }
+
+      const data = Object.values(employees).map(emp => ({
+        'שם': emp.name,
+        'תפקיד': emp.position,
+        'מחלקה': this.DEPARTMENTS[emp.department] || emp.department,
+        'סוג העסקה': this.EMPLOYMENT_TYPES[emp.employment_type] || emp.employment_type,
+        'שכר ברוטו': emp.salary || 0,
+        'עלות מעביד': Math.round((emp.salary || 0) * 1.185)
+      }));
+
+      const month = Utils.getHebrewMonth(new Date().getMonth());
+      const year = new Date().getFullYear();
+
+      Utils.exportToCSV(data, `משכורות_${month}_${year}`);
+      Utils.toast('הדו"ח הורד בהצלחה', 'success');
+
+    } catch (error) {
+      console.error('Error generating payroll report:', error);
+      Utils.toast('שגיאה בהפקת הדו"ח', 'error');
+    }
+  },
+
+  async generateAttendanceReport() {
+    Utils.toast('מפיק דו"ח נוכחות...', 'info');
+
+    try {
+      const month = new Date().getMonth();
+      const year = new Date().getFullYear();
+      const startDate = new Date(year, month, 1).toISOString().split('T')[0];
+      const endDate = new Date(year, month + 1, 0).toISOString().split('T')[0];
+
+      const snapshot = await firebaseDB.ref('attendance')
+        .orderByChild('date')
+        .startAt(startDate)
+        .endAt(endDate)
+        .once('value');
+
+      const attendance = snapshot.val();
+
+      if (!attendance) {
+        Utils.toast('אין נתוני נוכחות לחודש זה', 'warning');
+        return;
+      }
+
+      // Get employee names
+      const empSnapshot = await firebaseDB.ref('employees').once('value');
+      const employees = empSnapshot.val() || {};
+
+      const data = Object.values(attendance).map(record => ({
+        'שם': employees[record.employeeId]?.name || 'לא ידוע',
+        'תאריך': record.date,
+        'כניסה': record.checkIn ? Utils.formatTime(new Date(record.checkIn).getTime()) : '-',
+        'יציאה': record.checkOut ? Utils.formatTime(new Date(record.checkOut).getTime()) : '-',
+        'שעות': record.checkIn && record.checkOut ?
+          Math.round((new Date(record.checkOut) - new Date(record.checkIn)) / 3600000 * 10) / 10 : 0
+      }));
+
+      const monthName = Utils.getHebrewMonth(month);
+      Utils.exportToCSV(data, `נוכחות_${monthName}_${year}`);
+      Utils.toast('הדו"ח הורד בהצלחה', 'success');
+
+    } catch (error) {
+      console.error('Error generating attendance report:', error);
+      Utils.toast('שגיאה בהפקת הדו"ח', 'error');
+    }
+  },
+
+  cleanup() {}
+};
+
+window.Employees = Employees;

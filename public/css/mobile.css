@@ -1,0 +1,661 @@
+/* ============================================
+   MEITZAD MANAGEMENT SYSTEM - MOBILE STYLES
+   Mobile-specific optimizations and app-like UI
+   ============================================ */
+
+/* ===== MOBILE APP SHELL ===== */
+@media (max-width: 768px) {
+  /* Prevent overscroll bounce on iOS */
+  html, body {
+    overscroll-behavior: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* App-like smooth scrolling */
+  .content-area {
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Hide desktop sidebar, show mobile nav */
+  .sidebar {
+    display: none;
+  }
+
+  .mobile-nav {
+    display: flex;
+  }
+
+  /* Adjust content for mobile nav */
+  .main-content {
+    margin-right: 0;
+    padding-bottom: calc(var(--mobile-nav-height) + var(--space-2));
+  }
+
+  /* Mobile header */
+  .top-bar {
+    height: 56px;
+    padding: 0 var(--space-3);
+  }
+
+  .mobile-menu-btn {
+    display: flex;
+  }
+
+  .page-title h1 {
+    font-size: var(--text-lg);
+  }
+
+  /* Content area padding */
+  .content-area {
+    padding: var(--space-4);
+  }
+
+  /* Module header mobile */
+  .module-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-3);
+  }
+
+  .module-tabs {
+    order: 2;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    margin: 0 calc(-1 * var(--space-4));
+    padding: 0 var(--space-4);
+  }
+
+  .module-tabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  .module-actions {
+    order: 1;
+  }
+
+  .module-actions .btn {
+    width: 100%;
+  }
+}
+
+
+/* ===== MOBILE NAVIGATION ENHANCEMENTS ===== */
+@media (max-width: 768px) {
+  .mobile-nav {
+    background: var(--color-bg-primary);
+    border-top: 1px solid var(--color-border-primary);
+    box-shadow: 0 -4px 20px rgba(0, 0, 0, 0.08);
+  }
+
+  .mobile-nav-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-2) var(--space-1);
+    border-radius: var(--radius-lg);
+    color: var(--color-text-tertiary);
+    font-size: 10px;
+    font-weight: var(--font-medium);
+    transition: all var(--transition-fast);
+    position: relative;
+    gap: var(--space-1);
+  }
+
+  .mobile-nav-item .material-symbols-rounded {
+    font-size: 26px;
+    margin-bottom: 0;
+  }
+
+  .mobile-nav-item.active {
+    color: var(--primary-600);
+  }
+
+  .mobile-nav-item.active .material-symbols-rounded {
+    font-variation-settings: 'FILL' 1;
+  }
+
+  .mobile-nav-item:active {
+    background: var(--color-bg-tertiary);
+    transform: scale(0.95);
+  }
+
+  .mobile-badge {
+    position: absolute;
+    top: 2px;
+    right: calc(50% - 20px);
+    background: var(--error-500);
+    color: white;
+    font-size: 9px;
+    font-weight: var(--font-bold);
+    padding: 2px 5px;
+    border-radius: var(--radius-full);
+    min-width: 16px;
+    text-align: center;
+    line-height: 1.2;
+  }
+}
+
+
+/* ===== MOBILE CARDS ===== */
+@media (max-width: 768px) {
+  /* Stat cards horizontal scroll on mobile */
+  .dashboard-grid {
+    display: flex;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    gap: var(--space-3);
+    padding-bottom: var(--space-2);
+    margin: 0 calc(-1 * var(--space-4));
+    padding-left: var(--space-4);
+    padding-right: var(--space-4);
+  }
+
+  .dashboard-grid::-webkit-scrollbar {
+    display: none;
+  }
+
+  .stat-card {
+    min-width: 200px;
+    flex-shrink: 0;
+  }
+
+  .dashboard-card {
+    min-width: 100%;
+    flex-shrink: 0;
+  }
+
+  .dashboard-card.wide {
+    grid-column: span 1;
+  }
+
+  /* Cards stack on mobile */
+  .stat-card {
+    padding: var(--space-4);
+  }
+
+  .stat-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .stat-icon .material-symbols-rounded {
+    font-size: 24px;
+  }
+
+  .stat-value {
+    font-size: var(--text-xl);
+  }
+}
+
+
+/* ===== MOBILE FORMS ===== */
+@media (max-width: 768px) {
+  .form-group input,
+  .form-group select,
+  .form-group textarea {
+    font-size: 16px; /* Prevent zoom on iOS */
+    padding: var(--space-3-5) var(--space-4);
+  }
+
+  .filter-select {
+    font-size: 16px;
+    padding: var(--space-3);
+  }
+
+  .search-box {
+    width: 100%;
+  }
+
+  .search-box input {
+    font-size: 16px;
+  }
+
+  /* Filters stack on mobile */
+  .inquiries-filters {
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+}
+
+
+/* ===== MOBILE TABLES ===== */
+@media (max-width: 768px) {
+  .transactions-table-wrapper,
+  .inquiries-table-wrapper,
+  .attendance-table-wrapper,
+  .payroll-table-wrapper,
+  .protocols-table-wrapper {
+    margin: 0 calc(-1 * var(--space-4));
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+  }
+
+  .data-table th,
+  .data-table td {
+    padding: var(--space-3);
+    font-size: var(--text-sm);
+  }
+
+  /* Hide less important columns on mobile */
+  .data-table th:nth-child(n+5),
+  .data-table td:nth-child(n+5) {
+    display: none;
+  }
+}
+
+
+/* ===== MOBILE MODALS ===== */
+@media (max-width: 768px) {
+  .modal-overlay {
+    padding: 0;
+    align-items: flex-end;
+  }
+
+  .modal {
+    border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
+    max-height: 90vh;
+    animation: slideInUp var(--transition-slow) ease-out;
+  }
+
+  .modal-header {
+    padding: var(--space-4) var(--space-5);
+  }
+
+  .modal-body {
+    padding: var(--space-4) var(--space-5);
+  }
+
+  .modal-footer {
+    padding: var(--space-4) var(--space-5);
+    padding-bottom: calc(var(--space-4) + env(safe-area-inset-bottom, 0px));
+    flex-direction: column;
+    gap: var(--space-2);
+  }
+
+  .modal-footer .btn {
+    width: 100%;
+  }
+}
+
+
+/* ===== MOBILE GRIDS ===== */
+@media (max-width: 768px) {
+  .budget-overview-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+  }
+
+  .payroll-summary-cards {
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+  }
+
+  .settings-grid {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+
+  .reports-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: var(--space-3);
+  }
+
+  .report-card {
+    padding: var(--space-5);
+  }
+
+  .report-card .material-symbols-rounded {
+    font-size: 32px;
+  }
+
+  .projects-board {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+
+  .board-column {
+    min-height: auto;
+  }
+
+  .meetings-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .employees-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .inquiries-cards {
+    grid-template-columns: 1fr;
+  }
+}
+
+
+/* ===== MOBILE LOGIN ===== */
+@media (max-width: 768px) {
+  .login-wrapper {
+    flex-direction: column;
+  }
+
+  .login-hero {
+    flex: none;
+    padding: var(--space-8) var(--space-4);
+    min-height: auto;
+  }
+
+  .login-logo {
+    margin-bottom: var(--space-6);
+  }
+
+  .login-logo .logo-icon {
+    width: 72px;
+    height: 72px;
+  }
+
+  .login-logo .logo-icon .material-symbols-rounded {
+    font-size: 40px;
+  }
+
+  .login-logo h1 {
+    font-size: var(--text-2xl);
+  }
+
+  .login-logo p {
+    font-size: var(--text-base);
+  }
+
+  .login-illustration {
+    display: none;
+  }
+
+  .login-form-container {
+    width: 100%;
+    flex: 1;
+    border-radius: var(--radius-2xl) var(--radius-2xl) 0 0;
+    padding: var(--space-8) var(--space-5);
+    box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.1);
+  }
+
+  .login-form {
+    max-width: 100%;
+  }
+
+  .login-form h2 {
+    font-size: var(--text-xl);
+    margin-bottom: var(--space-6);
+  }
+
+  .form-options {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--space-3);
+  }
+}
+
+
+/* ===== MOBILE BUDGET ===== */
+@media (max-width: 768px) {
+  .budget-summary-card {
+    padding: var(--space-4);
+  }
+
+  .budget-summary-card .summary-icon {
+    width: 48px;
+    height: 48px;
+  }
+
+  .budget-summary-card .summary-icon .material-symbols-rounded {
+    font-size: 24px;
+  }
+
+  .summary-value {
+    font-size: var(--text-xl);
+  }
+
+  .budget-chart-section {
+    padding: var(--space-4);
+  }
+
+  .budget-chart-section canvas {
+    height: 200px !important;
+  }
+
+  .recent-transactions {
+    padding: var(--space-4);
+  }
+}
+
+
+/* ===== MOBILE ATTENDANCE ===== */
+@media (max-width: 768px) {
+  .attendance-header {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--space-4);
+  }
+
+  .attendance-date-selector {
+    justify-content: center;
+  }
+
+  .attendance-summary {
+    justify-content: space-around;
+  }
+
+  .attendance-summary .summary-value {
+    font-size: var(--text-xl);
+  }
+}
+
+
+/* ===== MOBILE MEETING CARDS ===== */
+@media (max-width: 768px) {
+  .meeting-card {
+    padding: var(--space-4);
+  }
+
+  .meeting-card-header {
+    gap: var(--space-3);
+  }
+
+  .meeting-card-date {
+    width: 52px;
+    height: 52px;
+  }
+
+  .meeting-card-date .day {
+    font-size: var(--text-xl);
+  }
+
+  .meeting-card-title {
+    font-size: var(--text-base);
+  }
+}
+
+
+/* ===== MOBILE EMPLOYEE CARDS ===== */
+@media (max-width: 768px) {
+  .employee-card {
+    padding: var(--space-4);
+  }
+
+  .employee-avatar {
+    width: 64px;
+    height: 64px;
+  }
+
+  .employee-avatar .material-symbols-rounded {
+    font-size: 32px;
+  }
+
+  .employee-name {
+    font-size: var(--text-base);
+  }
+}
+
+
+/* ===== MOBILE PROTOCOL UPLOAD ===== */
+@media (max-width: 768px) {
+  .protocol-upload-zone {
+    padding: var(--space-8);
+  }
+
+  .protocol-upload-zone .material-symbols-rounded {
+    font-size: 40px;
+  }
+}
+
+
+/* ===== TOAST POSITION ON MOBILE ===== */
+@media (max-width: 768px) {
+  .toast-container {
+    bottom: calc(var(--mobile-nav-height) + var(--space-4));
+    left: var(--space-4);
+    right: var(--space-4);
+    transform: none;
+    max-width: none;
+    padding: 0;
+  }
+
+  .toast {
+    padding: var(--space-3);
+  }
+}
+
+
+/* ===== SAFE AREA INSETS (iPhone X+) ===== */
+@supports (padding: max(0px)) {
+  .mobile-nav {
+    padding-bottom: max(var(--space-2), env(safe-area-inset-bottom));
+    height: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px) - var(--space-2));
+  }
+
+  .main-content {
+    padding-bottom: calc(var(--mobile-nav-height) + env(safe-area-inset-bottom, 0px) + var(--space-2));
+  }
+
+  .more-menu-content {
+    padding-bottom: calc(var(--space-6) + env(safe-area-inset-bottom, 0px));
+  }
+}
+
+
+/* ===== PULL TO REFRESH INDICATOR (Optional) ===== */
+.pull-to-refresh {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--color-bg-secondary);
+  transform: translateY(-100%);
+  transition: transform var(--transition-base);
+  z-index: var(--z-sticky);
+}
+
+.pull-to-refresh.active {
+  transform: translateY(0);
+}
+
+.pull-to-refresh .spinner {
+  width: 24px;
+  height: 24px;
+  border: 2px solid var(--color-border-primary);
+  border-top-color: var(--primary-500);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+
+/* ===== TOUCH FEEDBACK ===== */
+@media (max-width: 768px) {
+  .btn:active {
+    transform: scale(0.98);
+  }
+
+  .stat-card:active,
+  .dashboard-card:active,
+  .meeting-card:active,
+  .employee-card:active,
+  .inquiry-card:active,
+  .project-card:active {
+    transform: scale(0.98);
+  }
+
+  .nav-link:active,
+  .mobile-nav-item:active,
+  .more-menu-item:active {
+    background: var(--color-bg-tertiary);
+  }
+}
+
+
+/* ===== LANDSCAPE MODE ===== */
+@media (max-width: 768px) and (orientation: landscape) {
+  .login-wrapper {
+    flex-direction: row;
+  }
+
+  .login-hero {
+    flex: 1;
+    padding: var(--space-4);
+  }
+
+  .login-form-container {
+    width: 50%;
+    border-radius: var(--radius-2xl) 0 0 var(--radius-2xl);
+  }
+
+  .mobile-nav {
+    height: 56px;
+  }
+
+  .mobile-nav-item {
+    flex-direction: row;
+    gap: var(--space-2);
+  }
+
+  .mobile-nav-item .material-symbols-rounded {
+    font-size: 22px;
+  }
+}
+
+
+/* ===== SMALL PHONES ===== */
+@media (max-width: 375px) {
+  :root {
+    --space-4: 14px;
+    --space-5: 18px;
+    --space-6: 22px;
+  }
+
+  .content-area {
+    padding: var(--space-3);
+  }
+
+  .tab-btn {
+    padding: var(--space-2) var(--space-3);
+    font-size: var(--text-xs);
+  }
+
+  .stat-card {
+    min-width: 170px;
+  }
+
+  .stat-value {
+    font-size: var(--text-lg);
+  }
+
+  .budget-summary-card .summary-icon {
+    width: 44px;
+    height: 44px;
+  }
+}

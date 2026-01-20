@@ -2,264 +2,931 @@
 <html lang="he" dir="rtl">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <meta name="theme-color" content="#1a365d">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <title>מערכת ניהול יישוב מיצד</title>
-  <link rel="stylesheet" href="/css/styles.css">
+
+  <!-- Favicon -->
+  <link rel="icon" type="image/svg+xml" href="/assets/images/favicon.svg">
+
+  <!-- Fonts -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet">
+
+  <!-- Styles -->
+  <link rel="stylesheet" href="/css/design-system.css">
+  <link rel="stylesheet" href="/css/layout.css">
+  <link rel="stylesheet" href="/css/components.css">
+  <link rel="stylesheet" href="/css/modules.css">
+  <link rel="stylesheet" href="/css/mobile.css">
 </head>
 <body>
-  <header class="main-header">
-    <div class="container">
-      <div class="logo">
-        <h1>יישוב מיצד</h1>
-        <span class="subtitle">מערכת פניות ושירות תושבים</span>
+  <!-- App Shell -->
+  <div id="app" class="app-container">
+
+    <!-- Login Screen -->
+    <div id="login-screen" class="screen active">
+      <div class="login-wrapper">
+        <div class="login-hero">
+          <div class="login-logo">
+            <div class="logo-icon">
+              <span class="material-symbols-rounded">location_city</span>
+            </div>
+            <h1>יישוב מיצד</h1>
+            <p>מערכת ניהול הוועד המקומי</p>
+          </div>
+          <div class="login-illustration">
+            <svg viewBox="0 0 400 300" class="illustration-svg">
+              <defs>
+                <linearGradient id="grad1" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" style="stop-color:#2ea1b3;stop-opacity:0.3" />
+                  <stop offset="100%" style="stop-color:#1a365d;stop-opacity:0.3" />
+                </linearGradient>
+              </defs>
+              <rect x="50" y="100" width="80" height="120" rx="4" fill="url(#grad1)" stroke="#2ea1b3" stroke-width="2"/>
+              <rect x="160" y="80" width="80" height="140" rx="4" fill="url(#grad1)" stroke="#2ea1b3" stroke-width="2"/>
+              <rect x="270" y="120" width="80" height="100" rx="4" fill="url(#grad1)" stroke="#2ea1b3" stroke-width="2"/>
+              <circle cx="200" cy="50" r="30" fill="#ffc107" opacity="0.8"/>
+              <path d="M50 220 Q200 200 350 220" stroke="#2ea1b3" stroke-width="3" fill="none" opacity="0.5"/>
+            </svg>
+          </div>
+        </div>
+
+        <div class="login-form-container">
+          <form id="login-form" class="login-form">
+            <h2>התחברות למערכת</h2>
+
+            <div class="form-group">
+              <label for="login-email">
+                <span class="material-symbols-rounded">email</span>
+                כתובת אימייל
+              </label>
+              <input type="email" id="login-email" name="email" required autocomplete="email" placeholder="your@email.com">
+            </div>
+
+            <div class="form-group">
+              <label for="login-password">
+                <span class="material-symbols-rounded">lock</span>
+                סיסמה
+              </label>
+              <div class="password-input-wrapper">
+                <input type="password" id="login-password" name="password" required autocomplete="current-password" placeholder="הזינו סיסמה">
+                <button type="button" class="toggle-password" aria-label="הצג סיסמה">
+                  <span class="material-symbols-rounded">visibility</span>
+                </button>
+              </div>
+            </div>
+
+            <div class="form-options">
+              <label class="checkbox-label">
+                <input type="checkbox" name="remember" id="remember-me">
+                <span class="checkmark"></span>
+                זכור אותי
+              </label>
+              <a href="#" class="forgot-password" id="forgot-password-link">שכחתי סיסמה</a>
+            </div>
+
+            <button type="submit" class="btn btn-primary btn-large btn-full">
+              <span class="btn-text">התחברות</span>
+              <span class="btn-loader hidden">
+                <span class="loader"></span>
+              </span>
+            </button>
+          </form>
+
+          <div class="login-footer">
+            <p>מערכת ניהול יישוב מיצד &copy; 2026</p>
+          </div>
+        </div>
       </div>
-      <nav class="main-nav">
-        <a href="#" class="nav-link active" data-page="home">דף הבית</a>
-        <a href="#submit" class="nav-link" data-page="submit">הגשת פנייה</a>
-        <a href="#track" class="nav-link" data-page="track">מעקב פנייה</a>
-        <a href="#login" class="nav-link login-btn" id="loginBtn">התחברות</a>
+    </div>
+
+    <!-- Main App Screen -->
+    <div id="main-screen" class="screen">
+
+      <!-- Desktop Sidebar -->
+      <aside class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+          <div class="sidebar-logo">
+            <span class="material-symbols-rounded">location_city</span>
+            <span class="logo-text">מיצד</span>
+          </div>
+          <button class="sidebar-toggle" id="sidebar-toggle" aria-label="צמצם תפריט">
+            <span class="material-symbols-rounded">menu_open</span>
+          </button>
+        </div>
+
+        <nav class="sidebar-nav">
+          <ul class="nav-list">
+            <li class="nav-item">
+              <a href="#dashboard" class="nav-link active" data-module="dashboard">
+                <span class="material-symbols-rounded">dashboard</span>
+                <span class="nav-text">לוח בקרה</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="#budget" class="nav-link" data-module="budget">
+                <span class="material-symbols-rounded">account_balance_wallet</span>
+                <span class="nav-text">תקציב וכספים</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="#planning" class="nav-link" data-module="planning">
+                <span class="material-symbols-rounded">architecture</span>
+                <span class="nav-text">תכנון ובנייה</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="#inquiries" class="nav-link" data-module="inquiries">
+                <span class="material-symbols-rounded">support_agent</span>
+                <span class="nav-text">פניות תושבים</span>
+                <span class="nav-badge" id="inquiries-badge">3</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="#meetings" class="nav-link" data-module="meetings">
+                <span class="material-symbols-rounded">groups</span>
+                <span class="nav-text">ישיבות ופרוטוקולים</span>
+              </a>
+            </li>
+            <li class="nav-item">
+              <a href="#employees" class="nav-link" data-module="employees">
+                <span class="material-symbols-rounded">badge</span>
+                <span class="nav-text">ניהול עובדים</span>
+              </a>
+            </li>
+            <li class="nav-divider"></li>
+            <li class="nav-item">
+              <a href="#settings" class="nav-link" data-module="settings">
+                <span class="material-symbols-rounded">settings</span>
+                <span class="nav-text">הגדרות</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+
+        <div class="sidebar-footer">
+          <div class="user-info">
+            <div class="user-avatar">
+              <span class="material-symbols-rounded">person</span>
+            </div>
+            <div class="user-details">
+              <span class="user-name" id="sidebar-user-name">מנהל המערכת</span>
+              <span class="user-role" id="sidebar-user-role">מנהל ראשי</span>
+            </div>
+          </div>
+          <button class="logout-btn" id="logout-btn" aria-label="התנתקות">
+            <span class="material-symbols-rounded">logout</span>
+          </button>
+        </div>
+      </aside>
+
+      <!-- Main Content Area -->
+      <main class="main-content" id="main-content">
+
+        <!-- Top Header Bar -->
+        <header class="top-bar">
+          <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="תפריט">
+            <span class="material-symbols-rounded">menu</span>
+          </button>
+
+          <div class="page-title">
+            <h1 id="current-page-title">לוח בקרה</h1>
+          </div>
+
+          <div class="top-bar-actions">
+            <button class="action-btn" id="notifications-btn" aria-label="התראות">
+              <span class="material-symbols-rounded">notifications</span>
+              <span class="notification-dot" id="notification-dot"></span>
+            </button>
+            <button class="action-btn" id="search-btn" aria-label="חיפוש">
+              <span class="material-symbols-rounded">search</span>
+            </button>
+          </div>
+        </header>
+
+        <!-- Content Modules -->
+        <div class="content-area" id="content-area">
+
+          <!-- Dashboard Module -->
+          <section class="module active" id="module-dashboard">
+            <div class="dashboard-grid">
+              <!-- Quick Stats -->
+              <div class="stat-card">
+                <div class="stat-icon budget">
+                  <span class="material-symbols-rounded">payments</span>
+                </div>
+                <div class="stat-content">
+                  <span class="stat-value" id="stat-budget">₪0</span>
+                  <span class="stat-label">יתרת תקציב</span>
+                </div>
+                <div class="stat-trend positive">
+                  <span class="material-symbols-rounded">trending_up</span>
+                  <span>+12%</span>
+                </div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-icon inquiries">
+                  <span class="material-symbols-rounded">inbox</span>
+                </div>
+                <div class="stat-content">
+                  <span class="stat-value" id="stat-open-inquiries">0</span>
+                  <span class="stat-label">פניות פתוחות</span>
+                </div>
+                <div class="stat-trend negative">
+                  <span class="material-symbols-rounded">trending_down</span>
+                  <span>-5</span>
+                </div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-icon meetings">
+                  <span class="material-symbols-rounded">event</span>
+                </div>
+                <div class="stat-content">
+                  <span class="stat-value" id="stat-next-meeting">--</span>
+                  <span class="stat-label">ישיבה הבאה</span>
+                </div>
+              </div>
+
+              <div class="stat-card">
+                <div class="stat-icon employees">
+                  <span class="material-symbols-rounded">groups</span>
+                </div>
+                <div class="stat-content">
+                  <span class="stat-value" id="stat-employees">0</span>
+                  <span class="stat-label">עובדים פעילים</span>
+                </div>
+              </div>
+
+              <!-- Recent Inquiries -->
+              <div class="dashboard-card wide">
+                <div class="card-header">
+                  <h3>
+                    <span class="material-symbols-rounded">inbox</span>
+                    פניות אחרונות
+                  </h3>
+                  <a href="#inquiries" class="card-action" data-module="inquiries">צפה בהכל</a>
+                </div>
+                <div class="card-content">
+                  <div class="inquiries-list" id="recent-inquiries">
+                    <div class="empty-state small">
+                      <span class="material-symbols-rounded">inbox</span>
+                      <p>אין פניות חדשות</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Upcoming Meetings -->
+              <div class="dashboard-card">
+                <div class="card-header">
+                  <h3>
+                    <span class="material-symbols-rounded">event</span>
+                    ישיבות קרובות
+                  </h3>
+                  <a href="#meetings" class="card-action" data-module="meetings">צפה בהכל</a>
+                </div>
+                <div class="card-content">
+                  <div class="meetings-list" id="upcoming-meetings">
+                    <div class="empty-state small">
+                      <span class="material-symbols-rounded">event_busy</span>
+                      <p>אין ישיבות מתוכננות</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <!-- Budget Overview -->
+              <div class="dashboard-card">
+                <div class="card-header">
+                  <h3>
+                    <span class="material-symbols-rounded">pie_chart</span>
+                    סקירת תקציב
+                  </h3>
+                  <a href="#budget" class="card-action" data-module="budget">פרטים</a>
+                </div>
+                <div class="card-content">
+                  <div class="budget-chart" id="budget-chart">
+                    <canvas id="budget-pie-chart"></canvas>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Budget Module -->
+          <section class="module" id="module-budget">
+            <div class="module-header">
+              <div class="module-tabs">
+                <button class="tab-btn active" data-tab="budget-overview">סקירה כללית</button>
+                <button class="tab-btn" data-tab="budget-income">הכנסות</button>
+                <button class="tab-btn" data-tab="budget-expenses">הוצאות</button>
+                <button class="tab-btn" data-tab="budget-reports">דוחות</button>
+              </div>
+              <div class="module-actions">
+                <button class="btn btn-primary" id="add-transaction-btn">
+                  <span class="material-symbols-rounded">add</span>
+                  תנועה חדשה
+                </button>
+              </div>
+            </div>
+
+            <div class="tab-content active" id="tab-budget-overview">
+              <div class="budget-overview-grid">
+                <div class="budget-summary-card income">
+                  <div class="summary-icon">
+                    <span class="material-symbols-rounded">arrow_downward</span>
+                  </div>
+                  <div class="summary-content">
+                    <span class="summary-label">סה"כ הכנסות</span>
+                    <span class="summary-value" id="total-income">₪0</span>
+                  </div>
+                </div>
+                <div class="budget-summary-card expenses">
+                  <div class="summary-icon">
+                    <span class="material-symbols-rounded">arrow_upward</span>
+                  </div>
+                  <div class="summary-content">
+                    <span class="summary-label">סה"כ הוצאות</span>
+                    <span class="summary-value" id="total-expenses">₪0</span>
+                  </div>
+                </div>
+                <div class="budget-summary-card balance">
+                  <div class="summary-icon">
+                    <span class="material-symbols-rounded">account_balance</span>
+                  </div>
+                  <div class="summary-content">
+                    <span class="summary-label">יתרה</span>
+                    <span class="summary-value" id="total-balance">₪0</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="budget-chart-section">
+                <canvas id="budget-line-chart"></canvas>
+              </div>
+
+              <div class="recent-transactions">
+                <h3>תנועות אחרונות</h3>
+                <div class="transactions-table-wrapper">
+                  <table class="data-table" id="transactions-table">
+                    <thead>
+                      <tr>
+                        <th>תאריך</th>
+                        <th>תיאור</th>
+                        <th>קטגוריה</th>
+                        <th>סכום</th>
+                        <th>פעולות</th>
+                      </tr>
+                    </thead>
+                    <tbody id="transactions-body">
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+
+            <div class="tab-content" id="tab-budget-income">
+              <div class="data-grid" id="income-grid"></div>
+            </div>
+
+            <div class="tab-content" id="tab-budget-expenses">
+              <div class="data-grid" id="expenses-grid"></div>
+            </div>
+
+            <div class="tab-content" id="tab-budget-reports">
+              <div class="reports-grid">
+                <button class="report-card" data-report="monthly">
+                  <span class="material-symbols-rounded">calendar_month</span>
+                  <span>דוח חודשי</span>
+                </button>
+                <button class="report-card" data-report="quarterly">
+                  <span class="material-symbols-rounded">date_range</span>
+                  <span>דוח רבעוני</span>
+                </button>
+                <button class="report-card" data-report="annual">
+                  <span class="material-symbols-rounded">calendar_today</span>
+                  <span>דוח שנתי</span>
+                </button>
+                <button class="report-card" data-report="custom">
+                  <span class="material-symbols-rounded">tune</span>
+                  <span>דוח מותאם</span>
+                </button>
+              </div>
+            </div>
+          </section>
+
+          <!-- Planning Module -->
+          <section class="module" id="module-planning">
+            <div class="module-header">
+              <div class="module-tabs">
+                <button class="tab-btn active" data-tab="planning-projects">פרויקטים</button>
+                <button class="tab-btn" data-tab="planning-permits">היתרים</button>
+                <button class="tab-btn" data-tab="planning-map">מפת תכנון</button>
+              </div>
+              <div class="module-actions">
+                <button class="btn btn-primary" id="add-project-btn">
+                  <span class="material-symbols-rounded">add</span>
+                  פרויקט חדש
+                </button>
+              </div>
+            </div>
+
+            <div class="tab-content active" id="tab-planning-projects">
+              <div class="projects-board" id="projects-board">
+                <div class="board-column" data-status="planning">
+                  <div class="column-header">
+                    <span class="column-title">בתכנון</span>
+                    <span class="column-count">0</span>
+                  </div>
+                  <div class="column-content" id="projects-planning"></div>
+                </div>
+                <div class="board-column" data-status="in-progress">
+                  <div class="column-header">
+                    <span class="column-title">בביצוע</span>
+                    <span class="column-count">0</span>
+                  </div>
+                  <div class="column-content" id="projects-in-progress"></div>
+                </div>
+                <div class="board-column" data-status="completed">
+                  <div class="column-header">
+                    <span class="column-title">הושלם</span>
+                    <span class="column-count">0</span>
+                  </div>
+                  <div class="column-content" id="projects-completed"></div>
+                </div>
+              </div>
+            </div>
+
+            <div class="tab-content" id="tab-planning-permits">
+              <div class="permits-list" id="permits-list"></div>
+            </div>
+
+            <div class="tab-content" id="tab-planning-map">
+              <div class="planning-map-container" id="planning-map"></div>
+            </div>
+          </section>
+
+          <!-- Inquiries Module -->
+          <section class="module" id="module-inquiries">
+            <div class="module-header">
+              <div class="module-tabs">
+                <button class="tab-btn active" data-tab="inquiries-all">כל הפניות</button>
+                <button class="tab-btn" data-tab="inquiries-new">חדשות <span class="tab-badge">3</span></button>
+                <button class="tab-btn" data-tab="inquiries-in-progress">בטיפול</button>
+                <button class="tab-btn" data-tab="inquiries-resolved">טופלו</button>
+              </div>
+              <div class="module-actions">
+                <button class="btn btn-secondary" id="export-inquiries-btn">
+                  <span class="material-symbols-rounded">download</span>
+                  ייצוא
+                </button>
+              </div>
+            </div>
+
+            <div class="inquiries-filters">
+              <div class="search-box">
+                <span class="material-symbols-rounded">search</span>
+                <input type="text" id="inquiries-search" placeholder="חיפוש פניות...">
+              </div>
+              <select id="inquiries-category-filter" class="filter-select">
+                <option value="">כל הקטגוריות</option>
+                <option value="infrastructure">תשתיות</option>
+                <option value="security">ביטחון</option>
+                <option value="environment">סביבה</option>
+                <option value="education">חינוך</option>
+                <option value="welfare">רווחה</option>
+                <option value="other">אחר</option>
+              </select>
+              <select id="inquiries-date-filter" class="filter-select">
+                <option value="">כל התאריכים</option>
+                <option value="today">היום</option>
+                <option value="week">השבוע</option>
+                <option value="month">החודש</option>
+              </select>
+            </div>
+
+            <div class="tab-content active" id="tab-inquiries-all">
+              <div class="inquiries-table-wrapper">
+                <table class="data-table" id="inquiries-table">
+                  <thead>
+                    <tr>
+                      <th>מספר</th>
+                      <th>נושא</th>
+                      <th>פונה</th>
+                      <th>קטגוריה</th>
+                      <th>סטטוס</th>
+                      <th>תאריך</th>
+                      <th>פעולות</th>
+                    </tr>
+                  </thead>
+                  <tbody id="inquiries-body">
+                  </tbody>
+                </table>
+              </div>
+              <div class="pagination" id="inquiries-pagination"></div>
+            </div>
+
+            <div class="tab-content" id="tab-inquiries-new">
+              <div class="inquiries-cards" id="new-inquiries-grid"></div>
+            </div>
+
+            <div class="tab-content" id="tab-inquiries-in-progress">
+              <div class="inquiries-cards" id="in-progress-inquiries-grid"></div>
+            </div>
+
+            <div class="tab-content" id="tab-inquiries-resolved">
+              <div class="inquiries-cards" id="resolved-inquiries-grid"></div>
+            </div>
+          </section>
+
+          <!-- Meetings Module -->
+          <section class="module" id="module-meetings">
+            <div class="module-header">
+              <div class="module-tabs">
+                <button class="tab-btn active" data-tab="meetings-upcoming">ישיבות קרובות</button>
+                <button class="tab-btn" data-tab="meetings-past">ישיבות קודמות</button>
+                <button class="tab-btn" data-tab="meetings-protocols">פרוטוקולים</button>
+              </div>
+              <div class="module-actions">
+                <button class="btn btn-primary" id="add-meeting-btn">
+                  <span class="material-symbols-rounded">add</span>
+                  ישיבה חדשה
+                </button>
+              </div>
+            </div>
+
+            <div class="tab-content active" id="tab-meetings-upcoming">
+              <div class="meetings-grid" id="upcoming-meetings-grid"></div>
+            </div>
+
+            <div class="tab-content" id="tab-meetings-past">
+              <div class="meetings-grid" id="past-meetings-grid"></div>
+            </div>
+
+            <div class="tab-content" id="tab-meetings-protocols">
+              <div class="protocols-list" id="protocols-list">
+                <div class="protocol-upload-zone" id="protocol-upload-zone">
+                  <span class="material-symbols-rounded">upload_file</span>
+                  <p>גררו קובץ הקלטה לכאן</p>
+                  <p class="small">או לחצו לבחירת קובץ</p>
+                  <input type="file" id="protocol-file-input" accept="audio/*,video/*" hidden>
+                </div>
+                <div class="protocols-table-wrapper">
+                  <table class="data-table" id="protocols-table">
+                    <thead>
+                      <tr>
+                        <th>תאריך ישיבה</th>
+                        <th>סוג ישיבה</th>
+                        <th>משתתפים</th>
+                        <th>סטטוס</th>
+                        <th>פעולות</th>
+                      </tr>
+                    </thead>
+                    <tbody id="protocols-body"></tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <!-- Employees Module -->
+          <section class="module" id="module-employees">
+            <div class="module-header">
+              <div class="module-tabs">
+                <button class="tab-btn active" data-tab="employees-list">רשימת עובדים</button>
+                <button class="tab-btn" data-tab="employees-attendance">נוכחות</button>
+                <button class="tab-btn" data-tab="employees-payroll">שכר ותשלומים</button>
+                <button class="tab-btn" data-tab="employees-schedule">לוח זמנים</button>
+              </div>
+              <div class="module-actions">
+                <button class="btn btn-primary" id="add-employee-btn">
+                  <span class="material-symbols-rounded">person_add</span>
+                  עובד חדש
+                </button>
+              </div>
+            </div>
+
+            <div class="tab-content active" id="tab-employees-list">
+              <div class="employees-grid" id="employees-grid"></div>
+            </div>
+
+            <div class="tab-content" id="tab-employees-attendance">
+              <div class="attendance-header">
+                <div class="attendance-date-selector">
+                  <button class="btn btn-icon" id="prev-date">
+                    <span class="material-symbols-rounded">chevron_right</span>
+                  </button>
+                  <span id="current-attendance-date">היום</span>
+                  <button class="btn btn-icon" id="next-date">
+                    <span class="material-symbols-rounded">chevron_left</span>
+                  </button>
+                </div>
+                <div class="attendance-summary">
+                  <div class="summary-item">
+                    <span class="summary-value" id="attendance-present">0</span>
+                    <span class="summary-label">נוכחים</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="summary-value" id="attendance-absent">0</span>
+                    <span class="summary-label">נעדרים</span>
+                  </div>
+                  <div class="summary-item">
+                    <span class="summary-value" id="attendance-late">0</span>
+                    <span class="summary-label">איחורים</span>
+                  </div>
+                </div>
+              </div>
+              <div class="attendance-table-wrapper">
+                <table class="data-table" id="attendance-table">
+                  <thead>
+                    <tr>
+                      <th>עובד</th>
+                      <th>שעת כניסה</th>
+                      <th>שעת יציאה</th>
+                      <th>סה"כ שעות</th>
+                      <th>סטטוס</th>
+                      <th>פעולות</th>
+                    </tr>
+                  </thead>
+                  <tbody id="attendance-body"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="tab-content" id="tab-employees-payroll">
+              <div class="payroll-summary-cards">
+                <div class="payroll-card">
+                  <span class="payroll-label">סה"כ לתשלום החודש</span>
+                  <span class="payroll-value" id="payroll-total">₪0</span>
+                </div>
+                <div class="payroll-card">
+                  <span class="payroll-label">שולם</span>
+                  <span class="payroll-value paid" id="payroll-paid">₪0</span>
+                </div>
+                <div class="payroll-card">
+                  <span class="payroll-label">ממתין לתשלום</span>
+                  <span class="payroll-value pending" id="payroll-pending">₪0</span>
+                </div>
+              </div>
+              <div class="payroll-table-wrapper">
+                <table class="data-table" id="payroll-table">
+                  <thead>
+                    <tr>
+                      <th>עובד</th>
+                      <th>משכורת בסיס</th>
+                      <th>שעות נוספות</th>
+                      <th>ניכויים</th>
+                      <th>סה"כ</th>
+                      <th>סטטוס</th>
+                      <th>פעולות</th>
+                    </tr>
+                  </thead>
+                  <tbody id="payroll-body"></tbody>
+                </table>
+              </div>
+            </div>
+
+            <div class="tab-content" id="tab-employees-schedule">
+              <div class="schedule-calendar" id="employees-schedule-calendar"></div>
+            </div>
+          </section>
+
+          <!-- Settings Module -->
+          <section class="module" id="module-settings">
+            <div class="settings-grid">
+              <div class="settings-card">
+                <h3>
+                  <span class="material-symbols-rounded">person</span>
+                  פרטי משתמש
+                </h3>
+                <form id="user-settings-form" class="settings-form">
+                  <div class="form-group">
+                    <label>שם מלא</label>
+                    <input type="text" id="settings-name" name="name">
+                  </div>
+                  <div class="form-group">
+                    <label>אימייל</label>
+                    <input type="email" id="settings-email" name="email" disabled>
+                  </div>
+                  <div class="form-group">
+                    <label>טלפון</label>
+                    <input type="tel" id="settings-phone" name="phone">
+                  </div>
+                  <button type="submit" class="btn btn-primary">שמירת שינויים</button>
+                </form>
+              </div>
+
+              <div class="settings-card">
+                <h3>
+                  <span class="material-symbols-rounded">lock</span>
+                  אבטחה
+                </h3>
+                <form id="password-change-form" class="settings-form">
+                  <div class="form-group">
+                    <label>סיסמה נוכחית</label>
+                    <input type="password" id="current-password" name="currentPassword">
+                  </div>
+                  <div class="form-group">
+                    <label>סיסמה חדשה</label>
+                    <input type="password" id="new-password" name="newPassword">
+                  </div>
+                  <div class="form-group">
+                    <label>אימות סיסמה</label>
+                    <input type="password" id="confirm-password" name="confirmPassword">
+                  </div>
+                  <button type="submit" class="btn btn-primary">עדכון סיסמה</button>
+                </form>
+              </div>
+
+              <div class="settings-card">
+                <h3>
+                  <span class="material-symbols-rounded">notifications</span>
+                  התראות
+                </h3>
+                <div class="settings-toggles">
+                  <label class="toggle-label">
+                    <span>התראות אימייל</span>
+                    <input type="checkbox" id="email-notifications" checked>
+                    <span class="toggle-switch"></span>
+                  </label>
+                  <label class="toggle-label">
+                    <span>התראות וואטסאפ</span>
+                    <input type="checkbox" id="whatsapp-notifications" checked>
+                    <span class="toggle-switch"></span>
+                  </label>
+                  <label class="toggle-label">
+                    <span>סיכום יומי</span>
+                    <input type="checkbox" id="daily-summary">
+                    <span class="toggle-switch"></span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="settings-card">
+                <h3>
+                  <span class="material-symbols-rounded">palette</span>
+                  תצוגה
+                </h3>
+                <div class="settings-toggles">
+                  <label class="toggle-label">
+                    <span>מצב כהה</span>
+                    <input type="checkbox" id="dark-mode">
+                    <span class="toggle-switch"></span>
+                  </label>
+                  <label class="toggle-label">
+                    <span>אנימציות</span>
+                    <input type="checkbox" id="animations" checked>
+                    <span class="toggle-switch"></span>
+                  </label>
+                </div>
+              </div>
+
+              <div class="settings-card wide">
+                <h3>
+                  <span class="material-symbols-rounded">admin_panel_settings</span>
+                  ניהול מערכת
+                </h3>
+                <div class="admin-actions">
+                  <button class="btn btn-secondary" id="manage-users-btn">
+                    <span class="material-symbols-rounded">group</span>
+                    ניהול משתמשים
+                  </button>
+                  <button class="btn btn-secondary" id="manage-categories-btn">
+                    <span class="material-symbols-rounded">category</span>
+                    קטגוריות פניות
+                  </button>
+                  <button class="btn btn-secondary" id="email-settings-btn">
+                    <span class="material-symbols-rounded">mail</span>
+                    הגדרות אימייל
+                  </button>
+                  <button class="btn btn-secondary" id="whatsapp-settings-btn">
+                    <span class="material-symbols-rounded">chat</span>
+                    הגדרות וואטסאפ
+                  </button>
+                  <button class="btn btn-secondary" id="backup-btn">
+                    <span class="material-symbols-rounded">backup</span>
+                    גיבוי נתונים
+                  </button>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      </main>
+
+      <!-- Mobile Bottom Navigation -->
+      <nav class="mobile-nav" id="mobile-nav">
+        <a href="#dashboard" class="mobile-nav-item active" data-module="dashboard">
+          <span class="material-symbols-rounded">dashboard</span>
+          <span>בית</span>
+        </a>
+        <a href="#inquiries" class="mobile-nav-item" data-module="inquiries">
+          <span class="material-symbols-rounded">inbox</span>
+          <span>פניות</span>
+          <span class="mobile-badge" id="mobile-inquiries-badge">3</span>
+        </a>
+        <a href="#budget" class="mobile-nav-item" data-module="budget">
+          <span class="material-symbols-rounded">payments</span>
+          <span>תקציב</span>
+        </a>
+        <a href="#meetings" class="mobile-nav-item" data-module="meetings">
+          <span class="material-symbols-rounded">groups</span>
+          <span>ישיבות</span>
+        </a>
+        <a href="#more" class="mobile-nav-item" id="mobile-more-btn">
+          <span class="material-symbols-rounded">more_horiz</span>
+          <span>עוד</span>
+        </a>
       </nav>
-      <button class="mobile-menu-btn" id="mobileMenuBtn">
-        <span></span><span></span><span></span>
-      </button>
     </div>
-  </header>
 
-  <main class="main-content">
-    <!-- Home Page -->
-    <section id="page-home" class="page active">
-      <div class="hero">
-        <div class="container">
-          <h2>ברוכים הבאים למערכת פניות יישוב מיצד</h2>
-          <p>מערכת מתקדמת לניהול פניות ושירות תושבים</p>
-          <div class="hero-buttons">
-            <a href="#submit" class="btn btn-primary btn-large" data-page="submit">הגשת פנייה חדשה</a>
-            <a href="#track" class="btn btn-secondary btn-large" data-page="track">מעקב פנייה קיימת</a>
-          </div>
+    <!-- Mobile More Menu -->
+    <div class="mobile-more-menu hidden" id="mobile-more-menu">
+      <div class="more-menu-overlay"></div>
+      <div class="more-menu-content">
+        <div class="more-menu-header">
+          <h3>תפריט נוסף</h3>
+          <button class="close-more-menu" id="close-more-menu">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+        <div class="more-menu-items">
+          <a href="#planning" class="more-menu-item" data-module="planning">
+            <span class="material-symbols-rounded">architecture</span>
+            <span>תכנון ובנייה</span>
+          </a>
+          <a href="#employees" class="more-menu-item" data-module="employees">
+            <span class="material-symbols-rounded">badge</span>
+            <span>ניהול עובדים</span>
+          </a>
+          <a href="#settings" class="more-menu-item" data-module="settings">
+            <span class="material-symbols-rounded">settings</span>
+            <span>הגדרות</span>
+          </a>
+          <button class="more-menu-item logout" id="mobile-logout-btn">
+            <span class="material-symbols-rounded">logout</span>
+            <span>התנתקות</span>
+          </button>
         </div>
       </div>
-
-      <section class="features">
-        <div class="container">
-          <h3>איך זה עובד?</h3>
-          <div class="features-grid">
-            <div class="feature-card">
-              <div class="feature-icon">📝</div>
-              <h4>הגשת פנייה</h4>
-              <p>מלאו את הטופס עם פרטי הפנייה, בחרו קטגוריה ותארו את הבעיה</p>
-            </div>
-            <div class="feature-card">
-              <div class="feature-icon">📧</div>
-              <h4>אישור במייל</h4>
-              <p>תקבלו אישור במייל עם מספר פנייה ייחודי למעקב</p>
-            </div>
-            <div class="feature-card">
-              <div class="feature-icon">⚡</div>
-              <h4>טיפול מהיר</h4>
-              <p>הפנייה מועברת אוטומטית לצוות הוועד לטיפול</p>
-            </div>
-            <div class="feature-card">
-              <div class="feature-icon">🔔</div>
-              <h4>עדכונים שוטפים</h4>
-              <p>קבלו עדכונים על התקדמות הטיפול בפנייתכם</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="categories-section">
-        <div class="container">
-          <h3>קטגוריות פניות</h3>
-          <div class="categories-grid" id="categoriesGrid">
-            <!-- Categories loaded dynamically -->
-          </div>
-        </div>
-      </section>
-    </section>
-
-    <!-- Submit Request Page -->
-    <section id="page-submit" class="page">
-      <div class="container">
-        <div class="form-container">
-          <h2>הגשת פנייה חדשה</h2>
-          <p class="form-subtitle">מלאו את הפרטים ונטפל בפנייתכם בהקדם</p>
-
-          <form id="requestForm" class="request-form">
-            <fieldset>
-              <legend>פרטי פונה</legend>
-              <div class="form-row">
-                <div class="form-group">
-                  <label for="name">שם מלא *</label>
-                  <input type="text" id="name" name="name" required>
-                </div>
-                <div class="form-group">
-                  <label for="email">אימייל *</label>
-                  <input type="email" id="email" name="email" required>
-                </div>
-              </div>
-              <div class="form-row">
-                <div class="form-group">
-                  <label for="phone">טלפון</label>
-                  <input type="tel" id="phone" name="phone" placeholder="050-1234567">
-                </div>
-                <div class="form-group">
-                  <label for="address">כתובת ביישוב</label>
-                  <input type="text" id="address" name="address">
-                </div>
-              </div>
-            </fieldset>
-
-            <fieldset>
-              <legend>פרטי הפנייה</legend>
-              <div class="form-row">
-                <div class="form-group">
-                  <label for="categoryId">קטגוריה *</label>
-                  <select id="categoryId" name="categoryId" required>
-                    <option value="">בחרו קטגוריה</option>
-                  </select>
-                </div>
-                <div class="form-group">
-                  <label for="priority">דחיפות</label>
-                  <select id="priority" name="priority">
-                    <option value="normal">רגילה</option>
-                    <option value="low">נמוכה</option>
-                    <option value="high">גבוהה</option>
-                    <option value="urgent">דחופה</option>
-                  </select>
-                </div>
-              </div>
-              <div class="form-group">
-                <label for="subject">נושא הפנייה *</label>
-                <input type="text" id="subject" name="subject" required maxlength="200">
-              </div>
-              <div class="form-group">
-                <label for="description">תיאור מפורט</label>
-                <textarea id="description" name="description" rows="5" placeholder="תארו את הבעיה בפירוט..."></textarea>
-              </div>
-              <div class="form-group">
-                <label for="location">מיקום (אם רלוונטי)</label>
-                <input type="text" id="location" name="location" placeholder="למשל: ליד בית הקהילה">
-              </div>
-            </fieldset>
-
-            <div class="form-actions">
-              <button type="submit" class="btn btn-primary btn-large">שליחת פנייה</button>
-              <button type="reset" class="btn btn-secondary">ניקוי טופס</button>
-            </div>
-          </form>
-
-          <div id="submitSuccess" class="success-message hidden">
-            <div class="success-icon">✓</div>
-            <h3>הפנייה נשלחה בהצלחה!</h3>
-            <p>מספר פנייה: <strong id="requestNumber"></strong></p>
-            <p>שמרו את מספר הפנייה למעקב. אישור נשלח לאימייל שלכם.</p>
-            <button class="btn btn-primary" onclick="location.reload()">פנייה חדשה</button>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Track Request Page -->
-    <section id="page-track" class="page">
-      <div class="container">
-        <div class="form-container">
-          <h2>מעקב פנייה</h2>
-          <p class="form-subtitle">הזינו את מספר הפנייה למעקב</p>
-
-          <form id="trackForm" class="track-form">
-            <div class="form-group">
-              <label for="trackNumber">מספר פנייה</label>
-              <input type="text" id="trackNumber" name="trackNumber" placeholder="M2026-0001" required>
-            </div>
-            <button type="submit" class="btn btn-primary">חיפוש</button>
-          </form>
-
-          <div id="trackResult" class="track-result hidden">
-            <!-- Results loaded dynamically -->
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Login Page -->
-    <section id="page-login" class="page">
-      <div class="container">
-        <div class="form-container small">
-          <h2>התחברות למערכת</h2>
-
-          <form id="loginForm" class="login-form">
-            <div class="form-group">
-              <label for="loginEmail">אימייל</label>
-              <input type="email" id="loginEmail" name="email" required>
-            </div>
-            <div class="form-group">
-              <label for="loginPassword">סיסמה</label>
-              <input type="password" id="loginPassword" name="password" required>
-            </div>
-            <button type="submit" class="btn btn-primary btn-full">התחברות</button>
-          </form>
-
-          <div class="form-footer">
-            <p>אין לך חשבון? <a href="#register" data-page="register">הרשמה</a></p>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Register Page -->
-    <section id="page-register" class="page">
-      <div class="container">
-        <div class="form-container small">
-          <h2>הרשמה למערכת</h2>
-
-          <form id="registerForm" class="register-form">
-            <div class="form-group">
-              <label for="regName">שם מלא *</label>
-              <input type="text" id="regName" name="name" required>
-            </div>
-            <div class="form-group">
-              <label for="regEmail">אימייל *</label>
-              <input type="email" id="regEmail" name="email" required>
-            </div>
-            <div class="form-group">
-              <label for="regPhone">טלפון</label>
-              <input type="tel" id="regPhone" name="phone">
-            </div>
-            <div class="form-group">
-              <label for="regAddress">כתובת ביישוב</label>
-              <input type="text" id="regAddress" name="address">
-            </div>
-            <div class="form-group">
-              <label for="regPassword">סיסמה *</label>
-              <input type="password" id="regPassword" name="password" required minlength="6">
-            </div>
-            <div class="form-group">
-              <label for="regPasswordConfirm">אימות סיסמה *</label>
-              <input type="password" id="regPasswordConfirm" name="passwordConfirm" required minlength="6">
-            </div>
-            <button type="submit" class="btn btn-primary btn-full">הרשמה</button>
-          </form>
-
-          <div class="form-footer">
-            <p>יש לך חשבון? <a href="#login" data-page="login">התחברות</a></p>
-          </div>
-        </div>
-      </div>
-    </section>
-  </main>
-
-  <footer class="main-footer">
-    <div class="container">
-      <p>&copy; 2026 יישוב מיצד - מערכת ניהול פניות</p>
     </div>
-  </footer>
 
-  <!-- Toast notifications -->
-  <div id="toast" class="toast hidden"></div>
+    <!-- Modals -->
+    <div class="modal-overlay hidden" id="modal-overlay">
+      <div class="modal" id="modal">
+        <div class="modal-header">
+          <h3 id="modal-title">כותרת</h3>
+          <button class="modal-close" id="modal-close">
+            <span class="material-symbols-rounded">close</span>
+          </button>
+        </div>
+        <div class="modal-body" id="modal-body">
+        </div>
+        <div class="modal-footer" id="modal-footer">
+        </div>
+      </div>
+    </div>
 
-  <script src="/js/main.js"></script>
+    <!-- Toast Notifications -->
+    <div class="toast-container" id="toast-container"></div>
+
+    <!-- Loading Overlay -->
+    <div class="loading-overlay hidden" id="loading-overlay">
+      <div class="loading-spinner">
+        <div class="spinner"></div>
+        <p>טוען...</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Firebase SDK -->
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-storage-compat.js"></script>
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+
+  <!-- App Scripts -->
+  <script src="/js/firebase-config.js"></script>
+  <script src="/js/utils.js"></script>
+  <script src="/js/auth.js"></script>
+  <script src="/js/navigation.js"></script>
+  <script src="/js/dashboard.js"></script>
+  <script src="/js/budget.js"></script>
+  <script src="/js/planning.js"></script>
+  <script src="/js/inquiries.js"></script>
+  <script src="/js/meetings.js"></script>
+  <script src="/js/employees.js"></script>
+  <script src="/js/settings.js"></script>
+  <script src="/js/app.js"></script>
 </body>
 </html>

@@ -1,513 +1,478 @@
-// API Base URL
-const API_BASE = '/api';
+// Budget Management Module for Meitzad Management System
 
-// State
-let currentUser = null;
-let authToken = localStorage.getItem('authToken');
-let transactions = [];
-let budgetAllocations = [];
-let currentYear = new Date().getFullYear();
-let expensesPieChart = null;
-let monthlyTrendChart = null;
+const Budget = {
+  charts: {},
+  currentPeriod: 'month',
+  transactionsPerPage: 20,
+  currentPage: 1,
 
-// Category translations
-const EXPENSE_CATEGORIES = {
-  salaries: { name: 'משכורות', icon: '💰', color: '#4CAF50' },
-  maintenance: { name: 'תחזוקה', icon: '🔧', color: '#2196F3' },
-  utilities: { name: 'חשבונות', icon: '⚡', color: '#FF9800' },
-  events: { name: 'אירועים', icon: '🎉', color: '#9C27B0' },
-  security: { name: 'ביטחון', icon: '🔒', color: '#F44336' },
-  education: { name: 'חינוך', icon: '📚', color: '#00BCD4' },
-  infrastructure: { name: 'תשתיות', icon: '🏗️', color: '#795548' },
-  other: { name: 'אחר', icon: '📋', color: '#607D8B' }
-};
+  init() {
+    this.setupEventListeners();
+  },
 
-const INCOME_CATEGORIES = {
-  taxes: { name: 'ארנונה', icon: '🏠', color: '#4CAF50' },
-  fees: { name: 'אגרות', icon: '📝', color: '#2196F3' },
-  grants: { name: 'מענקים', icon: '🎁', color: '#FF9800' },
-  rentals: { name: 'השכרות', icon: '🏛️', color: '#9C27B0' },
-  donations: { name: 'תרומות', icon: '❤️', color: '#E91E63' },
-  other: { name: 'אחר', icon: '📋', color: '#607D8B' }
-};
+  setupEventListeners() {
+    const addBtn = document.getElementById('add-transaction-btn');
+    if (addBtn) {
+      addBtn.addEventListener('click', () => this.showAddTransactionModal());
+    }
 
-// ==================== Initialization ====================
-
-document.addEventListener('DOMContentLoaded', () => {
-  checkAuth();
-  document.getElementById('transDate').value = new Date().toISOString().split('T')[0];
-  updateCategoryOptions();
-});
-
-// ==================== Authentication ====================
-
-async function checkAuth() {
-  if (!authToken) {
-    window.location.href = '/#login';
-    return;
-  }
-
-  try {
-    const response = await fetch(`${API_BASE}/auth/me`, {
-      headers: { 'Authorization': `Bearer ${authToken}` }
+    document.querySelectorAll('.report-card').forEach(card => {
+      card.addEventListener('click', () => {
+        const reportType = card.dataset.report;
+        this.generateReport(reportType);
+      });
     });
+  },
 
-    if (response.ok) {
-      const data = await response.json();
-      currentUser = data.user;
+  async load() {
+    Utils.showLoading();
 
-      if (!['super_admin', 'admin'].includes(currentUser.role)) {
-        showToast('אין לך הרשאת גישה לניהול תקציב', 'error');
-        window.location.href = '/admin/dashboard.html';
+    try {
+      await Promise.all([
+        this.loadSummary(),
+        this.loadLineChart(),
+        this.loadRecentTransactions()
+      ]);
+    } catch (error) {
+      console.error('Budget load error:', error);
+      Utils.toast('שגיאה בטעינת נתוני תקציב', 'error');
+    } finally {
+      Utils.hideLoading();
+    }
+  },
+
+  async loadSummary() {
+    try {
+      const now = new Date();
+      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
+      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).getTime();
+
+      const snapshot = await firebaseDB.ref('transactions')
+        .orderByChild('date')
+        .startAt(startOfMonth)
+        .endAt(endOfMonth)
+        .once('value');
+
+      const transactions = snapshot.val() || {};
+
+      let totalIncome = 0;
+      let totalExpenses = 0;
+
+      Object.values(transactions).forEach(tx => {
+        if (tx.type === 'income') {
+          totalIncome += tx.amount;
+        } else {
+          totalExpenses += tx.amount;
+        }
+      });
+
+      const balance = totalIncome - totalExpenses;
+
+      document.getElementById('total-income').textContent = Utils.formatCurrency(totalIncome);
+      document.getElementById('total-expenses').textContent = Utils.formatCurrency(totalExpenses);
+      document.getElementById('total-balance').textContent = Utils.formatCurrency(balance);
+
+      const balanceEl = document.getElementById('total-balance');
+      if (balance >= 0) {
+        balanceEl.style.color = 'var(--success-600)';
+      } else {
+        balanceEl.style.color = 'var(--error-600)';
+      }
+
+    } catch (error) {
+      console.error('Error loading budget summary:', error);
+    }
+  },
+
+  async loadLineChart() {
+    const canvas = document.getElementById('budget-line-chart');
+    if (!canvas) return;
+
+    try {
+      const months = [];
+      const incomeData = [];
+      const expensesData = [];
+
+      for (let i = 5; i >= 0; i--) {
+        const date = new Date();
+        date.setMonth(date.getMonth() - i);
+
+        const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1).getTime();
+        const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59).getTime();
+
+        months.push(Utils.getHebrewMonth(date.getMonth()));
+
+        const snapshot = await firebaseDB.ref('transactions')
+          .orderByChild('date')
+          .startAt(startOfMonth)
+          .endAt(endOfMonth)
+          .once('value');
+
+        const transactions = snapshot.val() || {};
+
+        let income = 0;
+        let expenses = 0;
+
+        Object.values(transactions).forEach(tx => {
+          if (tx.type === 'income') {
+            income += tx.amount;
+          } else {
+            expenses += tx.amount;
+          }
+        });
+
+        incomeData.push(income);
+        expensesData.push(expenses);
+      }
+
+      if (this.charts.line) {
+        this.charts.line.destroy();
+      }
+
+      this.charts.line = new Chart(canvas, {
+        type: 'line',
+        data: {
+          labels: months,
+          datasets: [
+            {
+              label: 'הכנסות',
+              data: incomeData,
+              borderColor: '#10b981',
+              backgroundColor: 'rgba(16, 185, 129, 0.1)',
+              fill: true,
+              tension: 0.4,
+              pointRadius: 4,
+              pointHoverRadius: 6
+            },
+            {
+              label: 'הוצאות',
+              data: expensesData,
+              borderColor: '#ef4444',
+              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+              fill: true,
+              tension: 0.4,
+              pointRadius: 4,
+              pointHoverRadius: 6
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+              rtl: true,
+              labels: {
+                font: { family: 'Heebo' },
+                usePointStyle: true
+              }
+            },
+            tooltip: {
+              rtl: true,
+              callbacks: {
+                label: (context) => ` ${context.dataset.label}: ${Utils.formatCurrency(context.raw)}`
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: {
+                callback: (value) => Utils.formatCurrency(value)
+              }
+            }
+          },
+          interaction: {
+            intersect: false,
+            mode: 'index'
+          }
+        }
+      });
+
+    } catch (error) {
+      console.error('Error loading budget chart:', error);
+    }
+  },
+
+  async loadRecentTransactions() {
+    const tbody = document.getElementById('transactions-body');
+    if (!tbody) return;
+
+    try {
+      const snapshot = await firebaseDB.ref('transactions')
+        .orderByChild('date')
+        .limitToLast(this.transactionsPerPage)
+        .once('value');
+
+      const transactions = snapshot.val();
+
+      if (!transactions || Object.keys(transactions).length === 0) {
+        tbody.innerHTML = `
+          <tr>
+            <td colspan="5" class="empty-state small">
+              <span class="material-symbols-rounded">receipt_long</span>
+              <p>אין תנועות להצגה</p>
+            </td>
+          </tr>
+        `;
         return;
       }
 
-      document.getElementById('userName').textContent = `שלום, ${currentUser.name}`;
-      loadBudgetData();
-    } else {
-      logout();
+      const txArray = Object.entries(transactions)
+        .map(([id, data]) => ({ id, ...data }))
+        .sort((a, b) => b.date - a.date);
+
+      tbody.innerHTML = txArray.map(tx => `
+        <tr>
+          <td>${Utils.formatDate(tx.date)}</td>
+          <td>${tx.description}</td>
+          <td>
+            <span class="transaction-category">${Utils.getCategoryLabel(tx.category)}</span>
+          </td>
+          <td>
+            <span class="transaction-amount ${tx.type}">
+              ${tx.type === 'income' ? '+' : '-'}${Utils.formatCurrency(tx.amount)}
+            </span>
+          </td>
+          <td>
+            <div class="table-actions">
+              <button class="table-action-btn edit" onclick="Budget.editTransaction('${tx.id}')" title="עריכה">
+                <span class="material-symbols-rounded">edit</span>
+              </button>
+              <button class="table-action-btn delete" onclick="Budget.deleteTransaction('${tx.id}')" title="מחיקה">
+                <span class="material-symbols-rounded">delete</span>
+              </button>
+            </div>
+          </td>
+        </tr>
+      `).join('');
+
+    } catch (error) {
+      console.error('Error loading transactions:', error);
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="5" class="empty-state small">
+            <span class="material-symbols-rounded">error</span>
+            <p>שגיאה בטעינת תנועות</p>
+          </td>
+        </tr>
+      `;
     }
-  } catch (error) {
-    console.error('Auth check error:', error);
-    loadSampleData();
-  }
-}
+  },
 
-function logout() {
-  localStorage.removeItem('authToken');
-  window.location.href = '/#login';
-}
+  showAddTransactionModal(transaction = null) {
+    const isEdit = !!transaction;
 
-// ==================== Data Loading ====================
-
-async function loadBudgetData() {
-  const year = document.getElementById('yearSelect').value;
-  currentYear = parseInt(year);
-
-  try {
-    const [transRes, allocRes] = await Promise.all([
-      fetch(`${API_BASE}/budget/transactions?year=${year}`, { headers: { 'Authorization': `Bearer ${authToken}` } }),
-      fetch(`${API_BASE}/budget/allocations?year=${year}`, { headers: { 'Authorization': `Bearer ${authToken}` } })
-    ]);
-
-    if (transRes.ok) transactions = await transRes.json();
-    if (allocRes.ok) budgetAllocations = await allocRes.json();
-  } catch (error) {
-    console.error('Load budget error:', error);
-    loadSampleData();
-  }
-
-  updateStats();
-  renderCharts();
-  renderBudgetCategories();
-  renderTransactions();
-}
-
-function loadSampleData() {
-  // Sample transactions
-  transactions = [
-    { id: 1, date: '2026-01-15', type: 'expense', category: 'salaries', description: 'משכורות ינואר', amount: 45000, vendor: 'צוות עובדים' },
-    { id: 2, date: '2026-01-10', type: 'expense', category: 'utilities', description: 'חשמל - דצמבר', amount: 8500, vendor: 'חברת החשמל' },
-    { id: 3, date: '2026-01-08', type: 'expense', category: 'maintenance', description: 'תיקון גינות', amount: 3200, vendor: 'גן ירוק בע"מ' },
-    { id: 4, date: '2026-01-05', type: 'income', category: 'taxes', description: 'ארנונה ינואר', amount: 85000, vendor: 'תושבים' },
-    { id: 5, date: '2026-01-03', type: 'expense', category: 'security', description: 'שירותי שמירה', amount: 12000, vendor: 'חברת אבטחה' },
-    { id: 6, date: '2025-12-28', type: 'expense', category: 'events', description: 'אירוע סוף שנה', amount: 15000, vendor: 'הפקות חגים' },
-    { id: 7, date: '2025-12-20', type: 'income', category: 'grants', description: 'מענק ממשלתי', amount: 50000, vendor: 'משרד הפנים' },
-    { id: 8, date: '2025-12-15', type: 'expense', category: 'salaries', description: 'משכורות דצמבר', amount: 45000, vendor: 'צוות עובדים' }
-  ];
-
-  // Sample budget allocations
-  budgetAllocations = [
-    { category: 'salaries', allocated: 540000, spent: 90000 },
-    { category: 'maintenance', allocated: 120000, spent: 15000 },
-    { category: 'utilities', allocated: 100000, spent: 8500 },
-    { category: 'events', allocated: 80000, spent: 15000 },
-    { category: 'security', allocated: 150000, spent: 12000 },
-    { category: 'education', allocated: 60000, spent: 0 },
-    { category: 'infrastructure', allocated: 200000, spent: 0 },
-    { category: 'other', allocated: 50000, spent: 0 }
-  ];
-
-  updateStats();
-  renderCharts();
-  renderBudgetCategories();
-  renderTransactions();
-}
-
-// ==================== Stats ====================
-
-function updateStats() {
-  const income = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
-  const expenses = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
-  const balance = income - expenses;
-
-  const totalAllocated = budgetAllocations.reduce((sum, a) => sum + a.allocated, 0);
-  const totalSpent = budgetAllocations.reduce((sum, a) => sum + a.spent, 0);
-  const budgetUsed = totalAllocated > 0 ? Math.round((totalSpent / totalAllocated) * 100) : 0;
-
-  document.getElementById('totalIncome').textContent = `₪${income.toLocaleString()}`;
-  document.getElementById('totalExpenses').textContent = `₪${expenses.toLocaleString()}`;
-  document.getElementById('balance').textContent = `₪${balance.toLocaleString()}`;
-  document.getElementById('budgetUsed').textContent = `${budgetUsed}%`;
-
-  // Color balance based on positive/negative
-  const balanceEl = document.getElementById('balance');
-  balanceEl.style.color = balance >= 0 ? 'var(--success-main)' : 'var(--error-main)';
-}
-
-// ==================== Charts ====================
-
-function renderCharts() {
-  renderExpensesPieChart();
-  renderMonthlyTrendChart();
-}
-
-function renderExpensesPieChart() {
-  const ctx = document.getElementById('expensesPieChart').getContext('2d');
-
-  // Group expenses by category
-  const expensesByCategory = {};
-  transactions.filter(t => t.type === 'expense').forEach(t => {
-    expensesByCategory[t.category] = (expensesByCategory[t.category] || 0) + t.amount;
-  });
-
-  const labels = Object.keys(expensesByCategory).map(k => EXPENSE_CATEGORIES[k]?.name || k);
-  const data = Object.values(expensesByCategory);
-  const colors = Object.keys(expensesByCategory).map(k => EXPENSE_CATEGORIES[k]?.color || '#607D8B');
-
-  if (expensesPieChart) expensesPieChart.destroy();
-
-  expensesPieChart = new Chart(ctx, {
-    type: 'doughnut',
-    data: {
-      labels,
-      datasets: [{
-        data,
-        backgroundColor: colors,
-        borderWidth: 2,
-        borderColor: '#fff'
-      }]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          position: 'right',
-          rtl: true,
-          labels: {
-            font: { family: 'Heebo' },
-            usePointStyle: true
-          }
-        },
-        tooltip: {
-          callbacks: {
-            label: (context) => `${context.label}: ₪${context.raw.toLocaleString()}`
-          }
-        }
-      }
-    }
-  });
-}
-
-function renderMonthlyTrendChart() {
-  const ctx = document.getElementById('monthlyTrendChart').getContext('2d');
-
-  const months = ['ינואר', 'פברואר', 'מרץ', 'אפריל', 'מאי', 'יוני', 'יולי', 'אוגוסט', 'ספטמבר', 'אוקטובר', 'נובמבר', 'דצמבר'];
-
-  // Group by month
-  const incomeByMonth = Array(12).fill(0);
-  const expensesByMonth = Array(12).fill(0);
-
-  transactions.forEach(t => {
-    const month = new Date(t.date).getMonth();
-    if (t.type === 'income') {
-      incomeByMonth[month] += t.amount;
-    } else {
-      expensesByMonth[month] += t.amount;
-    }
-  });
-
-  if (monthlyTrendChart) monthlyTrendChart.destroy();
-
-  monthlyTrendChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-      labels: months,
-      datasets: [
-        {
-          label: 'הכנסות',
-          data: incomeByMonth,
-          borderColor: '#4CAF50',
-          backgroundColor: 'rgba(76, 175, 80, 0.1)',
-          fill: true,
-          tension: 0.4
-        },
-        {
-          label: 'הוצאות',
-          data: expensesByMonth,
-          borderColor: '#F44336',
-          backgroundColor: 'rgba(244, 67, 54, 0.1)',
-          fill: true,
-          tension: 0.4
-        }
-      ]
-    },
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      plugins: {
-        legend: {
-          rtl: true,
-          labels: { font: { family: 'Heebo' } }
-        },
-        tooltip: {
-          callbacks: {
-            label: (context) => `${context.dataset.label}: ₪${context.raw.toLocaleString()}`
-          }
-        }
-      },
-      scales: {
-        y: {
-          beginAtZero: true,
-          ticks: {
-            callback: (value) => `₪${value.toLocaleString()}`
-          }
-        }
-      }
-    }
-  });
-}
-
-// ==================== Budget Categories ====================
-
-function renderBudgetCategories() {
-  const container = document.getElementById('budgetCategories');
-
-  container.innerHTML = budgetAllocations.map(alloc => {
-    const cat = EXPENSE_CATEGORIES[alloc.category] || { name: alloc.category, icon: '📋', color: '#607D8B' };
-    const percentage = alloc.allocated > 0 ? Math.round((alloc.spent / alloc.allocated) * 100) : 0;
-    const remaining = alloc.allocated - alloc.spent;
-
-    return `
-      <div class="budget-category-card">
-        <div class="category-header">
-          <span class="category-icon" style="background: ${cat.color}20; color: ${cat.color}">${cat.icon}</span>
-          <div class="category-info">
-            <h4>${cat.name}</h4>
-            <span class="category-allocated">תקציב: ₪${alloc.allocated.toLocaleString()}</span>
-          </div>
-          <span class="category-percentage ${percentage > 90 ? 'danger' : percentage > 70 ? 'warning' : ''}">${percentage}%</span>
-        </div>
-        <div class="category-progress">
-          <div class="progress-bar">
-            <div class="progress-fill" style="width: ${Math.min(percentage, 100)}%; background: ${cat.color}"></div>
+    const content = `
+      <form id="transaction-form" class="modal-form">
+        <div class="form-group">
+          <label>סוג תנועה *</label>
+          <div class="radio-group">
+            <label class="radio-label">
+              <input type="radio" name="type" value="income" ${!isEdit || transaction?.type === 'income' ? 'checked' : ''}>
+              <span class="radio-custom"></span>
+              הכנסה
+            </label>
+            <label class="radio-label">
+              <input type="radio" name="type" value="expense" ${transaction?.type === 'expense' ? 'checked' : ''}>
+              <span class="radio-custom"></span>
+              הוצאה
+            </label>
           </div>
         </div>
-        <div class="category-footer">
-          <span>נוצל: ₪${alloc.spent.toLocaleString()}</span>
-          <span>נותר: ₪${remaining.toLocaleString()}</span>
+
+        <div class="form-group">
+          <label for="tx-date">תאריך *</label>
+          <input type="date" id="tx-date" name="date" required
+            value="${transaction ? new Date(transaction.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]}">
         </div>
-      </div>
+
+        <div class="form-group">
+          <label for="tx-amount">סכום (₪) *</label>
+          <input type="number" id="tx-amount" name="amount" required min="0" step="0.01"
+            value="${transaction?.amount || ''}" placeholder="0">
+        </div>
+
+        <div class="form-group">
+          <label for="tx-category">קטגוריה *</label>
+          <select id="tx-category" name="category" required>
+            <option value="">בחרו קטגוריה</option>
+            <option value="infrastructure" ${transaction?.category === 'infrastructure' ? 'selected' : ''}>תשתיות</option>
+            <option value="maintenance" ${transaction?.category === 'maintenance' ? 'selected' : ''}>תחזוקה</option>
+            <option value="security" ${transaction?.category === 'security' ? 'selected' : ''}>ביטחון</option>
+            <option value="education" ${transaction?.category === 'education' ? 'selected' : ''}>חינוך</option>
+            <option value="welfare" ${transaction?.category === 'welfare' ? 'selected' : ''}>רווחה</option>
+            <option value="employees" ${transaction?.category === 'employees' ? 'selected' : ''}>עובדים</option>
+            <option value="taxes" ${transaction?.category === 'taxes' ? 'selected' : ''}>מיסים ואגרות</option>
+            <option value="other" ${transaction?.category === 'other' ? 'selected' : ''}>אחר</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label for="tx-description">תיאור *</label>
+          <input type="text" id="tx-description" name="description" required
+            value="${transaction?.description || ''}" placeholder="תיאור התנועה">
+        </div>
+
+        <div class="form-group">
+          <label for="tx-notes">הערות</label>
+          <textarea id="tx-notes" name="notes" rows="3"
+            placeholder="הערות נוספות (אופציונלי)">${transaction?.notes || ''}</textarea>
+        </div>
+      </form>
     `;
-  }).join('');
-}
 
-// ==================== Transactions ====================
-
-function renderTransactions() {
-  const tbody = document.getElementById('transactionsTable');
-  const recent = transactions.slice(0, 10);
-
-  if (recent.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="6" class="loading">אין תנועות</td></tr>';
-    return;
-  }
-
-  tbody.innerHTML = recent.map(t => {
-    const cat = t.type === 'expense' ? EXPENSE_CATEGORIES[t.category] : INCOME_CATEGORIES[t.category];
-    return `
-      <tr>
-        <td>${formatDate(t.date)}</td>
-        <td>${t.description}</td>
-        <td>${cat?.icon || ''} ${cat?.name || t.category}</td>
-        <td><span class="type-badge type-${t.type}">${t.type === 'income' ? 'הכנסה' : 'הוצאה'}</span></td>
-        <td class="amount ${t.type === 'income' ? 'positive' : 'negative'}">
-          ${t.type === 'income' ? '+' : '-'}₪${t.amount.toLocaleString()}
-        </td>
-        <td>
-          <button class="action-btn" onclick="editTransaction(${t.id})" title="עריכה">✏️</button>
-          <button class="action-btn" onclick="deleteTransaction(${t.id})" title="מחיקה">🗑️</button>
-        </td>
-      </tr>
+    const footer = `
+      <button class="btn btn-secondary" onclick="Utils.closeModal()">ביטול</button>
+      <button class="btn btn-primary" onclick="Budget.saveTransaction('${transaction?.id || ''}')">${isEdit ? 'שמור שינויים' : 'הוסף תנועה'}</button>
     `;
-  }).join('');
-}
 
-// ==================== Transaction Actions ====================
+    Utils.openModal(isEdit ? 'עריכת תנועה' : 'תנועה חדשה', content, footer);
+  },
 
-function showAddTransactionModal() {
-  document.getElementById('modalTitle').textContent = 'הוספת תנועה';
-  document.getElementById('transactionForm').reset();
-  document.getElementById('transDate').value = new Date().toISOString().split('T')[0];
-  updateCategoryOptions();
-  document.getElementById('transactionModal').classList.remove('hidden');
-}
+  async saveTransaction(existingId = '') {
+    const form = document.getElementById('transaction-form');
+    if (!form.checkValidity()) {
+      form.reportValidity();
+      return;
+    }
 
-function updateCategoryOptions() {
-  const type = document.getElementById('transType').value;
-  const select = document.getElementById('transCategory');
-  const categories = type === 'income' ? INCOME_CATEGORIES : EXPENSE_CATEGORIES;
+    const formData = new FormData(form);
+    const data = {
+      type: formData.get('type'),
+      date: new Date(formData.get('date')).getTime(),
+      amount: parseFloat(formData.get('amount')),
+      category: formData.get('category'),
+      description: formData.get('description'),
+      notes: formData.get('notes') || '',
+      updatedAt: Date.now(),
+      updatedBy: Auth.getUid()
+    };
 
-  select.innerHTML = '<option value="">בחר קטגוריה</option>' +
-    Object.entries(categories).map(([key, cat]) =>
-      `<option value="${key}">${cat.icon} ${cat.name}</option>`
-    ).join('');
-}
+    if (!existingId) {
+      data.createdAt = Date.now();
+      data.createdBy = Auth.getUid();
+    }
 
-async function saveTransaction() {
-  const formData = {
-    type: document.getElementById('transType').value,
-    date: document.getElementById('transDate').value,
-    category: document.getElementById('transCategory').value,
-    amount: parseFloat(document.getElementById('transAmount').value),
-    description: document.getElementById('transDescription').value,
-    notes: document.getElementById('transNotes').value,
-    vendor: document.getElementById('transVendor').value,
-    invoice_number: document.getElementById('transInvoice').value
-  };
+    try {
+      if (existingId) {
+        await firebaseDB.ref(`transactions/${existingId}`).update(data);
+        Utils.toast('התנועה עודכנה בהצלחה', 'success');
+      } else {
+        await firebaseDB.ref('transactions').push(data);
+        Utils.toast('התנועה נוספה בהצלחה', 'success');
+      }
 
-  if (!formData.category || !formData.amount || !formData.description) {
-    showToast('נא למלא את כל השדות הנדרשים', 'error');
-    return;
-  }
+      Utils.closeModal();
+      this.load();
 
-  try {
-    const response = await fetch(`${API_BASE}/budget/transactions`, {
-      method: 'POST',
-      headers: {
-        'Authorization': `Bearer ${authToken}`,
-        'Content-Type': 'application/json'
+    } catch (error) {
+      console.error('Error saving transaction:', error);
+      Utils.toast('שגיאה בשמירת התנועה', 'error');
+    }
+  },
+
+  async editTransaction(id) {
+    try {
+      const snapshot = await firebaseDB.ref(`transactions/${id}`).once('value');
+      const transaction = snapshot.val();
+
+      if (transaction) {
+        this.showAddTransactionModal({ id, ...transaction });
+      } else {
+        Utils.toast('התנועה לא נמצאה', 'error');
+      }
+    } catch (error) {
+      console.error('Error loading transaction:', error);
+      Utils.toast('שגיאה בטעינת התנועה', 'error');
+    }
+  },
+
+  deleteTransaction(id) {
+    Utils.confirm(
+      'מחיקת תנועה',
+      'האם אתה בטוח שברצונך למחוק תנועה זו? פעולה זו לא ניתנת לביטול.',
+      async () => {
+        try {
+          await firebaseDB.ref(`transactions/${id}`).remove();
+          Utils.toast('התנועה נמחקה', 'success');
+          this.load();
+        } catch (error) {
+          console.error('Error deleting transaction:', error);
+          Utils.toast('שגיאה במחיקת התנועה', 'error');
+        }
       },
-      body: JSON.stringify(formData)
-    });
+      'מחק',
+      'ביטול'
+    );
+  },
 
-    if (response.ok) {
-      showToast('התנועה נשמרה בהצלחה', 'success');
-      closeModal();
-      loadBudgetData();
-    } else {
-      throw new Error('Save failed');
-    }
-  } catch (error) {
-    // For demo, add to local data
-    formData.id = Math.max(...transactions.map(t => t.id), 0) + 1;
-    transactions.unshift(formData);
+  generateReport(type) {
+    const typeLabels = {
+      monthly: 'חודשי',
+      quarterly: 'רבעוני',
+      annual: 'שנתי',
+      custom: 'מותאם'
+    };
 
-    // Update budget allocation
-    if (formData.type === 'expense') {
-      const alloc = budgetAllocations.find(a => a.category === formData.category);
-      if (alloc) alloc.spent += formData.amount;
-    }
+    Utils.toast(`מייצר דוח ${typeLabels[type] || type}...`, 'info');
 
-    showToast('התנועה נשמרה בהצלחה', 'success');
-    closeModal();
-    updateStats();
-    renderCharts();
-    renderBudgetCategories();
-    renderTransactions();
+    setTimeout(() => {
+      Utils.toast('תכונת הדוחות תהיה זמינה בקרוב', 'warning');
+    }, 1500);
+  },
+
+  cleanup() {
+    Object.values(this.charts).forEach(chart => chart.destroy());
+    this.charts = {};
   }
-}
+};
 
-function editTransaction(id) {
-  const trans = transactions.find(t => t.id === id);
-  if (!trans) return;
-
-  document.getElementById('modalTitle').textContent = 'עריכת תנועה';
-  document.getElementById('transType').value = trans.type;
-  updateCategoryOptions();
-  document.getElementById('transDate').value = trans.date;
-  document.getElementById('transCategory').value = trans.category;
-  document.getElementById('transAmount').value = trans.amount;
-  document.getElementById('transDescription').value = trans.description;
-  document.getElementById('transNotes').value = trans.notes || '';
-  document.getElementById('transVendor').value = trans.vendor || '';
-  document.getElementById('transInvoice').value = trans.invoice_number || '';
-
-  document.getElementById('transactionModal').classList.remove('hidden');
-}
-
-async function deleteTransaction(id) {
-  if (!confirm('האם אתה בטוח שברצונך למחוק את התנועה?')) return;
-
-  try {
-    const response = await fetch(`${API_BASE}/budget/transactions/${id}`, {
-      method: 'DELETE',
-      headers: { 'Authorization': `Bearer ${authToken}` }
-    });
-
-    if (response.ok) {
-      showToast('התנועה נמחקה', 'success');
-      loadBudgetData();
-    } else {
-      throw new Error('Delete failed');
-    }
-  } catch (error) {
-    transactions = transactions.filter(t => t.id !== id);
-    showToast('התנועה נמחקה', 'success');
-    updateStats();
-    renderCharts();
-    renderTransactions();
+// Add CSS for radio buttons
+const radioStyles = document.createElement('style');
+radioStyles.textContent = `
+  .radio-group {
+    display: flex;
+    gap: var(--space-4);
   }
-}
+  .radio-label {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    cursor: pointer;
+    font-weight: var(--font-medium);
+  }
+  .radio-label input[type="radio"] {
+    display: none;
+  }
+  .radio-custom {
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--color-border-secondary);
+    border-radius: 50%;
+    position: relative;
+    transition: all var(--transition-fast);
+  }
+  .radio-custom::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) scale(0);
+    width: 10px;
+    height: 10px;
+    background: var(--primary-600);
+    border-radius: 50%;
+    transition: transform var(--transition-fast);
+  }
+  .radio-label input[type="radio"]:checked + .radio-custom {
+    border-color: var(--primary-600);
+  }
+  .radio-label input[type="radio"]:checked + .radio-custom::after {
+    transform: translate(-50%, -50%) scale(1);
+  }
+`;
+document.head.appendChild(radioStyles);
 
-function closeModal() {
-  document.getElementById('transactionModal').classList.add('hidden');
-}
-
-function exportReport() {
-  showToast('ייצוא דו"ח בקרוב...', 'info');
-}
-
-function showAllTransactions() {
-  showToast('תצוגת כל התנועות בקרוב...', 'info');
-}
-
-function showBudgetAllocationModal() {
-  showToast('עריכת הקצאות תקציב בקרוב...', 'info');
-}
-
-// ==================== Sidebar ====================
-
-function toggleSidebar() {
-  document.querySelector('.admin-sidebar').classList.toggle('open');
-}
-
-// ==================== Utilities ====================
-
-function formatDate(dateString) {
-  if (!dateString) return '-';
-  return new Date(dateString).toLocaleDateString('he-IL');
-}
-
-function showToast(message, type = 'info') {
-  const toast = document.getElementById('toast');
-  toast.textContent = message;
-  toast.className = `toast ${type}`;
-  toast.classList.remove('hidden');
-  setTimeout(() => toast.classList.add('hidden'), 4000);
-}
-
-// Global functions
-window.showAddTransactionModal = showAddTransactionModal;
-window.saveTransaction = saveTransaction;
-window.editTransaction = editTransaction;
-window.deleteTransaction = deleteTransaction;
-window.updateCategoryOptions = updateCategoryOptions;
-window.closeModal = closeModal;
-window.exportReport = exportReport;
-window.showAllTransactions = showAllTransactions;
-window.showBudgetAllocationModal = showBudgetAllocationModal;
-window.loadBudgetData = loadBudgetData;
-window.toggleSidebar = toggleSidebar;
-window.logout = logout;
+window.Budget = Budget;
