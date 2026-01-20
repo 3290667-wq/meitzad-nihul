@@ -1,24 +1,76 @@
 // Authentication Module for Meitzad Management System
+// Uses Backend API (not Firebase)
 
 const Auth = {
   currentUser: null,
   userData: null,
+  token: null,
 
-  // Initialize auth state listener
+  // Initialize auth state from localStorage
   init() {
-    firebaseAuth.onAuthStateChanged(async (user) => {
-      if (user) {
-        this.currentUser = user;
-        await this.loadUserData(user.uid);
-        this.onAuthSuccess();
-      } else {
-        this.currentUser = null;
-        this.userData = null;
+    // Check for saved token
+    this.token = localStorage.getItem('meitzad_token');
+    const savedUser = localStorage.getItem('meitzad_user');
+
+    if (this.token && savedUser) {
+      try {
+        this.userData = JSON.parse(savedUser);
+        this.currentUser = this.userData;
+        this.verifyToken();
+      } catch (e) {
+        this.clearAuth();
         this.onAuthFailure();
       }
-    });
+    } else {
+      this.onAuthFailure();
+    }
 
     this.setupEventListeners();
+  },
+
+  // Verify token is still valid
+  async verifyToken() {
+    try {
+      const response = await this.apiRequest('/api/auth/me');
+      if (response.user) {
+        this.userData = response.user;
+        this.currentUser = response.user;
+        this.saveUserLocally();
+        this.onAuthSuccess();
+      } else {
+        this.clearAuth();
+        this.onAuthFailure();
+      }
+    } catch (error) {
+      console.error('Token verification failed:', error);
+      this.clearAuth();
+      this.onAuthFailure();
+    }
+  },
+
+  // Make authenticated API request
+  async apiRequest(url, options = {}) {
+    const headers = {
+      'Content-Type': 'application/json',
+      ...options.headers
+    };
+
+    if (this.token) {
+      headers['Authorization'] = `Bearer ${this.token}`;
+    }
+
+    const response = await fetch(url, {
+      ...options,
+      headers
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || 'שגיאה בשרת');
+    }
+
+    return data;
   },
 
   // Setup login form and other auth event listeners
@@ -76,41 +128,26 @@ const Auth = {
     submitBtn.disabled = true;
 
     try {
-      // Set persistence based on remember me
-      const persistence = rememberMe
-        ? firebase.auth.Auth.Persistence.LOCAL
-        : firebase.auth.Auth.Persistence.SESSION;
+      const response = await this.apiRequest('/api/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password })
+      });
 
-      await firebaseAuth.setPersistence(persistence);
-      await firebaseAuth.signInWithEmailAndPassword(email, password);
+      // Save token and user data
+      this.token = response.token;
+      this.userData = response.user;
+      this.currentUser = response.user;
+
+      // Save to localStorage
+      localStorage.setItem('meitzad_token', this.token);
+      this.saveUserLocally();
 
       Utils.toast('התחברת בהצלחה!', 'success');
+      this.onAuthSuccess();
 
     } catch (error) {
       console.error('Login error:', error);
-
-      let errorMessage = 'שגיאה בהתחברות. נסו שוב.';
-
-      switch (error.code) {
-        case 'auth/user-not-found':
-          errorMessage = 'משתמש לא נמצא במערכת';
-          break;
-        case 'auth/wrong-password':
-          errorMessage = 'סיסמה שגויה';
-          break;
-        case 'auth/invalid-email':
-          errorMessage = 'כתובת אימייל לא תקינה';
-          break;
-        case 'auth/user-disabled':
-          errorMessage = 'חשבון זה הושבת';
-          break;
-        case 'auth/too-many-requests':
-          errorMessage = 'יותר מדי ניסיונות. נסו שוב מאוחר יותר.';
-          break;
-      }
-
-      Utils.toast(errorMessage, 'error');
-
+      Utils.toast(error.message || 'שגיאה בהתחברות. נסו שוב.', 'error');
     } finally {
       btnText.classList.remove('hidden');
       btnLoader.classList.add('hidden');
@@ -135,56 +172,23 @@ const Auth = {
   // Handle forgot password
   async handleForgotPassword(e) {
     e.preventDefault();
+    Utils.toast('פונקציונליות איפוס סיסמה תתווסף בקרוב', 'info');
+  },
 
-    const email = document.getElementById('login-email').value.trim();
-
-    if (!email) {
-      Utils.toast('אנא הזינו כתובת אימייל', 'warning');
-      return;
-    }
-
-    if (!Utils.isValidEmail(email)) {
-      Utils.toast('כתובת אימייל לא תקינה', 'error');
-      return;
-    }
-
-    try {
-      await firebaseAuth.sendPasswordResetEmail(email);
-      Utils.toast('נשלח אימייל לאיפוס סיסמה', 'success');
-    } catch (error) {
-      console.error('Password reset error:', error);
-
-      if (error.code === 'auth/user-not-found') {
-        Utils.toast('משתמש עם אימייל זה לא נמצא', 'error');
-      } else {
-        Utils.toast('שגיאה בשליחת אימייל. נסו שוב.', 'error');
-      }
+  // Save user data locally
+  saveUserLocally() {
+    if (this.userData) {
+      localStorage.setItem('meitzad_user', JSON.stringify(this.userData));
     }
   },
 
-  // Load user data from database
-  async loadUserData(uid) {
-    try {
-      const snapshot = await firebaseDB.ref(`users/${uid}`).once('value');
-      this.userData = snapshot.val();
-
-      if (!this.userData) {
-        // Create basic user record if doesn't exist
-        this.userData = {
-          email: this.currentUser.email,
-          name: this.currentUser.displayName || 'משתמש',
-          role: 'admin',
-          createdAt: Date.now()
-        };
-        await firebaseDB.ref(`users/${uid}`).set(this.userData);
-      }
-
-      // Update last login
-      await firebaseDB.ref(`users/${uid}/lastLogin`).set(Date.now());
-
-    } catch (error) {
-      console.error('Error loading user data:', error);
-    }
+  // Clear auth data
+  clearAuth() {
+    this.token = null;
+    this.userData = null;
+    this.currentUser = null;
+    localStorage.removeItem('meitzad_token');
+    localStorage.removeItem('meitzad_user');
   },
 
   // Called when authentication is successful
@@ -236,26 +240,23 @@ const Auth = {
       super_admin: 'מנהל ראשי',
       admin: 'מנהל',
       staff: 'צוות',
+      citizen: 'תושב',
       user: 'משתמש'
     };
     return labels[role] || role;
   },
 
   // Logout
-  async logout() {
+  logout() {
     Utils.confirm(
       'התנתקות',
       'האם אתה בטוח שברצונך להתנתק?',
-      async () => {
-        try {
-          await firebaseAuth.signOut();
-          Utils.toast('התנתקת בהצלחה', 'success');
-          // Close mobile menu if open
-          Utils.hideElement('#mobile-more-menu');
-        } catch (error) {
-          console.error('Logout error:', error);
-          Utils.toast('שגיאה בהתנתקות', 'error');
-        }
+      () => {
+        this.clearAuth();
+        Utils.toast('התנתקת בהצלחה', 'success');
+        // Close mobile menu if open
+        Utils.hideElement('#mobile-more-menu');
+        this.onAuthFailure();
       },
       'התנתק',
       'ביטול'
@@ -264,13 +265,13 @@ const Auth = {
 
   // Check if user is authenticated
   isAuthenticated() {
-    return !!this.currentUser;
+    return !!this.currentUser && !!this.token;
   },
 
   // Check if user has specific role
   hasRole(role) {
     if (!this.userData) return false;
-    if (this.userData.role === 'super_admin') return true;
+    if (this.userData.role === 'super_admin' || this.userData.role === 'admin') return true;
     return this.userData.role === role;
   },
 
@@ -279,9 +280,14 @@ const Auth = {
     return this.hasRole('admin') || this.hasRole('super_admin');
   },
 
-  // Get current user UID
+  // Get current user ID
   getUid() {
-    return this.currentUser ? this.currentUser.uid : null;
+    return this.currentUser ? this.currentUser.id : null;
+  },
+
+  // Get auth token for API requests
+  getToken() {
+    return this.token;
   },
 
   // Update user profile
@@ -289,20 +295,21 @@ const Auth = {
     if (!this.currentUser) return false;
 
     try {
-      await firebaseDB.ref(`users/${this.currentUser.uid}`).update({
-        ...data,
-        updatedAt: Date.now()
+      const response = await this.apiRequest('/api/users/profile', {
+        method: 'PUT',
+        body: JSON.stringify(data)
       });
 
-      // Reload user data
-      await this.loadUserData(this.currentUser.uid);
+      this.userData = { ...this.userData, ...response.user };
+      this.currentUser = this.userData;
+      this.saveUserLocally();
       this.updateUserUI();
 
       Utils.toast('הפרטים עודכנו בהצלחה', 'success');
       return true;
     } catch (error) {
       console.error('Update profile error:', error);
-      Utils.toast('שגיאה בעדכון הפרטים', 'error');
+      Utils.toast(error.message || 'שגיאה בעדכון הפרטים', 'error');
       return false;
     }
   },
@@ -312,61 +319,17 @@ const Auth = {
     if (!this.currentUser) return false;
 
     try {
-      // Re-authenticate user
-      const credential = firebase.auth.EmailAuthProvider.credential(
-        this.currentUser.email,
-        currentPassword
-      );
-      await this.currentUser.reauthenticateWithCredential(credential);
-
-      // Update password
-      await this.currentUser.updatePassword(newPassword);
+      await this.apiRequest('/api/auth/change-password', {
+        method: 'POST',
+        body: JSON.stringify({ currentPassword, newPassword })
+      });
 
       Utils.toast('הסיסמה עודכנה בהצלחה', 'success');
       return true;
     } catch (error) {
       console.error('Change password error:', error);
-
-      if (error.code === 'auth/wrong-password') {
-        Utils.toast('סיסמה נוכחית שגויה', 'error');
-      } else {
-        Utils.toast('שגיאה בעדכון הסיסמה', 'error');
-      }
+      Utils.toast(error.message || 'שגיאה בעדכון הסיסמה', 'error');
       return false;
-    }
-  },
-
-  // Create new user (admin only)
-  async createUser(email, password, userData) {
-    if (!this.isAdmin()) {
-      Utils.toast('אין לך הרשאה לפעולה זו', 'error');
-      return null;
-    }
-
-    try {
-      // Create user in Firebase Auth
-      const userCredential = await firebaseAuth.createUserWithEmailAndPassword(email, password);
-      const uid = userCredential.user.uid;
-
-      // Save user data to database
-      await firebaseDB.ref(`users/${uid}`).set({
-        ...userData,
-        email,
-        createdAt: Date.now(),
-        createdBy: this.currentUser.uid
-      });
-
-      Utils.toast('משתמש נוצר בהצלחה', 'success');
-      return uid;
-    } catch (error) {
-      console.error('Create user error:', error);
-
-      if (error.code === 'auth/email-already-in-use') {
-        Utils.toast('כתובת האימייל כבר בשימוש', 'error');
-      } else {
-        Utils.toast('שגיאה ביצירת המשתמש', 'error');
-      }
-      return null;
     }
   }
 };

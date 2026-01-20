@@ -60,18 +60,16 @@ const App = {
     }
   },
 
-  // Wait for Firebase auth state
+  // Wait for auth state (no Firebase dependency)
   waitForAuth() {
     return new Promise((resolve) => {
-      const unsubscribe = firebaseAuth.onAuthStateChanged((user) => {
-        unsubscribe();
-        resolve(user);
-      });
-
-      // Timeout after 5 seconds
-      setTimeout(() => {
+      // Check if user is already authenticated via token
+      const token = localStorage.getItem('meitzad_token');
+      if (token) {
+        resolve({ token });
+      } else {
         resolve(null);
-      }, 5000);
+      }
     });
   },
 
