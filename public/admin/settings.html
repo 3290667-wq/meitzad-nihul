@@ -57,18 +57,18 @@
         <div class="settings-grid">
           <section class="dashboard-section">
             <div class="section-header"><h2>👤 פרטי חשבון</h2></div>
-            <form class="settings-form">
+            <form class="settings-form" id="profileForm">
               <div class="form-group">
                 <label>שם מלא</label>
-                <input type="text" value="מנהל מערכת" id="userName">
+                <input type="text" id="userName" placeholder="טוען...">
               </div>
               <div class="form-group">
                 <label>אימייל</label>
-                <input type="email" value="admin@meitzad.org.il" id="userEmail">
+                <input type="email" id="userEmail" disabled placeholder="טוען...">
               </div>
               <div class="form-group">
                 <label>טלפון</label>
-                <input type="tel" value="050-1234567" id="userPhone">
+                <input type="tel" id="userPhone" placeholder="הזן מספר טלפון">
               </div>
               <button type="button" class="btn btn-primary" onclick="saveProfile()">שמירת פרטים</button>
             </form>
@@ -76,18 +76,18 @@
 
           <section class="dashboard-section">
             <div class="section-header"><h2>🔒 שינוי סיסמה</h2></div>
-            <form class="settings-form">
+            <form class="settings-form" id="passwordForm">
               <div class="form-group">
                 <label>סיסמה נוכחית</label>
-                <input type="password" id="currentPassword">
+                <input type="password" id="currentPassword" required>
               </div>
               <div class="form-group">
-                <label>סיסמה חדשה</label>
-                <input type="password" id="newPassword">
+                <label>סיסמה חדשה (לפחות 6 תווים)</label>
+                <input type="password" id="newPassword" minlength="6" required>
               </div>
               <div class="form-group">
                 <label>אימות סיסמה</label>
-                <input type="password" id="confirmPassword">
+                <input type="password" id="confirmPassword" required>
               </div>
               <button type="button" class="btn btn-primary" onclick="changePassword()">שינוי סיסמה</button>
             </form>
@@ -98,54 +98,431 @@
             <div class="settings-form">
               <div class="toggle-setting">
                 <label>התראות אימייל על פניות חדשות</label>
-                <input type="checkbox" checked>
+                <input type="checkbox" id="notifEmail" checked>
               </div>
               <div class="toggle-setting">
-                <label>התראות SMS על פניות דחופות</label>
-                <input type="checkbox">
+                <label>התראות וואטסאפ על פניות דחופות</label>
+                <input type="checkbox" id="notifWhatsapp">
               </div>
               <div class="toggle-setting">
                 <label>סיכום יומי במייל</label>
-                <input type="checkbox" checked>
+                <input type="checkbox" id="notifDaily" checked>
               </div>
               <div class="toggle-setting">
                 <label>התראות על אירועים קרובים</label>
-                <input type="checkbox" checked>
+                <input type="checkbox" id="notifEvents" checked>
               </div>
+              <button type="button" class="btn btn-primary" onclick="saveNotifications()">שמירת הגדרות התראות</button>
             </div>
           </section>
 
           <section class="dashboard-section">
             <div class="section-header"><h2>🏢 פרטי היישוב</h2></div>
-            <form class="settings-form">
+            <form class="settings-form" id="siteForm">
               <div class="form-group">
                 <label>שם היישוב</label>
-                <input type="text" value="מיצד">
+                <input type="text" id="siteName" placeholder="טוען...">
               </div>
               <div class="form-group">
                 <label>אימייל ראשי</label>
-                <input type="email" value="info@meitzad.org.il">
+                <input type="email" id="siteEmail" placeholder="הזן אימייל">
               </div>
               <div class="form-group">
                 <label>טלפון מזכירות</label>
-                <input type="tel" value="08-1234567">
+                <input type="tel" id="sitePhone" placeholder="הזן טלפון">
               </div>
-              <button type="button" class="btn btn-primary" onclick="saveSettings()">שמירת הגדרות</button>
+              <button type="button" class="btn btn-primary" onclick="saveSiteSettings()">שמירת הגדרות</button>
             </form>
+          </section>
+
+          <!-- User Management Section -->
+          <section class="dashboard-section full-width">
+            <div class="section-header">
+              <h2>👥 ניהול משתמשים מורשים</h2>
+              <button class="btn btn-primary btn-small" onclick="showAddUserModal()">➕ הוסף משתמש</button>
+            </div>
+            <div class="users-table-wrapper">
+              <table class="data-table" id="usersTable">
+                <thead>
+                  <tr>
+                    <th>שם</th>
+                    <th>אימייל</th>
+                    <th>טלפון</th>
+                    <th>תפקיד</th>
+                    <th>סטטוס</th>
+                    <th>פעולות</th>
+                  </tr>
+                </thead>
+                <tbody id="usersTableBody">
+                  <tr><td colspan="6" class="loading-text">טוען משתמשים...</td></tr>
+                </tbody>
+              </table>
+            </div>
           </section>
         </div>
       </div>
     </main>
   </div>
 
+  <!-- Add User Modal -->
+  <div id="userModal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalTitle">הוספת משתמש חדש</h3>
+        <button class="modal-close" onclick="closeUserModal()">&times;</button>
+      </div>
+      <form id="userForm" class="settings-form">
+        <input type="hidden" id="editUserId">
+        <div class="form-group">
+          <label>שם מלא *</label>
+          <input type="text" id="newUserName" required>
+        </div>
+        <div class="form-group">
+          <label>אימייל *</label>
+          <input type="email" id="newUserEmail" required>
+        </div>
+        <div class="form-group">
+          <label>טלפון</label>
+          <input type="tel" id="newUserPhone">
+        </div>
+        <div class="form-group" id="passwordGroup">
+          <label>סיסמה * (לפחות 6 תווים)</label>
+          <input type="password" id="newUserPassword" minlength="6">
+        </div>
+        <div class="form-group">
+          <label>תפקיד *</label>
+          <select id="newUserRole" required>
+            <option value="citizen">תושב</option>
+            <option value="staff">צוות</option>
+            <option value="admin">מנהל</option>
+            <option value="super_admin">מנהל ראשי</option>
+          </select>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeUserModal()">ביטול</button>
+          <button type="submit" class="btn btn-primary">שמירה</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <div id="toast" class="toast hidden"></div>
 
   <script>
-    function saveProfile() { showToast('הפרטים נשמרו בהצלחה', 'success'); }
-    function changePassword() { showToast('הסיסמה שונתה בהצלחה', 'success'); }
-    function saveSettings() { showToast('ההגדרות נשמרו', 'success'); }
-    function toggleSidebar() { document.querySelector('.admin-sidebar').classList.toggle('open'); }
-    function logout() { localStorage.removeItem('authToken'); window.location.href = '/#login'; }
+    const API_BASE = '/api';
+    let authToken = localStorage.getItem('meitzad_token') || localStorage.getItem('authToken');
+    let currentUser = null;
+    let allUsers = [];
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!authToken) {
+        window.location.href = '/#login';
+        return;
+      }
+      loadCurrentUser();
+      loadSiteSettings();
+      loadUsers();
+
+      document.getElementById('userForm').addEventListener('submit', handleUserFormSubmit);
+    });
+
+    async function apiRequest(url, options = {}) {
+      const headers = {
+        'Content-Type': 'application/json',
+        ...options.headers
+      };
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      const response = await fetch(url, { ...options, headers });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'שגיאה בשרת');
+      }
+      return data;
+    }
+
+    async function loadCurrentUser() {
+      try {
+        const data = await apiRequest(`${API_BASE}/auth/me`);
+        currentUser = data.user;
+        document.getElementById('userName').value = currentUser.name || '';
+        document.getElementById('userEmail').value = currentUser.email || '';
+        document.getElementById('userPhone').value = currentUser.phone || '';
+      } catch (error) {
+        console.error('Load user error:', error);
+        showToast('שגיאה בטעינת פרטי משתמש', 'error');
+      }
+    }
+
+    async function loadSiteSettings() {
+      try {
+        const settings = await apiRequest(`${API_BASE}/settings`);
+        document.getElementById('siteName').value = settings.site_name || 'מיצד';
+        document.getElementById('siteEmail').value = settings.site_email || '';
+        document.getElementById('sitePhone').value = settings.site_phone || '';
+        document.getElementById('notifEmail').checked = settings.email_notifications !== 'false';
+        document.getElementById('notifWhatsapp').checked = settings.whatsapp_notifications === 'true';
+      } catch (error) {
+        console.error('Load settings error:', error);
+      }
+    }
+
+    async function loadUsers() {
+      try {
+        allUsers = await apiRequest(`${API_BASE}/users`);
+        renderUsersTable();
+      } catch (error) {
+        console.error('Load users error:', error);
+        document.getElementById('usersTableBody').innerHTML =
+          '<tr><td colspan="6" class="error-text">שגיאה בטעינת משתמשים</td></tr>';
+      }
+    }
+
+    function renderUsersTable() {
+      const tbody = document.getElementById('usersTableBody');
+      if (allUsers.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6">אין משתמשים רשומים</td></tr>';
+        return;
+      }
+
+      const roleLabels = {
+        super_admin: 'מנהל ראשי',
+        admin: 'מנהל',
+        staff: 'צוות',
+        citizen: 'תושב'
+      };
+
+      tbody.innerHTML = allUsers.map(user => `
+        <tr>
+          <td>${user.name}</td>
+          <td>${user.email}</td>
+          <td>${user.phone || '-'}</td>
+          <td><span class="role-badge role-${user.role}">${roleLabels[user.role] || user.role}</span></td>
+          <td><span class="status-badge status-${user.is_active ? 'active' : 'inactive'}">${user.is_active ? 'פעיל' : 'מושבת'}</span></td>
+          <td class="actions-cell">
+            <button class="btn btn-icon" onclick="editUser(${user.id})" title="עריכה">✏️</button>
+            ${user.id !== currentUser?.id ? `
+              <button class="btn btn-icon" onclick="toggleUserStatus(${user.id}, ${user.is_active})" title="${user.is_active ? 'השבת' : 'הפעל'}">
+                ${user.is_active ? '🔒' : '🔓'}
+              </button>
+              <button class="btn btn-icon btn-danger" onclick="resetUserPassword(${user.id})" title="איפוס סיסמה">🔑</button>
+            ` : ''}
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    async function saveProfile() {
+      const name = document.getElementById('userName').value.trim();
+      const phone = document.getElementById('userPhone').value.trim();
+
+      if (!name) {
+        showToast('נא למלא שם', 'error');
+        return;
+      }
+
+      try {
+        await apiRequest(`${API_BASE}/users/${currentUser.id}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ name, phone })
+        });
+        showToast('הפרטים נשמרו בהצלחה', 'success');
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
+    }
+
+    async function changePassword() {
+      const currentPassword = document.getElementById('currentPassword').value;
+      const newPassword = document.getElementById('newPassword').value;
+      const confirmPassword = document.getElementById('confirmPassword').value;
+
+      if (!currentPassword || !newPassword || !confirmPassword) {
+        showToast('נא למלא את כל השדות', 'error');
+        return;
+      }
+
+      if (newPassword.length < 6) {
+        showToast('הסיסמה חייבת להכיל לפחות 6 תווים', 'error');
+        return;
+      }
+
+      if (newPassword !== confirmPassword) {
+        showToast('הסיסמאות לא תואמות', 'error');
+        return;
+      }
+
+      try {
+        await apiRequest(`${API_BASE}/auth/change-password`, {
+          method: 'POST',
+          body: JSON.stringify({ currentPassword, newPassword })
+        });
+        showToast('הסיסמה שונתה בהצלחה', 'success');
+        document.getElementById('currentPassword').value = '';
+        document.getElementById('newPassword').value = '';
+        document.getElementById('confirmPassword').value = '';
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
+    }
+
+    async function saveNotifications() {
+      const settings = {
+        email_notifications: document.getElementById('notifEmail').checked ? 'true' : 'false',
+        whatsapp_notifications: document.getElementById('notifWhatsapp').checked ? 'true' : 'false',
+        daily_summary: document.getElementById('notifDaily').checked ? 'true' : 'false',
+        event_notifications: document.getElementById('notifEvents').checked ? 'true' : 'false'
+      };
+
+      try {
+        await apiRequest(`${API_BASE}/settings/bulk`, {
+          method: 'POST',
+          body: JSON.stringify(settings)
+        });
+        showToast('הגדרות ההתראות נשמרו', 'success');
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
+    }
+
+    async function saveSiteSettings() {
+      const settings = {
+        site_name: document.getElementById('siteName').value.trim(),
+        site_email: document.getElementById('siteEmail').value.trim(),
+        site_phone: document.getElementById('sitePhone').value.trim()
+      };
+
+      try {
+        await apiRequest(`${API_BASE}/settings/bulk`, {
+          method: 'POST',
+          body: JSON.stringify(settings)
+        });
+        showToast('הגדרות היישוב נשמרו', 'success');
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
+    }
+
+    // User management functions
+    function showAddUserModal() {
+      document.getElementById('modalTitle').textContent = 'הוספת משתמש חדש';
+      document.getElementById('editUserId').value = '';
+      document.getElementById('newUserName').value = '';
+      document.getElementById('newUserEmail').value = '';
+      document.getElementById('newUserEmail').disabled = false;
+      document.getElementById('newUserPhone').value = '';
+      document.getElementById('newUserPassword').value = '';
+      document.getElementById('newUserRole').value = 'citizen';
+      document.getElementById('passwordGroup').style.display = 'block';
+      document.getElementById('newUserPassword').required = true;
+      document.getElementById('userModal').classList.remove('hidden');
+    }
+
+    function editUser(userId) {
+      const user = allUsers.find(u => u.id === userId);
+      if (!user) return;
+
+      document.getElementById('modalTitle').textContent = 'עריכת משתמש';
+      document.getElementById('editUserId').value = userId;
+      document.getElementById('newUserName').value = user.name;
+      document.getElementById('newUserEmail').value = user.email;
+      document.getElementById('newUserEmail').disabled = true;
+      document.getElementById('newUserPhone').value = user.phone || '';
+      document.getElementById('newUserPassword').value = '';
+      document.getElementById('newUserRole').value = user.role;
+      document.getElementById('passwordGroup').style.display = 'none';
+      document.getElementById('newUserPassword').required = false;
+      document.getElementById('userModal').classList.remove('hidden');
+    }
+
+    function closeUserModal() {
+      document.getElementById('userModal').classList.add('hidden');
+    }
+
+    async function handleUserFormSubmit(e) {
+      e.preventDefault();
+      const userId = document.getElementById('editUserId').value;
+      const name = document.getElementById('newUserName').value.trim();
+      const email = document.getElementById('newUserEmail').value.trim();
+      const phone = document.getElementById('newUserPhone').value.trim();
+      const password = document.getElementById('newUserPassword').value;
+      const role = document.getElementById('newUserRole').value;
+
+      try {
+        if (userId) {
+          // Edit existing user
+          await apiRequest(`${API_BASE}/users/${userId}`, {
+            method: 'PATCH',
+            body: JSON.stringify({ name, phone, role })
+          });
+          showToast('המשתמש עודכן בהצלחה', 'success');
+        } else {
+          // Create new user
+          if (!password || password.length < 6) {
+            showToast('נא להזין סיסמה של לפחות 6 תווים', 'error');
+            return;
+          }
+          await apiRequest(`${API_BASE}/users`, {
+            method: 'POST',
+            body: JSON.stringify({ name, email, phone, password, role })
+          });
+          showToast('המשתמש נוצר בהצלחה', 'success');
+        }
+        closeUserModal();
+        loadUsers();
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
+    }
+
+    async function toggleUserStatus(userId, isActive) {
+      const action = isActive ? 'להשבית' : 'להפעיל';
+      if (!confirm(`האם ${action} את המשתמש?`)) return;
+
+      try {
+        await apiRequest(`${API_BASE}/users/${userId}`, {
+          method: 'PATCH',
+          body: JSON.stringify({ is_active: !isActive })
+        });
+        showToast(`המשתמש ${isActive ? 'הושבת' : 'הופעל'} בהצלחה`, 'success');
+        loadUsers();
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
+    }
+
+    async function resetUserPassword(userId) {
+      const newPassword = prompt('הזן סיסמה חדשה למשתמש (לפחות 6 תווים):');
+      if (!newPassword) return;
+      if (newPassword.length < 6) {
+        showToast('הסיסמה חייבת להכיל לפחות 6 תווים', 'error');
+        return;
+      }
+
+      try {
+        await apiRequest(`${API_BASE}/users/${userId}/reset-password`, {
+          method: 'PATCH',
+          body: JSON.stringify({ newPassword })
+        });
+        showToast('הסיסמה אופסה בהצלחה', 'success');
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
+    }
+
+    function toggleSidebar() {
+      document.querySelector('.admin-sidebar').classList.toggle('open');
+    }
+
+    function logout() {
+      localStorage.removeItem('authToken');
+      localStorage.removeItem('meitzad_token');
+      localStorage.removeItem('meitzad_user');
+      window.location.href = '/#login';
+    }
+
     function showToast(message, type = 'info') {
       const toast = document.getElementById('toast');
       toast.textContent = message;
@@ -161,6 +538,37 @@
     .toggle-setting { display: flex; justify-content: space-between; align-items: center; padding: var(--space-3) 0; border-bottom: 1px solid var(--gray-100); }
     .toggle-setting label { font-weight: 500; }
     .toggle-setting input[type="checkbox"] { width: 20px; height: 20px; }
+    .full-width { grid-column: 1 / -1; }
+    .section-header { display: flex; justify-content: space-between; align-items: center; }
+    .btn-small { padding: 8px 16px; font-size: 0.9rem; }
+    .users-table-wrapper { overflow-x: auto; margin-top: var(--space-4); }
+    .data-table { width: 100%; border-collapse: collapse; }
+    .data-table th, .data-table td { padding: 12px; text-align: right; border-bottom: 1px solid var(--gray-100); }
+    .data-table th { background: var(--gray-50); font-weight: 600; }
+    .role-badge { padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; }
+    .role-super_admin { background: #fce7f3; color: #be185d; }
+    .role-admin { background: #dbeafe; color: #1d4ed8; }
+    .role-staff { background: #d1fae5; color: #047857; }
+    .role-citizen { background: #f3f4f6; color: #374151; }
+    .status-badge { padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; }
+    .status-active { background: #d1fae5; color: #047857; }
+    .status-inactive { background: #fee2e2; color: #dc2626; }
+    .actions-cell { white-space: nowrap; }
+    .btn-icon { background: none; border: none; cursor: pointer; font-size: 1.1rem; padding: 4px 8px; }
+    .btn-icon:hover { background: var(--gray-100); border-radius: 4px; }
+    .loading-text, .error-text { text-align: center; padding: 20px; color: var(--gray-500); }
+    .error-text { color: var(--red-500); }
+
+    /* Modal styles */
+    .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+    .modal-overlay.hidden { display: none; }
+    .modal-content { background: white; border-radius: 12px; width: 90%; max-width: 500px; max-height: 90vh; overflow-y: auto; }
+    .modal-header { display: flex; justify-content: space-between; align-items: center; padding: 16px 20px; border-bottom: 1px solid var(--gray-100); }
+    .modal-header h3 { margin: 0; }
+    .modal-close { background: none; border: none; font-size: 1.5rem; cursor: pointer; color: var(--gray-500); }
+    .modal-content .settings-form { padding: 20px; }
+    .modal-actions { display: flex; gap: 12px; justify-content: flex-end; margin-top: 20px; }
+
     @media (max-width: 768px) {
       .settings-grid { grid-template-columns: 1fr; }
     }

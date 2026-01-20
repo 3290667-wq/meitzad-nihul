@@ -643,12 +643,91 @@ router.get('/directory', authenticateToken, (req, res) => {
   try {
     const db = getDb();
     const entries = db.prepare(`
-      SELECT * FROM directory_entries WHERE is_public = 1 ORDER BY category, display_name
+      SELECT * FROM directory_entries WHERE is_public = 1 ORDER BY category, sort_order, display_name
     `).all();
     res.json(entries);
   } catch (error) {
     console.error('Get directory error:', error);
     res.status(500).json({ error: 'שגיאה בטעינת ספר הטלפונים' });
+  }
+});
+
+// Create directory entry (admin only)
+router.post('/directory', authenticateToken, requireRole(['super_admin', 'admin']), (req, res) => {
+  try {
+    const db = getDb();
+    const { display_name, family_name, address, phone, mobile, email, category, occupation, is_public } = req.body;
+
+    if (!display_name) {
+      return res.status(400).json({ error: 'נא למלא שם להצגה' });
+    }
+
+    const result = db.prepare(`
+      INSERT INTO directory_entries (display_name, family_name, address, phone, mobile, email, category, occupation, is_public)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+    `).run(display_name, family_name || null, address || null, phone || null, mobile || null, email || null, category || 'resident', occupation || null, is_public !== false ? 1 : 0);
+
+    const entry = db.prepare('SELECT * FROM directory_entries WHERE id = ?').get(result.lastInsertRowid);
+    res.status(201).json(entry);
+  } catch (error) {
+    console.error('Create directory entry error:', error);
+    res.status(500).json({ error: 'שגיאה ביצירת איש קשר' });
+  }
+});
+
+// Update directory entry (admin only)
+router.put('/directory/:id', authenticateToken, requireRole(['super_admin', 'admin']), (req, res) => {
+  try {
+    const db = getDb();
+    const { display_name, family_name, address, phone, mobile, email, category, occupation, is_public } = req.body;
+    const entryId = req.params.id;
+
+    const existing = db.prepare('SELECT * FROM directory_entries WHERE id = ?').get(entryId);
+    if (!existing) {
+      return res.status(404).json({ error: 'איש קשר לא נמצא' });
+    }
+
+    db.prepare(`
+      UPDATE directory_entries
+      SET display_name = ?, family_name = ?, address = ?, phone = ?, mobile = ?, email = ?, category = ?, occupation = ?, is_public = ?, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).run(
+      display_name || existing.display_name,
+      family_name !== undefined ? family_name : existing.family_name,
+      address !== undefined ? address : existing.address,
+      phone !== undefined ? phone : existing.phone,
+      mobile !== undefined ? mobile : existing.mobile,
+      email !== undefined ? email : existing.email,
+      category || existing.category,
+      occupation !== undefined ? occupation : existing.occupation,
+      is_public !== undefined ? (is_public ? 1 : 0) : existing.is_public,
+      entryId
+    );
+
+    const entry = db.prepare('SELECT * FROM directory_entries WHERE id = ?').get(entryId);
+    res.json(entry);
+  } catch (error) {
+    console.error('Update directory entry error:', error);
+    res.status(500).json({ error: 'שגיאה בעדכון איש קשר' });
+  }
+});
+
+// Delete directory entry (admin only)
+router.delete('/directory/:id', authenticateToken, requireRole(['super_admin', 'admin']), (req, res) => {
+  try {
+    const db = getDb();
+    const entryId = req.params.id;
+
+    const existing = db.prepare('SELECT * FROM directory_entries WHERE id = ?').get(entryId);
+    if (!existing) {
+      return res.status(404).json({ error: 'איש קשר לא נמצא' });
+    }
+
+    db.prepare('DELETE FROM directory_entries WHERE id = ?').run(entryId);
+    res.json({ success: true, message: 'איש הקשר נמחק' });
+  } catch (error) {
+    console.error('Delete directory entry error:', error);
+    res.status(500).json({ error: 'שגיאה במחיקת איש קשר' });
   }
 });
 

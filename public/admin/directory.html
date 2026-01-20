@@ -57,7 +57,7 @@
           <h1>📖 ספר טלפונים</h1>
         </div>
         <div class="header-left">
-          <button class="btn btn-primary" onclick="showAddContact()">➕ איש קשר חדש</button>
+          <button class="btn btn-primary" onclick="showAddContactModal()">➕ איש קשר חדש</button>
         </div>
       </header>
 
@@ -71,45 +71,133 @@
               <option value="">כל הקטגוריות</option>
               <option value="emergency">חירום</option>
               <option value="committee">חברי וועד</option>
-              <option value="services">שירותים</option>
-              <option value="residents">תושבים</option>
+              <option value="service">שירותים</option>
+              <option value="resident">תושבים</option>
+              <option value="business">עסקים</option>
             </select>
           </div>
         </div>
 
         <section class="dashboard-section">
           <div class="contacts-grid" id="contactsGrid">
-            <!-- Contacts loaded here -->
+            <div class="loading-text">טוען אנשי קשר...</div>
           </div>
         </section>
       </div>
     </main>
   </div>
 
+  <!-- Add/Edit Contact Modal -->
+  <div id="contactModal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="modalTitle">הוספת איש קשר</h3>
+        <button class="modal-close" onclick="closeContactModal()">&times;</button>
+      </div>
+      <form id="contactForm" class="settings-form">
+        <input type="hidden" id="editContactId">
+        <div class="form-group">
+          <label>שם להצגה *</label>
+          <input type="text" id="contactName" required placeholder="שם מלא / שם גוף">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>טלפון</label>
+            <input type="tel" id="contactPhone" placeholder="טלפון קווי">
+          </div>
+          <div class="form-group">
+            <label>נייד</label>
+            <input type="tel" id="contactMobile" placeholder="טלפון נייד">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>אימייל</label>
+          <input type="email" id="contactEmail" placeholder="כתובת אימייל">
+        </div>
+        <div class="form-group">
+          <label>כתובת</label>
+          <input type="text" id="contactAddress" placeholder="כתובת">
+        </div>
+        <div class="form-row">
+          <div class="form-group">
+            <label>קטגוריה</label>
+            <select id="contactCategory">
+              <option value="resident">תושב</option>
+              <option value="committee">חבר וועד</option>
+              <option value="service">שירות</option>
+              <option value="business">עסק</option>
+              <option value="emergency">חירום</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>תפקיד / עיסוק</label>
+            <input type="text" id="contactOccupation" placeholder="תפקיד או עיסוק">
+          </div>
+        </div>
+        <div class="form-group toggle-setting">
+          <label>מוצג בספר הטלפונים</label>
+          <input type="checkbox" id="contactPublic" checked>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeContactModal()">ביטול</button>
+          <button type="submit" class="btn btn-primary">שמירה</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <div id="toast" class="toast hidden"></div>
 
   <script>
-    const authToken = localStorage.getItem('authToken');
+    const API_BASE = '/api';
+    let authToken = localStorage.getItem('meitzad_token') || localStorage.getItem('authToken');
+    let contacts = [];
 
-    const contacts = [
-      { id: 1, name: 'קב"ט היישוב', phone: '050-1234567', category: 'emergency', icon: '🔒' },
-      { id: 2, name: 'מזכיר היישוב', phone: '050-2345678', category: 'committee', icon: '👤' },
-      { id: 3, name: 'רכזת חינוך', phone: '050-3456789', category: 'committee', icon: '📚' },
-      { id: 4, name: 'מד"א', phone: '101', category: 'emergency', icon: '🚑' },
-      { id: 5, name: 'משטרה', phone: '100', category: 'emergency', icon: '🚔' },
-      { id: 6, name: 'כיבוי אש', phone: '102', category: 'emergency', icon: '🚒' },
-      { id: 7, name: 'חברת החשמל', phone: '103', category: 'services', icon: '⚡' },
-      { id: 8, name: 'מוקד מים', phone: '*8455', category: 'services', icon: '💧' },
-      { id: 9, name: 'גנן היישוב', phone: '050-4567890', category: 'services', icon: '🌳' },
-      { id: 10, name: 'תחזוקה', phone: '050-5678901', category: 'services', icon: '🔧' }
-    ];
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!authToken) {
+        window.location.href = '/#login';
+        return;
+      }
+      loadContacts();
+      document.getElementById('contactForm').addEventListener('submit', handleContactSubmit);
+    });
+
+    async function apiRequest(url, options = {}) {
+      const headers = {
+        'Content-Type': 'application/json',
+        ...options.headers
+      };
+      if (authToken) {
+        headers['Authorization'] = `Bearer ${authToken}`;
+      }
+      const response = await fetch(url, { ...options, headers });
+      const data = await response.json();
+      if (!response.ok) {
+        throw new Error(data.error || 'שגיאה בשרת');
+      }
+      return data;
+    }
+
+    async function loadContacts() {
+      try {
+        contacts = await apiRequest(`${API_BASE}/directory`);
+        renderContacts(contacts);
+      } catch (error) {
+        console.error('Load contacts error:', error);
+        document.getElementById('contactsGrid').innerHTML =
+          '<div class="empty-state"><div class="empty-state-icon">📖</div><p>שגיאה בטעינת אנשי קשר</p></div>';
+      }
+    }
 
     function filterContacts() {
       const search = document.getElementById('searchInput').value.toLowerCase();
       const category = document.getElementById('categoryFilter').value;
 
       const filtered = contacts.filter(c => {
-        const matchSearch = c.name.toLowerCase().includes(search) || c.phone.includes(search);
+        const name = (c.display_name || '').toLowerCase();
+        const phone = c.phone || c.mobile || '';
+        const matchSearch = name.includes(search) || phone.includes(search);
         const matchCategory = !category || c.category === category;
         return matchSearch && matchCategory;
       });
@@ -117,27 +205,136 @@
       renderContacts(filtered);
     }
 
+    function getCategoryIcon(category) {
+      const icons = {
+        emergency: '🚨',
+        committee: '👥',
+        service: '🔧',
+        resident: '🏠',
+        business: '🏪'
+      };
+      return icons[category] || '👤';
+    }
+
+    function getCategoryLabel(category) {
+      const labels = {
+        emergency: 'חירום',
+        committee: 'חבר וועד',
+        service: 'שירות',
+        resident: 'תושב',
+        business: 'עסק'
+      };
+      return labels[category] || category;
+    }
+
     function renderContacts(list) {
       const grid = document.getElementById('contactsGrid');
 
       if (list.length === 0) {
-        grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📖</div><p>לא נמצאו אנשי קשר</p></div>';
+        grid.innerHTML = '<div class="empty-state"><div class="empty-state-icon">📖</div><p>לא נמצאו אנשי קשר</p><p class="small">לחץ על "איש קשר חדש" להוספת הראשון</p></div>';
         return;
       }
 
       grid.innerHTML = list.map(c => `
-        <div class="contact-card">
-          <div class="contact-icon">${c.icon}</div>
+        <div class="contact-card" data-id="${c.id}">
+          <div class="contact-icon">${getCategoryIcon(c.category)}</div>
           <div class="contact-info">
-            <h3>${c.name}</h3>
-            <a href="tel:${c.phone}" class="contact-phone">${c.phone}</a>
+            <h3>${c.display_name}</h3>
+            ${c.occupation ? `<span class="contact-occupation">${c.occupation}</span>` : ''}
+            ${c.phone ? `<a href="tel:${c.phone}" class="contact-phone">${c.phone}</a>` : ''}
+            ${c.mobile ? `<a href="tel:${c.mobile}" class="contact-phone">${c.mobile}</a>` : ''}
+            ${c.email ? `<a href="mailto:${c.email}" class="contact-email">${c.email}</a>` : ''}
+            <span class="contact-category">${getCategoryLabel(c.category)}</span>
+          </div>
+          <div class="contact-actions">
+            <button class="btn btn-icon" onclick="editContact(${c.id})" title="עריכה">✏️</button>
+            <button class="btn btn-icon btn-danger" onclick="deleteContact(${c.id})" title="מחיקה">🗑️</button>
           </div>
         </div>
       `).join('');
     }
 
-    function showAddContact() {
-      showToast('הוספת איש קשר - בקרוב', 'info');
+    function showAddContactModal() {
+      document.getElementById('modalTitle').textContent = 'הוספת איש קשר';
+      document.getElementById('editContactId').value = '';
+      document.getElementById('contactForm').reset();
+      document.getElementById('contactPublic').checked = true;
+      document.getElementById('contactModal').classList.remove('hidden');
+    }
+
+    function editContact(contactId) {
+      const contact = contacts.find(c => c.id === contactId);
+      if (!contact) return;
+
+      document.getElementById('modalTitle').textContent = 'עריכת איש קשר';
+      document.getElementById('editContactId').value = contactId;
+      document.getElementById('contactName').value = contact.display_name || '';
+      document.getElementById('contactPhone').value = contact.phone || '';
+      document.getElementById('contactMobile').value = contact.mobile || '';
+      document.getElementById('contactEmail').value = contact.email || '';
+      document.getElementById('contactAddress').value = contact.address || '';
+      document.getElementById('contactCategory').value = contact.category || 'resident';
+      document.getElementById('contactOccupation').value = contact.occupation || '';
+      document.getElementById('contactPublic').checked = contact.is_public !== 0;
+      document.getElementById('contactModal').classList.remove('hidden');
+    }
+
+    function closeContactModal() {
+      document.getElementById('contactModal').classList.add('hidden');
+    }
+
+    async function handleContactSubmit(e) {
+      e.preventDefault();
+      const contactId = document.getElementById('editContactId').value;
+      const data = {
+        display_name: document.getElementById('contactName').value.trim(),
+        phone: document.getElementById('contactPhone').value.trim() || null,
+        mobile: document.getElementById('contactMobile').value.trim() || null,
+        email: document.getElementById('contactEmail').value.trim() || null,
+        address: document.getElementById('contactAddress').value.trim() || null,
+        category: document.getElementById('contactCategory').value,
+        occupation: document.getElementById('contactOccupation').value.trim() || null,
+        is_public: document.getElementById('contactPublic').checked
+      };
+
+      if (!data.display_name) {
+        showToast('נא למלא שם להצגה', 'error');
+        return;
+      }
+
+      try {
+        if (contactId) {
+          await apiRequest(`${API_BASE}/directory/${contactId}`, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+          });
+          showToast('איש הקשר עודכן בהצלחה', 'success');
+        } else {
+          await apiRequest(`${API_BASE}/directory`, {
+            method: 'POST',
+            body: JSON.stringify(data)
+          });
+          showToast('איש הקשר נוסף בהצלחה', 'success');
+        }
+        closeContactModal();
+        loadContacts();
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
+    }
+
+    async function deleteContact(contactId) {
+      if (!confirm('האם למחוק את איש הקשר?')) return;
+
+      try {
+        await apiRequest(`${API_BASE}/directory/${contactId}`, {
+          method: 'DELETE'
+        });
+        showToast('איש הקשר נמחק', 'success');
+        loadContacts();
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
     }
 
     function toggleSidebar() {
@@ -146,6 +343,8 @@
 
     function logout() {
       localStorage.removeItem('authToken');
+      localStorage.removeItem('meitzad_token');
+      localStorage.removeItem('meitzad_user');
       window.location.href = '/#login';
     }
 
@@ -156,26 +355,24 @@
       toast.classList.remove('hidden');
       setTimeout(() => toast.classList.add('hidden'), 4000);
     }
-
-    // Initialize
-    renderContacts(contacts);
   </script>
 
   <style>
     .contacts-grid {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
       gap: var(--space-4);
     }
     .contact-card {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       gap: var(--space-4);
       padding: var(--space-5);
       background: white;
       border-radius: var(--radius-lg);
       border: 1px solid var(--gray-100);
       transition: all var(--transition-fast);
+      position: relative;
     }
     .contact-card:hover {
       box-shadow: var(--shadow-md);
@@ -190,18 +387,159 @@
       background: var(--primary-50);
       border-radius: var(--radius-md);
       font-size: 1.5rem;
+      flex-shrink: 0;
+    }
+    .contact-info {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
     }
     .contact-info h3 {
       font-size: 1rem;
       font-weight: 600;
-      margin-bottom: var(--space-1);
+      margin: 0;
     }
-    .contact-phone {
+    .contact-occupation {
+      font-size: 0.85rem;
+      color: var(--gray-600);
+    }
+    .contact-phone, .contact-email {
       color: var(--primary-600);
-      font-weight: 600;
-      font-size: 1.1rem;
+      font-weight: 500;
+      font-size: 0.95rem;
       direction: ltr;
       display: inline-block;
+      text-decoration: none;
+    }
+    .contact-phone:hover, .contact-email:hover {
+      text-decoration: underline;
+    }
+    .contact-category {
+      font-size: 0.8rem;
+      padding: 2px 8px;
+      background: var(--gray-100);
+      border-radius: 4px;
+      display: inline-block;
+      width: fit-content;
+      margin-top: 4px;
+    }
+    .contact-actions {
+      display: flex;
+      gap: 4px;
+    }
+    .btn-icon {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 1rem;
+      padding: 4px 8px;
+      border-radius: 4px;
+    }
+    .btn-icon:hover {
+      background: var(--gray-100);
+    }
+    .loading-text {
+      text-align: center;
+      padding: 40px;
+      color: var(--gray-500);
+    }
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: var(--gray-500);
+    }
+    .empty-state-icon {
+      font-size: 3rem;
+      margin-bottom: 16px;
+    }
+    .empty-state .small {
+      font-size: 0.9rem;
+      margin-top: 8px;
+    }
+
+    /* Modal styles */
+    .modal-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+    .modal-overlay.hidden { display: none; }
+    .modal-content {
+      background: white;
+      border-radius: 12px;
+      width: 90%;
+      max-width: 500px;
+      max-height: 90vh;
+      overflow-y: auto;
+    }
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--gray-100);
+    }
+    .modal-header h3 { margin: 0; }
+    .modal-close {
+      background: none;
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      color: var(--gray-500);
+    }
+    .settings-form {
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+    .form-group label {
+      display: block;
+      margin-bottom: 6px;
+      font-weight: 500;
+    }
+    .form-group input, .form-group select {
+      width: 100%;
+      padding: 10px 12px;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+    .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 16px;
+    }
+    .toggle-setting {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-top: 1px solid var(--gray-100);
+    }
+    .toggle-setting input[type="checkbox"] {
+      width: 20px;
+      height: 20px;
+    }
+    .modal-actions {
+      display: flex;
+      gap: 12px;
+      justify-content: flex-end;
+      margin-top: 20px;
+      padding-top: 16px;
+      border-top: 1px solid var(--gray-100);
+    }
+
+    @media (max-width: 768px) {
+      .form-row { grid-template-columns: 1fr; }
     }
   </style>
 </body>

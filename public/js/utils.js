@@ -1,6 +1,12 @@
 // Utility Functions for Meitzad Management System
 
 const Utils = {
+  // ===== Initialization =====
+  init() {
+    // Initialize utilities (placeholder for future use)
+    console.log('Utils initialized');
+  },
+
   // ===== Date & Time Formatting =====
   formatDate(date, format = 'short') {
     const d = new Date(date);
@@ -278,6 +284,16 @@ const Utils = {
 
   removeStorage(key) {
     localStorage.removeItem(key);
+  },
+
+  // Alias for getStorage (for backward compatibility)
+  getLocal(key, defaultValue = null) {
+    return this.getStorage(key, defaultValue);
+  },
+
+  // Alias for setStorage (for backward compatibility)
+  setLocal(key, value) {
+    return this.setStorage(key, value);
   },
 
   // ===== Debounce & Throttle =====
