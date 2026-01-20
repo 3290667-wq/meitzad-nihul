@@ -385,6 +385,153 @@ const Utils = {
 // Make Utils globally available
 window.Utils = Utils;
 
+// ===== API Client =====
+const API = {
+  baseURL: '',
+  token: null,
+
+  // Initialize with token from storage
+  init() {
+    this.token = localStorage.getItem('auth_token');
+  },
+
+  // Set auth token
+  setToken(token) {
+    this.token = token;
+    if (token) {
+      localStorage.setItem('auth_token', token);
+    } else {
+      localStorage.removeItem('auth_token');
+    }
+  },
+
+  // Get auth headers
+  getHeaders() {
+    const headers = {
+      'Content-Type': 'application/json'
+    };
+    if (this.token) {
+      headers['Authorization'] = `Bearer ${this.token}`;
+    }
+    return headers;
+  },
+
+  // GET request
+  async get(url) {
+    try {
+      const response = await fetch(this.baseURL + url, {
+        method: 'GET',
+        headers: this.getHeaders()
+      });
+
+      if (response.status === 401) {
+        this.handleUnauthorized();
+        throw new Error('Unauthorized');
+      }
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || `HTTP ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('API GET error:', error);
+      throw error;
+    }
+  },
+
+  // POST request
+  async post(url, data) {
+    try {
+      const response = await fetch(this.baseURL + url, {
+        method: 'POST',
+        headers: this.getHeaders(),
+        body: JSON.stringify(data)
+      });
+
+      if (response.status === 401) {
+        this.handleUnauthorized();
+        throw new Error('Unauthorized');
+      }
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || `HTTP ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('API POST error:', error);
+      throw error;
+    }
+  },
+
+  // PUT request
+  async put(url, data) {
+    try {
+      const response = await fetch(this.baseURL + url, {
+        method: 'PUT',
+        headers: this.getHeaders(),
+        body: JSON.stringify(data)
+      });
+
+      if (response.status === 401) {
+        this.handleUnauthorized();
+        throw new Error('Unauthorized');
+      }
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || `HTTP ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('API PUT error:', error);
+      throw error;
+    }
+  },
+
+  // DELETE request
+  async delete(url) {
+    try {
+      const response = await fetch(this.baseURL + url, {
+        method: 'DELETE',
+        headers: this.getHeaders()
+      });
+
+      if (response.status === 401) {
+        this.handleUnauthorized();
+        throw new Error('Unauthorized');
+      }
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({}));
+        throw new Error(error.error || `HTTP ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('API DELETE error:', error);
+      throw error;
+    }
+  },
+
+  // Handle unauthorized (redirect to login)
+  handleUnauthorized() {
+    this.setToken(null);
+    // Only redirect if we're not already on login page
+    if (typeof Auth !== 'undefined' && Auth.logout) {
+      Auth.logout();
+    }
+  }
+};
+
+// Initialize API on load
+API.init();
+window.API = API;
+
 // Add CSS for fadeOut animation
 const style = document.createElement('style');
 style.textContent = `

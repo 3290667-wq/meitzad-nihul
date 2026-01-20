@@ -1,4 +1,5 @@
 // Planning & Construction Module for Meitzad Management System
+// Uses API instead of Firebase
 
 const Planning = {
   boardChart: null,
@@ -30,7 +31,8 @@ const Planning = {
     community: { name: 'קהילה וחברה', icon: 'groups', color: '#FF9800' },
     environment: { name: 'סביבה וקיימות', icon: 'eco', color: '#8BC34A' },
     education: { name: 'חינוך', icon: 'school', color: '#9C27B0' },
-    security: { name: 'ביטחון', icon: 'shield', color: '#F44336' }
+    security: { name: 'ביטחון', icon: 'shield', color: '#F44336' },
+    other: { name: 'אחר', icon: 'folder', color: '#607D8B' }
   },
 
   // Status definitions
@@ -40,7 +42,8 @@ const Planning = {
     approved: { name: 'מאושר', color: '#00BCD4' },
     in_progress: { name: 'בביצוע', color: '#FF9800' },
     completed: { name: 'הושלם', color: '#4CAF50' },
-    on_hold: { name: 'מושהה', color: '#F44336' }
+    on_hold: { name: 'מושהה', color: '#F44336' },
+    cancelled: { name: 'בוטל', color: '#9E9E9E' }
   },
 
   // Priority definitions
@@ -71,13 +74,14 @@ const Planning = {
     if (!board) return;
 
     try {
-      const snapshot = await firebaseDB.ref('projects')
-        .orderByChild('priority')
-        .once('value');
+      const params = new URLSearchParams();
+      if (statusFilter && statusFilter !== 'all') {
+        params.append('status', statusFilter);
+      }
 
-      const projects = snapshot.val();
+      const projects = await API.get(`/api/projects?${params.toString()}`);
 
-      if (!projects) {
+      if (!projects || projects.length === 0) {
         board.innerHTML = `
           <div class="empty-state" style="grid-column: 1 / -1;">
             <span class="material-symbols-rounded">folder_off</span>
@@ -91,14 +95,6 @@ const Planning = {
         return;
       }
 
-      let projectsArray = Object.entries(projects)
-        .map(([id, data]) => ({ id, ...data }));
-
-      // Filter by status if specified
-      if (statusFilter !== 'all') {
-        projectsArray = projectsArray.filter(p => p.status === statusFilter);
-      }
-
       // Group by status for Kanban board
       const columns = {
         idea: [],
@@ -108,7 +104,7 @@ const Planning = {
         completed: []
       };
 
-      projectsArray.forEach(project => {
+      projects.forEach(project => {
         if (columns[project.status]) {
           columns[project.status].push(project);
         }
@@ -149,12 +145,13 @@ const Planning = {
     const category = this.CATEGORIES[project.category] || { name: project.category, icon: 'folder', color: '#607D8B' };
     const priority = this.PRIORITIES[project.priority] || { name: project.priority, color: '#607D8B' };
 
-    const completedMilestones = project.milestones?.filter(m => m.completed).length || 0;
-    const totalMilestones = project.milestones?.length || 0;
+    const milestones = project.milestones || [];
+    const completedMilestones = milestones.filter(m => m.completed).length;
+    const totalMilestones = milestones.length;
     const progress = totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0;
 
     return `
-      <div class="project-card" onclick="Planning.viewProject('${project.id}')" draggable="true" data-project-id="${project.id}">
+      <div class="project-card" onclick="Planning.viewProject('${project.id}')" data-project-id="${project.id}">
         <div class="project-card-header">
           <span class="project-category" style="background: ${category.color}20; color: ${category.color}">
             <span class="material-symbols-rounded">${category.icon}</span>
@@ -196,101 +193,25 @@ const Planning = {
 
   async updateStats() {
     try {
-      const snapshot = await firebaseDB.ref('projects').once('value');
-      const projects = snapshot.val();
+      const stats = await API.get('/api/projects/stats/summary');
 
-      if (!projects) return;
-
-      const projectsArray = Object.values(projects);
-
-      // Count by category
-      const byCat = {
-        growth: projectsArray.filter(p => p.category === 'growth').length,
-        infrastructure: projectsArray.filter(p => p.category === 'infrastructure').length,
-        community: projectsArray.filter(p => p.category === 'community').length,
-        environment: projectsArray.filter(p => p.category === 'environment').length
-      };
-
-      // Update stat cards
+      // Count by category from stats
       const growthEl = document.getElementById('growth-projects');
       const infraEl = document.getElementById('infra-projects');
       const communityEl = document.getElementById('community-projects');
       const envEl = document.getElementById('env-projects');
 
-      if (growthEl) growthEl.textContent = byCat.growth;
-      if (infraEl) infraEl.textContent = byCat.infrastructure;
-      if (communityEl) communityEl.textContent = byCat.community;
-      if (envEl) envEl.textContent = byCat.environment;
+      const byCategory = stats.byCategory || [];
+      const getCatCount = (cat) => byCategory.find(c => c.category === cat)?.count || 0;
 
-      // Update budget chart if on budget tab
-      this.updateBudgetChart(projectsArray);
+      if (growthEl) growthEl.textContent = getCatCount('growth');
+      if (infraEl) infraEl.textContent = getCatCount('infrastructure');
+      if (communityEl) communityEl.textContent = getCatCount('community');
+      if (envEl) envEl.textContent = getCatCount('environment');
 
     } catch (error) {
       console.error('Error updating stats:', error);
     }
-  },
-
-  updateBudgetChart(projects) {
-    const ctx = document.getElementById('budget-forecast-chart');
-    if (!ctx) return;
-
-    const currentYear = new Date().getFullYear();
-    const years = [currentYear, currentYear + 1, currentYear + 2, currentYear + 3, currentYear + 4];
-
-    // Calculate budget per year
-    const budgetByYear = years.map(year => {
-      return projects.reduce((sum, p) => {
-        if (!p.start_date || !p.end_date) return sum;
-
-        const startYear = new Date(p.start_date).getFullYear();
-        const endYear = new Date(p.end_date).getFullYear();
-
-        if (year >= startYear && year <= endYear) {
-          const projectYears = endYear - startYear + 1;
-          return sum + ((p.budget || 0) / projectYears);
-        }
-        return sum;
-      }, 0);
-    });
-
-    if (this.boardChart) {
-      this.boardChart.destroy();
-    }
-
-    this.boardChart = new Chart(ctx, {
-      type: 'bar',
-      data: {
-        labels: years.map(y => y.toString()),
-        datasets: [{
-          label: 'תקציב מתוכנן',
-          data: budgetByYear,
-          backgroundColor: 'rgba(46, 161, 179, 0.7)',
-          borderColor: 'rgba(46, 161, 179, 1)',
-          borderWidth: 2,
-          borderRadius: 8
-        }]
-      },
-      options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-          legend: { display: false },
-          tooltip: {
-            callbacks: {
-              label: (context) => Utils.formatCurrency(context.raw)
-            }
-          }
-        },
-        scales: {
-          y: {
-            beginAtZero: true,
-            ticks: {
-              callback: (value) => `₪${(value / 1000000).toFixed(1)}M`
-            }
-          }
-        }
-      }
-    });
   },
 
   showAddProjectModal(project = null) {
@@ -307,6 +228,8 @@ const Planning = {
     const statusOptions = Object.entries(this.STATUSES)
       .map(([value, { name }]) => `<option value="${value}" ${project?.status === value ? 'selected' : ''}>${name}</option>`)
       .join('');
+
+    const milestones = project?.milestones || [];
 
     const content = `
       <form id="project-form">
@@ -369,10 +292,10 @@ const Planning = {
             </button>
           </div>
           <div id="milestones-container">
-            ${(project?.milestones || []).map((m, i) => `
+            ${milestones.map((m, i) => `
               <div class="milestone-item">
-                <input type="text" value="${m.name}" placeholder="שם אבן דרך" class="milestone-name">
-                <input type="date" value="${m.date}" class="milestone-date">
+                <input type="text" value="${m.name || ''}" placeholder="שם אבן דרך" class="milestone-name">
+                <input type="date" value="${m.date || ''}" class="milestone-date">
                 <label class="milestone-completed">
                   <input type="checkbox" ${m.completed ? 'checked' : ''}>
                   הושלם
@@ -443,22 +366,15 @@ const Planning = {
       priority: formData.get('priority'),
       status: formData.get('status'),
       owner: formData.get('owner'),
-      milestones,
-      updatedAt: Date.now(),
-      updatedBy: Auth.getUid()
+      milestones
     };
-
-    if (!existingId) {
-      data.createdAt = Date.now();
-      data.createdBy = Auth.getUid();
-    }
 
     try {
       if (existingId) {
-        await firebaseDB.ref(`projects/${existingId}`).update(data);
+        await API.put(`/api/projects/${existingId}`, data);
         Utils.toast('הפרויקט עודכן בהצלחה', 'success');
       } else {
-        await firebaseDB.ref('projects').push(data);
+        await API.post('/api/projects', data);
         Utils.toast('הפרויקט נוצר בהצלחה', 'success');
       }
 
@@ -472,8 +388,7 @@ const Planning = {
 
   async viewProject(id) {
     try {
-      const snapshot = await firebaseDB.ref(`projects/${id}`).once('value');
-      const project = snapshot.val();
+      const project = await API.get(`/api/projects/${id}`);
 
       if (!project) {
         Utils.toast('הפרויקט לא נמצא', 'error');
@@ -484,8 +399,9 @@ const Planning = {
       const status = this.STATUSES[project.status] || { name: project.status, color: '#607D8B' };
       const priority = this.PRIORITIES[project.priority] || { name: project.priority, color: '#607D8B' };
 
-      const completedMilestones = project.milestones?.filter(m => m.completed).length || 0;
-      const totalMilestones = project.milestones?.length || 0;
+      const milestones = project.milestones || [];
+      const completedMilestones = milestones.filter(m => m.completed).length;
+      const totalMilestones = milestones.length;
       const progress = totalMilestones > 0 ? Math.round((completedMilestones / totalMilestones) * 100) : 0;
 
       const content = `
@@ -549,12 +465,12 @@ const Planning = {
                 <div class="progress-fill" style="width: ${progress}%; background: ${category.color}"></div>
               </div>
               <div class="milestones-list">
-                ${project.milestones.map(m => `
+                ${milestones.map(m => `
                   <div class="milestone-list-item ${m.completed ? 'completed' : ''}">
                     <span class="material-symbols-rounded">${m.completed ? 'check_circle' : 'radio_button_unchecked'}</span>
                     <div class="milestone-info">
                       <span class="milestone-name">${m.name}</span>
-                      <span class="milestone-date">${Utils.formatDate(new Date(m.date).getTime())}</span>
+                      <span class="milestone-date">${m.date ? Utils.formatDate(new Date(m.date).getTime()) : ''}</span>
                     </div>
                   </div>
                 `).join('')}
@@ -582,8 +498,7 @@ const Planning = {
 
   async editProject(id) {
     try {
-      const snapshot = await firebaseDB.ref(`projects/${id}`).once('value');
-      const project = snapshot.val();
+      const project = await API.get(`/api/projects/${id}`);
 
       if (!project) {
         Utils.toast('הפרויקט לא נמצא', 'error');
@@ -602,33 +517,21 @@ const Planning = {
   },
 
   async deleteProject(id) {
-    if (!confirm('האם אתה בטוח שברצונך למחוק את הפרויקט?')) return;
-
-    try {
-      await firebaseDB.ref(`projects/${id}`).remove();
-      Utils.toast('הפרויקט נמחק בהצלחה', 'success');
-      Utils.closeModal();
-      this.load();
-    } catch (error) {
-      console.error('Error deleting project:', error);
-      Utils.toast('שגיאה במחיקת הפרויקט', 'error');
-    }
-  },
-
-  async updateProjectStatus(projectId, newStatus) {
-    try {
-      await firebaseDB.ref(`projects/${projectId}`).update({
-        status: newStatus,
-        updatedAt: Date.now(),
-        updatedBy: Auth.getUid()
-      });
-
-      Utils.toast('סטטוס הפרויקט עודכן', 'success');
-      this.load();
-    } catch (error) {
-      console.error('Error updating project status:', error);
-      Utils.toast('שגיאה בעדכון הסטטוס', 'error');
-    }
+    Utils.confirm(
+      'מחיקת פרויקט',
+      'האם אתה בטוח שברצונך למחוק את הפרויקט?',
+      async () => {
+        try {
+          await API.delete(`/api/projects/${id}`);
+          Utils.toast('הפרויקט נמחק בהצלחה', 'success');
+          Utils.closeModal();
+          this.load();
+        } catch (error) {
+          console.error('Error deleting project:', error);
+          Utils.toast('שגיאה במחיקת הפרויקט', 'error');
+        }
+      }
+    );
   },
 
   cleanup() {

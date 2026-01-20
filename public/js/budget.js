@@ -1,4 +1,5 @@
 // Budget Management Module for Meitzad Management System
+// Uses API instead of Firebase
 
 const Budget = {
   charts: {},
@@ -43,37 +44,14 @@ const Budget = {
 
   async loadSummary() {
     try {
-      const now = new Date();
-      const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).getTime();
-      const endOfMonth = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59).getTime();
+      const summary = await API.get('/api/budget/summary');
 
-      const snapshot = await firebaseDB.ref('transactions')
-        .orderByChild('date')
-        .startAt(startOfMonth)
-        .endAt(endOfMonth)
-        .once('value');
-
-      const transactions = snapshot.val() || {};
-
-      let totalIncome = 0;
-      let totalExpenses = 0;
-
-      Object.values(transactions).forEach(tx => {
-        if (tx.type === 'income') {
-          totalIncome += tx.amount;
-        } else {
-          totalExpenses += tx.amount;
-        }
-      });
-
-      const balance = totalIncome - totalExpenses;
-
-      document.getElementById('total-income').textContent = Utils.formatCurrency(totalIncome);
-      document.getElementById('total-expenses').textContent = Utils.formatCurrency(totalExpenses);
-      document.getElementById('total-balance').textContent = Utils.formatCurrency(balance);
+      document.getElementById('total-income').textContent = Utils.formatCurrency(summary.income || 0);
+      document.getElementById('total-expenses').textContent = Utils.formatCurrency(summary.expense || 0);
+      document.getElementById('total-balance').textContent = Utils.formatCurrency(summary.balance || 0);
 
       const balanceEl = document.getElementById('total-balance');
-      if (balance >= 0) {
+      if (summary.balance >= 0) {
         balanceEl.style.color = 'var(--success-600)';
       } else {
         balanceEl.style.color = 'var(--error-600)';
@@ -89,40 +67,26 @@ const Budget = {
     if (!canvas) return;
 
     try {
+      const monthlyData = await API.get('/api/budget/monthly');
+
       const months = [];
       const incomeData = [];
       const expensesData = [];
 
+      // Fill in all 12 months, even if no data
+      const hebrewMonths = ['ינו', 'פבר', 'מרץ', 'אפר', 'מאי', 'יונ', 'יול', 'אוג', 'ספט', 'אוק', 'נוב', 'דצמ'];
+
+      // Get last 6 months
       for (let i = 5; i >= 0; i--) {
         const date = new Date();
         date.setMonth(date.getMonth() - i);
+        const monthNum = String(date.getMonth() + 1).padStart(2, '0');
 
-        const startOfMonth = new Date(date.getFullYear(), date.getMonth(), 1).getTime();
-        const endOfMonth = new Date(date.getFullYear(), date.getMonth() + 1, 0, 23, 59, 59).getTime();
+        months.push(hebrewMonths[date.getMonth()]);
 
-        months.push(Utils.getHebrewMonth(date.getMonth()));
-
-        const snapshot = await firebaseDB.ref('transactions')
-          .orderByChild('date')
-          .startAt(startOfMonth)
-          .endAt(endOfMonth)
-          .once('value');
-
-        const transactions = snapshot.val() || {};
-
-        let income = 0;
-        let expenses = 0;
-
-        Object.values(transactions).forEach(tx => {
-          if (tx.type === 'income') {
-            income += tx.amount;
-          } else {
-            expenses += tx.amount;
-          }
-        });
-
-        incomeData.push(income);
-        expensesData.push(expenses);
+        const monthData = monthlyData.find(m => m.month === monthNum) || { income: 0, expense: 0 };
+        incomeData.push(monthData.income || 0);
+        expensesData.push(monthData.expense || 0);
       }
 
       if (this.charts.line) {
@@ -200,14 +164,9 @@ const Budget = {
     if (!tbody) return;
 
     try {
-      const snapshot = await firebaseDB.ref('transactions')
-        .orderByChild('date')
-        .limitToLast(this.transactionsPerPage)
-        .once('value');
+      const transactions = await API.get(`/api/budget/transactions?limit=${this.transactionsPerPage}`);
 
-      const transactions = snapshot.val();
-
-      if (!transactions || Object.keys(transactions).length === 0) {
+      if (!transactions || transactions.length === 0) {
         tbody.innerHTML = `
           <tr>
             <td colspan="5" class="empty-state small">
@@ -219,13 +178,9 @@ const Budget = {
         return;
       }
 
-      const txArray = Object.entries(transactions)
-        .map(([id, data]) => ({ id, ...data }))
-        .sort((a, b) => b.date - a.date);
-
-      tbody.innerHTML = txArray.map(tx => `
+      tbody.innerHTML = transactions.map(tx => `
         <tr>
-          <td>${Utils.formatDate(tx.date)}</td>
+          <td>${Utils.formatDate(new Date(tx.date).getTime())}</td>
           <td>${tx.description}</td>
           <td>
             <span class="transaction-category">${Utils.getCategoryLabel(tx.category)}</span>
@@ -341,26 +296,19 @@ const Budget = {
     const formData = new FormData(form);
     const data = {
       type: formData.get('type'),
-      date: new Date(formData.get('date')).getTime(),
+      date: formData.get('date'),
       amount: parseFloat(formData.get('amount')),
       category: formData.get('category'),
       description: formData.get('description'),
-      notes: formData.get('notes') || '',
-      updatedAt: Date.now(),
-      updatedBy: Auth.getUid()
+      notes: formData.get('notes') || ''
     };
-
-    if (!existingId) {
-      data.createdAt = Date.now();
-      data.createdBy = Auth.getUid();
-    }
 
     try {
       if (existingId) {
-        await firebaseDB.ref(`transactions/${existingId}`).update(data);
+        await API.put(`/api/budget/transactions/${existingId}`, data);
         Utils.toast('התנועה עודכנה בהצלחה', 'success');
       } else {
-        await firebaseDB.ref('transactions').push(data);
+        await API.post('/api/budget/transactions', data);
         Utils.toast('התנועה נוספה בהצלחה', 'success');
       }
 
@@ -375,8 +323,7 @@ const Budget = {
 
   async editTransaction(id) {
     try {
-      const snapshot = await firebaseDB.ref(`transactions/${id}`).once('value');
-      const transaction = snapshot.val();
+      const transaction = await API.get(`/api/budget/transactions/${id}`);
 
       if (transaction) {
         this.showAddTransactionModal({ id, ...transaction });
@@ -395,7 +342,7 @@ const Budget = {
       'האם אתה בטוח שברצונך למחוק תנועה זו? פעולה זו לא ניתנת לביטול.',
       async () => {
         try {
-          await firebaseDB.ref(`transactions/${id}`).remove();
+          await API.delete(`/api/budget/transactions/${id}`);
           Utils.toast('התנועה נמחקה', 'success');
           this.load();
         } catch (error) {

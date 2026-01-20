@@ -473,3 +473,151 @@ INSERT OR IGNORE INTO quick_links (id, title, url, icon, category, sort_order) V
 (1, 'אתר המועצה', 'https://council.gov.il', '🏛️', 'external', 1),
 (2, 'דואר ישראל', 'https://israelpost.co.il', '📮', 'services', 2),
 (3, 'חברת חשמל', 'https://iec.co.il', '⚡', 'services', 3);
+
+-- =====================================================
+-- ADDITIONAL TABLES FOR FULL MANAGEMENT SYSTEM
+-- =====================================================
+
+-- Employees table - עובדים
+CREATE TABLE IF NOT EXISTS employees (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id_number TEXT UNIQUE,
+    name TEXT NOT NULL,
+    position TEXT,
+    department TEXT CHECK(department IN ('management', 'maintenance', 'security', 'education', 'admin', 'other')),
+    phone TEXT,
+    email TEXT,
+    address TEXT,
+    start_date DATE,
+    end_date DATE,
+    employment_type TEXT DEFAULT 'full_time' CHECK(employment_type IN ('full_time', 'part_time', 'contract', 'volunteer')),
+    salary REAL DEFAULT 0,
+    status TEXT DEFAULT 'active' CHECK(status IN ('active', 'inactive', 'on_leave', 'deleted')),
+    photo TEXT,
+    send_attendance_notifications INTEGER DEFAULT 0,
+    notes TEXT,
+    created_by INTEGER REFERENCES users(id),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Attendance records - נוכחות
+CREATE TABLE IF NOT EXISTS attendance (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    employee_id INTEGER REFERENCES employees(id) ON DELETE CASCADE,
+    date DATE NOT NULL,
+    check_in DATETIME,
+    check_out DATETIME,
+    total_hours REAL,
+    notes TEXT,
+    created_by INTEGER REFERENCES users(id),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE(employee_id, date)
+);
+
+-- Transactions table - תנועות כספיות
+CREATE TABLE IF NOT EXISTS transactions (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    type TEXT NOT NULL CHECK(type IN ('income', 'expense')),
+    amount REAL NOT NULL,
+    description TEXT NOT NULL,
+    category TEXT CHECK(category IN ('infrastructure', 'maintenance', 'security', 'education', 'welfare', 'employees', 'taxes', 'other')),
+    date DATE NOT NULL,
+    notes TEXT,
+    receipt_number TEXT,
+    created_by INTEGER REFERENCES users(id),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Meetings table - ישיבות
+CREATE TABLE IF NOT EXISTS meetings (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    type TEXT DEFAULT 'regular' CHECK(type IN ('regular', 'emergency', 'annual', 'special')),
+    date DATETIME NOT NULL,
+    location TEXT,
+    agenda TEXT,
+    participants TEXT,
+    has_protocol INTEGER DEFAULT 0,
+    created_by INTEGER REFERENCES users(id),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Protocols table - פרוטוקולים
+CREATE TABLE IF NOT EXISTS protocols (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    meeting_id INTEGER REFERENCES meetings(id) ON DELETE SET NULL,
+    meeting_date DATE,
+    meeting_type TEXT,
+    participants TEXT,
+    content TEXT,
+    audio_file TEXT,
+    status TEXT DEFAULT 'processing' CHECK(status IN ('processing', 'ready', 'approved')),
+    created_by INTEGER REFERENCES users(id),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Projects table - פרויקטים
+CREATE TABLE IF NOT EXISTS projects (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    name TEXT NOT NULL,
+    description TEXT,
+    category TEXT CHECK(category IN ('growth', 'infrastructure', 'community', 'environment', 'education', 'security', 'other')),
+    priority TEXT DEFAULT 'medium' CHECK(priority IN ('low', 'medium', 'high', 'critical')),
+    status TEXT DEFAULT 'idea' CHECK(status IN ('idea', 'planning', 'approved', 'in_progress', 'completed', 'on_hold', 'cancelled')),
+    budget REAL DEFAULT 0,
+    spent REAL DEFAULT 0,
+    start_date DATE,
+    end_date DATE,
+    owner TEXT,
+    milestones TEXT,
+    created_by INTEGER REFERENCES users(id),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Inquiries/Requests table (alias for requests with additional fields)
+CREATE TABLE IF NOT EXISTS inquiries (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    inquiry_number TEXT UNIQUE NOT NULL,
+    name TEXT,
+    email TEXT,
+    phone TEXT,
+    address TEXT,
+    subject TEXT NOT NULL,
+    description TEXT,
+    category TEXT CHECK(category IN ('infrastructure', 'security', 'environment', 'education', 'welfare', 'other')),
+    priority TEXT DEFAULT 'normal' CHECK(priority IN ('low', 'normal', 'high', 'urgent')),
+    status TEXT DEFAULT 'new' CHECK(status IN ('new', 'in-progress', 'pending', 'resolved', 'closed')),
+    assigned_to INTEGER REFERENCES users(id),
+    source TEXT DEFAULT 'web' CHECK(source IN ('web', 'email', 'whatsapp', 'phone')),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    resolved_at DATETIME
+);
+
+-- Inquiry updates - עדכוני פניות
+CREATE TABLE IF NOT EXISTS inquiry_updates (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    inquiry_id INTEGER REFERENCES inquiries(id) ON DELETE CASCADE,
+    status TEXT,
+    note TEXT,
+    created_by INTEGER REFERENCES users(id),
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+
+-- Create indexes for new tables
+CREATE INDEX IF NOT EXISTS idx_employees_department ON employees(department);
+CREATE INDEX IF NOT EXISTS idx_employees_status ON employees(status);
+CREATE INDEX IF NOT EXISTS idx_attendance_employee ON attendance(employee_id);
+CREATE INDEX IF NOT EXISTS idx_attendance_date ON attendance(date);
+CREATE INDEX IF NOT EXISTS idx_transactions_type ON transactions(type);
+CREATE INDEX IF NOT EXISTS idx_transactions_date ON transactions(date);
+CREATE INDEX IF NOT EXISTS idx_meetings_date ON meetings(date);
+CREATE INDEX IF NOT EXISTS idx_projects_status ON projects(status);
+CREATE INDEX IF NOT EXISTS idx_projects_category ON projects(category);
+CREATE INDEX IF NOT EXISTS idx_inquiries_status ON inquiries(status);
+CREATE INDEX IF NOT EXISTS idx_inquiries_category ON inquiries(category);

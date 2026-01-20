@@ -1,4 +1,5 @@
 // Employees Module for Meitzad Management System
+// Uses API instead of Firebase
 
 const Employees = {
   init() {
@@ -40,7 +41,8 @@ const Employees = {
     maintenance: 'תחזוקה',
     security: 'ביטחון',
     education: 'חינוך',
-    admin: 'מנהלה'
+    admin: 'מנהלה',
+    other: 'אחר'
   },
 
   // Status translations
@@ -63,13 +65,14 @@ const Employees = {
     if (!grid) return;
 
     try {
-      const snapshot = await firebaseDB.ref('employees')
-        .orderByChild('name')
-        .once('value');
+      const params = new URLSearchParams();
+      if (department && department !== 'all') {
+        params.append('department', department);
+      }
 
-      const employees = snapshot.val();
+      const employees = await API.get(`/api/employees?${params.toString()}`);
 
-      if (!employees) {
+      if (!employees || employees.length === 0) {
         grid.innerHTML = `
           <div class="empty-state">
             <span class="material-symbols-rounded">group_off</span>
@@ -79,22 +82,13 @@ const Employees = {
         return;
       }
 
-      let employeesArray = Object.entries(employees)
-        .map(([id, data]) => ({ id, ...data }))
-        .filter(e => e.status !== 'deleted');
-
-      // Filter by department if specified
-      if (department !== 'all') {
-        employeesArray = employeesArray.filter(e => e.department === department);
-      }
-
       // Sort by name
-      employeesArray.sort((a, b) => a.name.localeCompare(b.name, 'he'));
+      employees.sort((a, b) => (a.name || '').localeCompare(b.name || '', 'he'));
 
-      grid.innerHTML = employeesArray.map(employee => this.renderEmployeeCard(employee)).join('');
+      grid.innerHTML = employees.map(employee => this.renderEmployeeCard(employee)).join('');
 
       // Update stats
-      this.updateStats(Object.values(employees).filter(e => e.status !== 'deleted'));
+      this.updateStats(employees);
 
     } catch (error) {
       console.error('Error loading employees:', error);
@@ -171,56 +165,42 @@ const Employees = {
     const tbody = document.getElementById('attendance-body');
     if (!tbody) return;
 
-    const today = new Date();
-    today.setHours(0, 0, 0, 0);
-    const todayStr = today.toISOString().split('T')[0];
+    const today = new Date().toISOString().split('T')[0];
 
     try {
-      // Get today's attendance records
-      const snapshot = await firebaseDB.ref('attendance')
-        .orderByChild('date')
-        .equalTo(todayStr)
-        .once('value');
-
-      const attendance = snapshot.val();
-
-      // Get all active employees
-      const empSnapshot = await firebaseDB.ref('employees')
-        .orderByChild('status')
-        .equalTo('active')
-        .once('value');
-
-      const employees = empSnapshot.val() || {};
+      const data = await API.get(`/api/employees/attendance/date/${today}`);
 
       const attendanceMap = {};
-      if (attendance) {
-        Object.values(attendance).forEach(record => {
-          attendanceMap[record.employeeId] = record;
+      if (data.attendance) {
+        data.attendance.forEach(record => {
+          attendanceMap[record.employee_id] = record;
         });
       }
 
+      const employees = data.employees || [];
+
       // Render attendance table
-      const rows = Object.entries(employees).map(([empId, emp]) => {
-        const record = attendanceMap[empId];
-        const status = record ? (record.checkOut ? 'completed' : 'present') : 'absent';
-        const statusText = record ? (record.checkOut ? 'סיים' : 'נוכח') : 'לא הגיע';
+      const rows = employees.map(emp => {
+        const record = attendanceMap[emp.id];
+        const status = record ? (record.check_out ? 'completed' : 'present') : 'absent';
+        const statusText = record ? (record.check_out ? 'סיים' : 'נוכח') : 'לא הגיע';
 
         return `
           <tr>
             <td>${emp.name}</td>
-            <td>${record?.checkIn ? Utils.formatTime(new Date(record.checkIn).getTime()) : '-'}</td>
-            <td>${record?.checkOut ? Utils.formatTime(new Date(record.checkOut).getTime()) : '-'}</td>
+            <td>${record?.check_in ? Utils.formatTime(new Date(record.check_in).getTime()) : '-'}</td>
+            <td>${record?.check_out ? Utils.formatTime(new Date(record.check_out).getTime()) : '-'}</td>
             <td>
               <span class="status-badge status-${status}">${statusText}</span>
             </td>
             <td>
               <div class="table-actions">
                 ${!record ? `
-                  <button class="table-action-btn" onclick="Employees.recordCheckIn('${empId}')" title="רישום כניסה">
+                  <button class="table-action-btn" onclick="Employees.recordCheckIn('${emp.id}')" title="רישום כניסה">
                     <span class="material-symbols-rounded">login</span>
                   </button>
-                ` : !record.checkOut ? `
-                  <button class="table-action-btn" onclick="Employees.recordCheckOut('${empId}')" title="רישום יציאה">
+                ` : !record.check_out ? `
+                  <button class="table-action-btn" onclick="Employees.recordCheckOut('${emp.id}')" title="רישום יציאה">
                     <span class="material-symbols-rounded">logout</span>
                   </button>
                 ` : ''}
@@ -244,8 +224,8 @@ const Employees = {
       }
 
       // Update attendance summary
-      const present = Object.values(attendanceMap).length;
-      const absent = Object.keys(employees).length - present;
+      const present = Object.keys(attendanceMap).length;
+      const absent = employees.length - present;
 
       const presentEl = document.getElementById('present-count');
       const absentEl = document.getElementById('absent-count');
@@ -259,27 +239,10 @@ const Employees = {
   },
 
   async recordCheckIn(employeeId) {
-    const today = new Date().toISOString().split('T')[0];
-    const now = new Date().toISOString();
-
     try {
-      await firebaseDB.ref('attendance').push({
-        employeeId,
-        date: today,
-        checkIn: now,
-        createdBy: Auth.getUid()
-      });
-
+      await API.post('/api/employees/attendance/check-in', { employee_id: employeeId });
       Utils.toast('כניסה נרשמה בהצלחה', 'success');
       this.loadAttendance();
-
-      // Send WhatsApp notification if configured
-      const empSnapshot = await firebaseDB.ref(`employees/${employeeId}`).once('value');
-      const emp = empSnapshot.val();
-      if (emp?.phone && emp?.sendAttendanceNotifications) {
-        Utils.sendWhatsApp(emp.phone, `שלום ${emp.name}, כניסתך לעבודה נרשמה בשעה ${Utils.formatTime(Date.now())}`);
-      }
-
     } catch (error) {
       console.error('Error recording check-in:', error);
       Utils.toast('שגיאה ברישום כניסה', 'error');
@@ -287,45 +250,10 @@ const Employees = {
   },
 
   async recordCheckOut(employeeId) {
-    const today = new Date().toISOString().split('T')[0];
-    const now = new Date().toISOString();
-
     try {
-      // Find today's attendance record for this employee
-      const snapshot = await firebaseDB.ref('attendance')
-        .orderByChild('employeeId')
-        .equalTo(employeeId)
-        .once('value');
-
-      const records = snapshot.val();
-      if (!records) {
-        Utils.toast('לא נמצא רישום כניסה להיום', 'error');
-        return;
-      }
-
-      // Find today's record
-      const todayRecord = Object.entries(records).find(([id, r]) => r.date === today && !r.checkOut);
-
-      if (!todayRecord) {
-        Utils.toast('לא נמצא רישום כניסה להיום', 'error');
-        return;
-      }
-
-      await firebaseDB.ref(`attendance/${todayRecord[0]}`).update({
-        checkOut: now,
-        updatedBy: Auth.getUid()
-      });
-
+      await API.post('/api/employees/attendance/check-out', { employee_id: employeeId });
       Utils.toast('יציאה נרשמה בהצלחה', 'success');
       this.loadAttendance();
-
-      // Send WhatsApp notification if configured
-      const empSnapshot = await firebaseDB.ref(`employees/${employeeId}`).once('value');
-      const emp = empSnapshot.val();
-      if (emp?.phone && emp?.sendAttendanceNotifications) {
-        Utils.sendWhatsApp(emp.phone, `שלום ${emp.name}, יציאתך מהעבודה נרשמה בשעה ${Utils.formatTime(Date.now())}`);
-      }
-
     } catch (error) {
       console.error('Error recording check-out:', error);
       Utils.toast('שגיאה ברישום יציאה', 'error');
@@ -337,19 +265,10 @@ const Employees = {
     if (!container) return;
 
     try {
-      const currentMonth = new Date().getMonth() + 1;
-      const currentYear = new Date().getFullYear();
+      const payroll = await API.get('/api/employees/payroll/summary');
 
-      // Get all active employees
-      const empSnapshot = await firebaseDB.ref('employees')
-        .orderByChild('status')
-        .equalTo('active')
-        .once('value');
-
-      const employees = empSnapshot.val() || {};
-      const employeesArray = Object.values(employees);
-
-      const totalSalary = employeesArray.reduce((sum, e) => sum + (e.salary || 0), 0);
+      const employees = payroll.employees || [];
+      const totalSalary = employees.reduce((sum, e) => sum + (e.salary || 0), 0);
       const socialCosts = totalSalary * 0.185; // 18.5% for social benefits
       const totalCost = totalSalary + socialCosts;
 
@@ -402,8 +321,8 @@ const Employees = {
             <input type="text" id="emp-name" name="name" required value="${employee?.name || ''}" placeholder="ישראל ישראלי">
           </div>
           <div class="form-group">
-            <label for="emp-id-number">תעודת זהות *</label>
-            <input type="text" id="emp-id-number" name="id_number" required value="${employee?.id_number || ''}" placeholder="123456789">
+            <label for="emp-id-number">תעודת זהות</label>
+            <input type="text" id="emp-id-number" name="id_number" value="${employee?.id_number || ''}" placeholder="123456789">
           </div>
         </div>
         <div class="form-row">
@@ -420,6 +339,7 @@ const Employees = {
               <option value="security" ${employee?.department === 'security' ? 'selected' : ''}>ביטחון</option>
               <option value="education" ${employee?.department === 'education' ? 'selected' : ''}>חינוך</option>
               <option value="admin" ${employee?.department === 'admin' ? 'selected' : ''}>מנהלה</option>
+              <option value="other" ${employee?.department === 'other' ? 'selected' : ''}>אחר</option>
             </select>
           </div>
         </div>
@@ -464,7 +384,7 @@ const Employees = {
         </div>
         <div class="form-group">
           <label class="toggle-label">
-            <input type="checkbox" id="emp-attendance-notifications" name="sendAttendanceNotifications" ${employee?.sendAttendanceNotifications ? 'checked' : ''}>
+            <input type="checkbox" id="emp-attendance-notifications" name="send_attendance_notifications" ${employee?.send_attendance_notifications ? 'checked' : ''}>
             <span class="toggle-switch"></span>
             שלח התראות נוכחות בווצאפ
           </label>
@@ -503,23 +423,16 @@ const Employees = {
       employment_type: formData.get('employment_type'),
       salary: parseFloat(formData.get('salary')) || 0,
       status: formData.get('status'),
-      sendAttendanceNotifications: form.querySelector('#emp-attendance-notifications').checked,
-      notes: formData.get('notes'),
-      updatedAt: Date.now(),
-      updatedBy: Auth.getUid()
+      send_attendance_notifications: form.querySelector('#emp-attendance-notifications').checked,
+      notes: formData.get('notes')
     };
-
-    if (!existingId) {
-      data.createdAt = Date.now();
-      data.createdBy = Auth.getUid();
-    }
 
     try {
       if (existingId) {
-        await firebaseDB.ref(`employees/${existingId}`).update(data);
+        await API.put(`/api/employees/${existingId}`, data);
         Utils.toast('העובד עודכן בהצלחה', 'success');
       } else {
-        await firebaseDB.ref('employees').push(data);
+        await API.post('/api/employees', data);
         Utils.toast('העובד נוסף בהצלחה', 'success');
       }
 
@@ -527,14 +440,13 @@ const Employees = {
       this.load();
     } catch (error) {
       console.error('Error saving employee:', error);
-      Utils.toast('שגיאה בשמירת העובד', 'error');
+      Utils.toast(error.message || 'שגיאה בשמירת העובד', 'error');
     }
   },
 
   async viewEmployee(id) {
     try {
-      const snapshot = await firebaseDB.ref(`employees/${id}`).once('value');
-      const employee = snapshot.val();
+      const employee = await API.get(`/api/employees/${id}`);
 
       if (!employee) {
         Utils.toast('העובד לא נמצא', 'error');
@@ -636,8 +548,7 @@ const Employees = {
 
   async editEmployee(id) {
     try {
-      const snapshot = await firebaseDB.ref(`employees/${id}`).once('value');
-      const employee = snapshot.val();
+      const employee = await API.get(`/api/employees/${id}`);
 
       if (!employee) {
         Utils.toast('העובד לא נמצא', 'error');
@@ -656,23 +567,21 @@ const Employees = {
   },
 
   async deleteEmployee(id) {
-    if (!confirm('האם אתה בטוח שברצונך למחוק את העובד?')) return;
-
-    try {
-      // Soft delete - just mark as deleted
-      await firebaseDB.ref(`employees/${id}`).update({
-        status: 'deleted',
-        deletedAt: Date.now(),
-        deletedBy: Auth.getUid()
-      });
-
-      Utils.toast('העובד נמחק בהצלחה', 'success');
-      Utils.closeModal();
-      this.load();
-    } catch (error) {
-      console.error('Error deleting employee:', error);
-      Utils.toast('שגיאה במחיקת העובד', 'error');
-    }
+    Utils.confirm(
+      'מחיקת עובד',
+      'האם אתה בטוח שברצונך למחוק את העובד?',
+      async () => {
+        try {
+          await API.delete(`/api/employees/${id}`);
+          Utils.toast('העובד נמחק בהצלחה', 'success');
+          Utils.closeModal();
+          this.load();
+        } catch (error) {
+          console.error('Error deleting employee:', error);
+          Utils.toast('שגיאה במחיקת העובד', 'error');
+        }
+      }
+    );
   },
 
   sendWhatsApp(phone) {
@@ -680,88 +589,7 @@ const Employees = {
       Utils.toast('אין מספר טלפון', 'error');
       return;
     }
-    Utils.sendWhatsApp(phone, '');
-  },
-
-  async generatePayrollReport() {
-    Utils.toast('מפיק דו"ח משכורות...', 'info');
-
-    try {
-      const snapshot = await firebaseDB.ref('employees')
-        .orderByChild('status')
-        .equalTo('active')
-        .once('value');
-
-      const employees = snapshot.val();
-      if (!employees) {
-        Utils.toast('אין עובדים פעילים', 'warning');
-        return;
-      }
-
-      const data = Object.values(employees).map(emp => ({
-        'שם': emp.name,
-        'תפקיד': emp.position,
-        'מחלקה': this.DEPARTMENTS[emp.department] || emp.department,
-        'סוג העסקה': this.EMPLOYMENT_TYPES[emp.employment_type] || emp.employment_type,
-        'שכר ברוטו': emp.salary || 0,
-        'עלות מעביד': Math.round((emp.salary || 0) * 1.185)
-      }));
-
-      const month = Utils.getHebrewMonth(new Date().getMonth());
-      const year = new Date().getFullYear();
-
-      Utils.exportToCSV(data, `משכורות_${month}_${year}`);
-      Utils.toast('הדו"ח הורד בהצלחה', 'success');
-
-    } catch (error) {
-      console.error('Error generating payroll report:', error);
-      Utils.toast('שגיאה בהפקת הדו"ח', 'error');
-    }
-  },
-
-  async generateAttendanceReport() {
-    Utils.toast('מפיק דו"ח נוכחות...', 'info');
-
-    try {
-      const month = new Date().getMonth();
-      const year = new Date().getFullYear();
-      const startDate = new Date(year, month, 1).toISOString().split('T')[0];
-      const endDate = new Date(year, month + 1, 0).toISOString().split('T')[0];
-
-      const snapshot = await firebaseDB.ref('attendance')
-        .orderByChild('date')
-        .startAt(startDate)
-        .endAt(endDate)
-        .once('value');
-
-      const attendance = snapshot.val();
-
-      if (!attendance) {
-        Utils.toast('אין נתוני נוכחות לחודש זה', 'warning');
-        return;
-      }
-
-      // Get employee names
-      const empSnapshot = await firebaseDB.ref('employees').once('value');
-      const employees = empSnapshot.val() || {};
-
-      const data = Object.values(attendance).map(record => ({
-        'שם': employees[record.employeeId]?.name || 'לא ידוע',
-        'תאריך': record.date,
-        'כניסה': record.checkIn ? Utils.formatTime(new Date(record.checkIn).getTime()) : '-',
-        'יציאה': record.checkOut ? Utils.formatTime(new Date(record.checkOut).getTime()) : '-',
-        'שעות': record.checkIn && record.checkOut ?
-          Math.round((new Date(record.checkOut) - new Date(record.checkIn)) / 3600000 * 10) / 10 : 0
-      }));
-
-      const monthName = Utils.getHebrewMonth(month);
-      Utils.exportToCSV(data, `נוכחות_${monthName}_${year}`);
-      Utils.toast('הדו"ח הורד בהצלחה', 'success');
-
-    } catch (error) {
-      console.error('Error generating attendance report:', error);
-      Utils.toast('שגיאה בהפקת הדו"ח', 'error');
-    }
+    Utils.sendWhatsAppMessage(phone, '');
   },
 
   cleanup() {}

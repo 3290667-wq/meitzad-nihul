@@ -18,6 +18,13 @@ const authRoutes = require('./routes/auth');
 const requestRoutes = require('./routes/requests');
 const userRoutes = require('./routes/users');
 const communityRoutes = require('./routes/community');
+const dashboardRoutes = require('./routes/dashboard');
+const inquiriesRoutes = require('./routes/inquiries');
+const budgetRoutes = require('./routes/budget');
+const employeesRoutes = require('./routes/employees');
+const meetingsRoutes = require('./routes/meetings');
+const projectsRoutes = require('./routes/projects');
+const settingsRoutes = require('./routes/settings');
 
 // Initialize Express app
 const app = express();
@@ -41,6 +48,13 @@ app.use(express.static(path.join(__dirname, '../public')));
 app.use('/api/auth', authRoutes);
 app.use('/api/requests', requestRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/dashboard', dashboardRoutes);
+app.use('/api/inquiries', inquiriesRoutes);
+app.use('/api/budget', budgetRoutes);
+app.use('/api/employees', employeesRoutes);
+app.use('/api/meetings', meetingsRoutes);
+app.use('/api/projects', projectsRoutes);
+app.use('/api/settings', settingsRoutes);
 
 // Community management routes
 app.use('/api', communityRoutes);

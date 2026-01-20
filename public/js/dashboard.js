@@ -1,4 +1,5 @@
 // Dashboard Module for Meitzad Management System
+// Uses API instead of Firebase
 
 const Dashboard = {
   charts: {},
@@ -31,65 +32,51 @@ const Dashboard = {
   },
 
   async loadStats() {
-    // Load budget balance
     try {
-      const budgetSnapshot = await firebaseDB.ref('budget/summary').once('value');
-      const budgetData = budgetSnapshot.val() || {};
-      const balance = (budgetData.income || 0) - (budgetData.expenses || 0);
+      const stats = await API.get('/api/dashboard/stats');
 
-      document.getElementById('stat-budget').textContent = Utils.formatCurrency(balance);
-    } catch (error) {
-      console.error('Error loading budget stats:', error);
-    }
-
-    // Load open inquiries count
-    try {
-      const inquiriesSnapshot = await firebaseDB.ref('inquiries')
-        .orderByChild('status')
-        .equalTo('new')
-        .once('value');
-
-      const openCount = inquiriesSnapshot.numChildren();
-      document.getElementById('stat-open-inquiries').textContent = openCount;
-
-      // Update badge
-      Navigation.updateInquiriesBadge(openCount);
-    } catch (error) {
-      console.error('Error loading inquiries stats:', error);
-    }
-
-    // Load next meeting
-    try {
-      const now = Date.now();
-      const meetingsSnapshot = await firebaseDB.ref('meetings')
-        .orderByChild('date')
-        .startAt(now)
-        .limitToFirst(1)
-        .once('value');
-
-      const meetings = meetingsSnapshot.val();
-      if (meetings) {
-        const nextMeeting = Object.values(meetings)[0];
-        const meetingDate = new Date(nextMeeting.date);
-        document.getElementById('stat-next-meeting').textContent =
-          `${meetingDate.getDate()}/${meetingDate.getMonth() + 1}`;
-      } else {
-        document.getElementById('stat-next-meeting').textContent = '--';
+      // Update stat cards
+      const budgetEl = document.getElementById('stat-budget');
+      if (budgetEl) {
+        budgetEl.textContent = Utils.formatCurrency(stats.budget?.balance || 0);
       }
-    } catch (error) {
-      console.error('Error loading meeting stats:', error);
-    }
 
-    // Load active employees count
-    try {
-      const employeesSnapshot = await firebaseDB.ref('employees')
-        .orderByChild('status')
-        .equalTo('active')
-        .once('value');
+      const inquiriesEl = document.getElementById('stat-open-inquiries');
+      if (inquiriesEl) {
+        inquiriesEl.textContent = stats.inquiries?.open || 0;
+        // Update badge
+        if (typeof Navigation !== 'undefined' && Navigation.updateInquiriesBadge) {
+          Navigation.updateInquiriesBadge(stats.inquiries?.open || 0);
+        }
+      }
 
-      document.getElementById('stat-employees').textContent = employeesSnapshot.numChildren();
+      const meetingsEl = document.getElementById('stat-next-meeting');
+      if (meetingsEl) {
+        if (stats.meetings?.upcoming > 0) {
+          // Fetch next meeting date
+          try {
+            const upcomingMeetings = await API.get('/api/meetings/upcoming?limit=1');
+            if (upcomingMeetings && upcomingMeetings.length > 0) {
+              const meetingDate = new Date(upcomingMeetings[0].date);
+              meetingsEl.textContent = `${meetingDate.getDate()}/${meetingDate.getMonth() + 1}`;
+            } else {
+              meetingsEl.textContent = '--';
+            }
+          } catch {
+            meetingsEl.textContent = '--';
+          }
+        } else {
+          meetingsEl.textContent = '--';
+        }
+      }
+
+      const employeesEl = document.getElementById('stat-employees');
+      if (employeesEl) {
+        employeesEl.textContent = stats.employees?.active || 0;
+      }
+
     } catch (error) {
-      console.error('Error loading employees stats:', error);
+      console.error('Error loading stats:', error);
     }
   },
 
@@ -98,14 +85,9 @@ const Dashboard = {
     if (!container) return;
 
     try {
-      const snapshot = await firebaseDB.ref('inquiries')
-        .orderByChild('createdAt')
-        .limitToLast(5)
-        .once('value');
+      const inquiries = await API.get('/api/inquiries?limit=5');
 
-      const inquiries = snapshot.val();
-
-      if (!inquiries || Object.keys(inquiries).length === 0) {
+      if (!inquiries || inquiries.length === 0) {
         container.innerHTML = `
           <div class="empty-state small">
             <span class="material-symbols-rounded">inbox</span>
@@ -115,12 +97,7 @@ const Dashboard = {
         return;
       }
 
-      // Convert to array and sort by date (newest first)
-      const inquiriesArray = Object.entries(inquiries)
-        .map(([id, data]) => ({ id, ...data }))
-        .sort((a, b) => b.createdAt - a.createdAt);
-
-      container.innerHTML = inquiriesArray.map(inquiry => `
+      container.innerHTML = inquiries.map(inquiry => `
         <div class="inquiry-item" data-id="${inquiry.id}">
           <div class="inquiry-item-icon">
             <span class="material-symbols-rounded">mail</span>
@@ -128,7 +105,7 @@ const Dashboard = {
           <div class="inquiry-item-content">
             <div class="inquiry-item-title">${Utils.truncate(inquiry.subject, 40)}</div>
             <div class="inquiry-item-meta">
-              ${inquiry.name} | ${Utils.formatRelativeTime(inquiry.createdAt)}
+              ${inquiry.name || 'אנונימי'} | ${Utils.formatRelativeTime(new Date(inquiry.created_at).getTime())}
             </div>
           </div>
           <span class="status-badge status-${inquiry.status}">${Utils.getStatusLabel(inquiry.status)}</span>
@@ -139,7 +116,6 @@ const Dashboard = {
       container.querySelectorAll('.inquiry-item').forEach(item => {
         item.addEventListener('click', () => {
           Navigation.navigateTo('inquiries');
-          // TODO: Open specific inquiry
         });
       });
 
@@ -159,16 +135,9 @@ const Dashboard = {
     if (!container) return;
 
     try {
-      const now = Date.now();
-      const snapshot = await firebaseDB.ref('meetings')
-        .orderByChild('date')
-        .startAt(now)
-        .limitToFirst(3)
-        .once('value');
+      const meetings = await API.get('/api/meetings/upcoming?limit=3');
 
-      const meetings = snapshot.val();
-
-      if (!meetings || Object.keys(meetings).length === 0) {
+      if (!meetings || meetings.length === 0) {
         container.innerHTML = `
           <div class="empty-state small">
             <span class="material-symbols-rounded">event_busy</span>
@@ -178,11 +147,7 @@ const Dashboard = {
         return;
       }
 
-      const meetingsArray = Object.entries(meetings)
-        .map(([id, data]) => ({ id, ...data }))
-        .sort((a, b) => a.date - b.date);
-
-      container.innerHTML = meetingsArray.map(meeting => {
+      container.innerHTML = meetings.map(meeting => {
         const date = new Date(meeting.date);
         const day = date.getDate();
         const month = Utils.getHebrewMonth(date.getMonth());
@@ -197,7 +162,7 @@ const Dashboard = {
               <div class="meeting-item-title">${meeting.title}</div>
               <div class="meeting-item-time">
                 <span class="material-symbols-rounded">schedule</span>
-                ${Utils.formatTime(meeting.date)}
+                ${Utils.formatTime(date.getTime())}
               </div>
             </div>
           </div>
@@ -208,7 +173,6 @@ const Dashboard = {
       container.querySelectorAll('.meeting-item').forEach(item => {
         item.addEventListener('click', () => {
           Navigation.navigateTo('meetings');
-          // TODO: Open specific meeting
         });
       });
 
@@ -228,8 +192,7 @@ const Dashboard = {
     if (!canvas) return;
 
     try {
-      const snapshot = await firebaseDB.ref('budget/categories').once('value');
-      const categories = snapshot.val() || {};
+      const categoryData = await API.get('/api/budget/by-category?type=expense');
 
       // Prepare data for chart
       const labels = [];
@@ -239,10 +202,12 @@ const Dashboard = {
         '#ef4444', '#8b5cf6', '#ec4899', '#6366f1'
       ];
 
-      Object.entries(categories).forEach(([key, value]) => {
-        labels.push(Utils.getCategoryLabel(key));
-        data.push(value.total || 0);
-      });
+      if (categoryData && categoryData.length > 0) {
+        categoryData.forEach(item => {
+          labels.push(Utils.getCategoryLabel(item.category));
+          data.push(item.total || 0);
+        });
+      }
 
       // If no data, show placeholder
       if (data.length === 0 || data.every(d => d === 0)) {

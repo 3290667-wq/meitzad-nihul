@@ -1,4 +1,5 @@
 // Inquiries Module for Meitzad Management System
+// Uses API instead of Firebase
 
 const Inquiries = {
   perPage: 20,
@@ -25,6 +26,15 @@ const Inquiries = {
     if (categoryFilter) {
       categoryFilter.addEventListener('change', (e) => {
         this.filters.category = e.target.value;
+        this.loadInquiries();
+      });
+    }
+
+    // Status filter
+    const statusFilter = document.getElementById('inquiries-status-filter');
+    if (statusFilter) {
+      statusFilter.addEventListener('change', (e) => {
+        this.filters.status = e.target.value;
         this.loadInquiries();
       });
     }
@@ -63,52 +73,16 @@ const Inquiries = {
     if (!tbody) return;
 
     try {
-      const snapshot = await firebaseDB.ref('inquiries')
-        .orderByChild('createdAt')
-        .limitToLast(100)
-        .once('value');
+      // Build query params
+      const params = new URLSearchParams();
+      if (this.filters.status) params.append('status', this.filters.status);
+      if (this.filters.category) params.append('category', this.filters.category);
+      if (this.filters.search) params.append('search', this.filters.search);
+      params.append('limit', '100');
 
-      let inquiries = snapshot.val() || {};
+      const inquiriesArray = await API.get(`/api/inquiries?${params.toString()}`);
 
-      // Convert to array
-      let inquiriesArray = Object.entries(inquiries)
-        .map(([id, data]) => ({ id, ...data }))
-        .sort((a, b) => b.createdAt - a.createdAt);
-
-      // Apply filters
-      if (this.filters.search) {
-        const search = this.filters.search.toLowerCase();
-        inquiriesArray = inquiriesArray.filter(i =>
-          i.subject?.toLowerCase().includes(search) ||
-          i.name?.toLowerCase().includes(search) ||
-          i.inquiryNumber?.toLowerCase().includes(search)
-        );
-      }
-
-      if (this.filters.category) {
-        inquiriesArray = inquiriesArray.filter(i => i.category === this.filters.category);
-      }
-
-      if (this.filters.date) {
-        const now = new Date();
-        let startDate;
-        switch (this.filters.date) {
-          case 'today':
-            startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-            break;
-          case 'week':
-            startDate = new Date(now - 7 * 24 * 60 * 60 * 1000);
-            break;
-          case 'month':
-            startDate = new Date(now.getFullYear(), now.getMonth(), 1);
-            break;
-        }
-        if (startDate) {
-          inquiriesArray = inquiriesArray.filter(i => i.createdAt >= startDate.getTime());
-        }
-      }
-
-      if (inquiriesArray.length === 0) {
+      if (!inquiriesArray || inquiriesArray.length === 0) {
         tbody.innerHTML = `
           <tr>
             <td colspan="7" class="empty-state small">
@@ -122,12 +96,12 @@ const Inquiries = {
 
       tbody.innerHTML = inquiriesArray.map(inquiry => `
         <tr onclick="Inquiries.viewInquiry('${inquiry.id}')" style="cursor: pointer;">
-          <td><strong>${inquiry.inquiryNumber || 'ללא'}</strong></td>
+          <td><strong>${inquiry.inquiry_number || 'ללא'}</strong></td>
           <td>${Utils.truncate(inquiry.subject, 40)}</td>
           <td>${inquiry.name || 'אנונימי'}</td>
           <td><span class="transaction-category">${Utils.getCategoryLabel(inquiry.category)}</span></td>
           <td><span class="status-badge status-${inquiry.status}">${Utils.getStatusLabel(inquiry.status)}</span></td>
-          <td>${Utils.formatDate(inquiry.createdAt)}</td>
+          <td>${Utils.formatDate(new Date(inquiry.created_at).getTime())}</td>
           <td>
             <div class="table-actions" onclick="event.stopPropagation()">
               <button class="table-action-btn view" onclick="Inquiries.viewInquiry('${inquiry.id}')" title="צפייה">
@@ -156,8 +130,7 @@ const Inquiries = {
 
   async viewInquiry(id) {
     try {
-      const snapshot = await firebaseDB.ref(`inquiries/${id}`).once('value');
-      const inquiry = snapshot.val();
+      const inquiry = await API.get(`/api/inquiries/${id}`);
 
       if (!inquiry) {
         Utils.toast('פנייה לא נמצאה', 'error');
@@ -168,7 +141,7 @@ const Inquiries = {
         <div class="inquiry-detail">
           <div class="detail-row">
             <span class="detail-label">מספר פנייה:</span>
-            <span class="detail-value">${inquiry.inquiryNumber || 'ללא'}</span>
+            <span class="detail-value">${inquiry.inquiry_number || 'ללא'}</span>
           </div>
           <div class="detail-row">
             <span class="detail-label">סטטוס:</span>
@@ -176,7 +149,7 @@ const Inquiries = {
           </div>
           <div class="detail-row">
             <span class="detail-label">תאריך פתיחה:</span>
-            <span class="detail-value">${Utils.formatDate(inquiry.createdAt, 'full')}</span>
+            <span class="detail-value">${Utils.formatDate(new Date(inquiry.created_at).getTime(), 'full')}</span>
           </div>
           <div class="detail-row">
             <span class="detail-label">שם פונה:</span>
@@ -202,13 +175,27 @@ const Inquiries = {
             <span class="detail-label">תיאור:</span>
             <div class="detail-value description">${inquiry.description || 'אין תיאור'}</div>
           </div>
+          ${inquiry.updates && inquiry.updates.length > 0 ? `
+            <div class="detail-row full">
+              <span class="detail-label">היסטוריית עדכונים:</span>
+              <div class="updates-list">
+                ${inquiry.updates.map(u => `
+                  <div class="update-item">
+                    <span class="update-time">${Utils.formatDate(new Date(u.created_at).getTime(), 'full')}</span>
+                    <span class="status-badge status-${u.status}">${Utils.getStatusLabel(u.status)}</span>
+                    ${u.note ? `<p class="update-note">${u.note}</p>` : ''}
+                  </div>
+                `).join('')}
+              </div>
+            </div>
+          ` : ''}
         </div>
       `;
 
       const footer = `
         <button class="btn btn-secondary" onclick="Utils.closeModal()">סגור</button>
         <button class="btn btn-primary" onclick="Inquiries.updateStatus('${id}')">עדכון סטטוס</button>
-        ${inquiry.phone ? `<button class="btn btn-success" onclick="Utils.sendWhatsAppMessage('${inquiry.phone}', 'שלום, לגבי הפנייה שלך ${inquiry.inquiryNumber}...')">שלח וואטסאפ</button>` : ''}
+        ${inquiry.phone ? `<button class="btn btn-success" onclick="Utils.sendWhatsAppMessage('${inquiry.phone}', 'שלום, לגבי הפנייה שלך ${inquiry.inquiry_number}...')">שלח וואטסאפ</button>` : ''}
       `;
 
       Utils.openModal(`פנייה: ${inquiry.subject}`, content, footer);
@@ -221,8 +208,7 @@ const Inquiries = {
 
   async updateStatus(id) {
     try {
-      const snapshot = await firebaseDB.ref(`inquiries/${id}`).once('value');
-      const inquiry = snapshot.val();
+      const inquiry = await API.get(`/api/inquiries/${id}`);
 
       if (!inquiry) {
         Utils.toast('פנייה לא נמצאה', 'error');
@@ -277,18 +263,9 @@ const Inquiries = {
     const notify = form.querySelector('#notify-citizen').checked;
 
     try {
-      await firebaseDB.ref(`inquiries/${id}`).update({
+      await API.put(`/api/inquiries/${id}`, {
         status,
-        updatedAt: Date.now(),
-        updatedBy: Auth.getUid()
-      });
-
-      // Add update to history
-      await firebaseDB.ref(`inquiries/${id}/updates`).push({
-        status,
-        note,
-        createdAt: Date.now(),
-        createdBy: Auth.getUid()
+        note
       });
 
       if (notify) {
@@ -309,21 +286,50 @@ const Inquiries = {
 
   async updateBadge() {
     try {
-      const snapshot = await firebaseDB.ref('inquiries')
-        .orderByChild('status')
-        .equalTo('new')
-        .once('value');
-
-      const count = snapshot.numChildren();
-      Navigation.updateInquiriesBadge(count);
+      const stats = await API.get('/api/inquiries/stats/summary');
+      const count = stats?.new_count || 0;
+      if (typeof Navigation !== 'undefined' && Navigation.updateInquiriesBadge) {
+        Navigation.updateInquiriesBadge(count);
+      }
     } catch (error) {
       console.error('Error updating badge:', error);
     }
   },
 
-  exportInquiries() {
-    Utils.toast('ייצוא פניות...', 'info');
-    // TODO: Implement export
+  async exportInquiries() {
+    Utils.toast('מייצא פניות...', 'info');
+    try {
+      const inquiries = await API.get('/api/inquiries');
+
+      // Create CSV
+      const headers = ['מספר פנייה', 'נושא', 'שם', 'קטגוריה', 'סטטוס', 'תאריך'];
+      const rows = inquiries.map(i => [
+        i.inquiry_number || '',
+        i.subject || '',
+        i.name || '',
+        Utils.getCategoryLabel(i.category),
+        Utils.getStatusLabel(i.status),
+        Utils.formatDate(new Date(i.created_at).getTime())
+      ]);
+
+      const csv = [headers, ...rows]
+        .map(row => row.map(cell => `"${cell}"`).join(','))
+        .join('\n');
+
+      // Add BOM for Hebrew support
+      const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `inquiries_${new Date().toISOString().split('T')[0]}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+
+      Utils.toast('הייצוא הושלם', 'success');
+    } catch (error) {
+      console.error('Export error:', error);
+      Utils.toast('שגיאה בייצוא', 'error');
+    }
   },
 
   cleanup() {
@@ -341,6 +347,10 @@ detailStyles.textContent = `
   .detail-label { font-weight: var(--font-semibold); color: var(--color-text-secondary); min-width: 120px; }
   .detail-value { color: var(--color-text-primary); }
   .detail-value.description { background: var(--color-bg-secondary); padding: var(--space-3); border-radius: var(--radius-md); white-space: pre-wrap; }
+  .updates-list { display: flex; flex-direction: column; gap: var(--space-2); }
+  .update-item { background: var(--color-bg-secondary); padding: var(--space-3); border-radius: var(--radius-md); }
+  .update-time { font-size: var(--text-sm); color: var(--color-text-tertiary); }
+  .update-note { margin-top: var(--space-2); font-size: var(--text-sm); }
 `;
 document.head.appendChild(detailStyles);
 

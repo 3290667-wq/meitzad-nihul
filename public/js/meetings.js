@@ -1,4 +1,5 @@
 // Meetings Module for Meitzad Management System
+// Uses API instead of Firebase
 
 const Meetings = {
   init() {
@@ -9,30 +10,6 @@ const Meetings = {
     const addBtn = document.getElementById('add-meeting-btn');
     if (addBtn) {
       addBtn.addEventListener('click', () => this.showAddMeetingModal());
-    }
-
-    // Protocol upload zone
-    const uploadZone = document.getElementById('protocol-upload-zone');
-    const fileInput = document.getElementById('protocol-file-input');
-
-    if (uploadZone && fileInput) {
-      uploadZone.addEventListener('click', () => fileInput.click());
-      uploadZone.addEventListener('dragover', (e) => {
-        e.preventDefault();
-        uploadZone.classList.add('dragover');
-      });
-      uploadZone.addEventListener('dragleave', () => {
-        uploadZone.classList.remove('dragover');
-      });
-      uploadZone.addEventListener('drop', (e) => {
-        e.preventDefault();
-        uploadZone.classList.remove('dragover');
-        const files = e.dataTransfer.files;
-        if (files.length) this.handleProtocolUpload(files[0]);
-      });
-      fileInput.addEventListener('change', (e) => {
-        if (e.target.files.length) this.handleProtocolUpload(e.target.files[0]);
-      });
     }
   },
 
@@ -57,15 +34,9 @@ const Meetings = {
     if (!container) return;
 
     try {
-      const now = Date.now();
-      const snapshot = await firebaseDB.ref('meetings')
-        .orderByChild('date')
-        .startAt(now)
-        .once('value');
+      const meetings = await API.get('/api/meetings?upcoming=true');
 
-      const meetings = snapshot.val();
-
-      if (!meetings) {
+      if (!meetings || meetings.length === 0) {
         container.innerHTML = `
           <div class="empty-state">
             <span class="material-symbols-rounded">event_busy</span>
@@ -75,11 +46,7 @@ const Meetings = {
         return;
       }
 
-      const meetingsArray = Object.entries(meetings)
-        .map(([id, data]) => ({ id, ...data }))
-        .sort((a, b) => a.date - b.date);
-
-      container.innerHTML = meetingsArray.map(meeting => this.renderMeetingCard(meeting)).join('');
+      container.innerHTML = meetings.map(meeting => this.renderMeetingCard(meeting)).join('');
 
     } catch (error) {
       console.error('Error loading upcoming meetings:', error);
@@ -91,16 +58,11 @@ const Meetings = {
     if (!container) return;
 
     try {
-      const now = Date.now();
-      const snapshot = await firebaseDB.ref('meetings')
-        .orderByChild('date')
-        .endAt(now)
-        .limitToLast(20)
-        .once('value');
+      const allMeetings = await API.get('/api/meetings');
+      const now = new Date();
+      const meetings = (allMeetings || []).filter(m => new Date(m.date) < now).slice(0, 20);
 
-      const meetings = snapshot.val();
-
-      if (!meetings) {
+      if (!meetings || meetings.length === 0) {
         container.innerHTML = `
           <div class="empty-state">
             <span class="material-symbols-rounded">history</span>
@@ -110,11 +72,7 @@ const Meetings = {
         return;
       }
 
-      const meetingsArray = Object.entries(meetings)
-        .map(([id, data]) => ({ id, ...data }))
-        .sort((a, b) => b.date - a.date);
-
-      container.innerHTML = meetingsArray.map(meeting => this.renderMeetingCard(meeting, true)).join('');
+      container.innerHTML = meetings.map(meeting => this.renderMeetingCard(meeting, true)).join('');
 
     } catch (error) {
       console.error('Error loading past meetings:', error);
@@ -126,14 +84,9 @@ const Meetings = {
     if (!tbody) return;
 
     try {
-      const snapshot = await firebaseDB.ref('protocols')
-        .orderByChild('meetingDate')
-        .limitToLast(20)
-        .once('value');
+      const protocols = await API.get('/api/meetings/protocols/all');
 
-      const protocols = snapshot.val();
-
-      if (!protocols) {
+      if (!protocols || protocols.length === 0) {
         tbody.innerHTML = `
           <tr>
             <td colspan="5" class="empty-state small">
@@ -145,23 +98,16 @@ const Meetings = {
         return;
       }
 
-      const protocolsArray = Object.entries(protocols)
-        .map(([id, data]) => ({ id, ...data }))
-        .sort((a, b) => b.meetingDate - a.meetingDate);
-
-      tbody.innerHTML = protocolsArray.map(protocol => `
+      tbody.innerHTML = protocols.map(protocol => `
         <tr>
-          <td>${Utils.formatDate(protocol.meetingDate)}</td>
-          <td>${protocol.meetingType || 'ישיבת וועד'}</td>
+          <td>${protocol.meeting_date ? Utils.formatDate(new Date(protocol.meeting_date).getTime()) : '-'}</td>
+          <td>${protocol.meeting_type || 'ישיבת וועד'}</td>
           <td>${protocol.participants || '-'}</td>
-          <td><span class="status-badge status-${protocol.status}">${protocol.status === 'ready' ? 'מוכן' : 'בעיבוד'}</span></td>
+          <td><span class="status-badge status-${protocol.status}">${protocol.status === 'ready' ? 'מוכן' : protocol.status === 'approved' ? 'מאושר' : 'בעיבוד'}</span></td>
           <td>
             <div class="table-actions">
               <button class="table-action-btn view" onclick="Meetings.viewProtocol('${protocol.id}')" title="צפייה">
                 <span class="material-symbols-rounded">visibility</span>
-              </button>
-              <button class="table-action-btn" onclick="Meetings.downloadProtocol('${protocol.id}')" title="הורדה">
-                <span class="material-symbols-rounded">download</span>
               </button>
             </div>
           </td>
@@ -189,7 +135,7 @@ const Meetings = {
             <h4 class="meeting-card-title">${meeting.title}</h4>
             <div class="meeting-card-time">
               <span class="material-symbols-rounded">schedule</span>
-              ${Utils.formatTime(meeting.date)}
+              ${Utils.formatTime(date.getTime())}
             </div>
           </div>
         </div>
@@ -198,7 +144,7 @@ const Meetings = {
           <div class="meeting-card-participants">
             ${meeting.participants ? `<span class="participant-count">${meeting.participants} משתתפים</span>` : ''}
           </div>
-          ${isPast && meeting.hasProtocol ? '<span class="status-badge status-completed">יש פרוטוקול</span>' : ''}
+          ${isPast && meeting.has_protocol ? '<span class="status-badge status-completed">יש פרוטוקול</span>' : ''}
         </div>
       </div>
     `;
@@ -228,6 +174,7 @@ const Meetings = {
             <option value="regular" ${meeting?.type === 'regular' ? 'selected' : ''}>ישיבה רגילה</option>
             <option value="emergency" ${meeting?.type === 'emergency' ? 'selected' : ''}>ישיבה דחופה</option>
             <option value="annual" ${meeting?.type === 'annual' ? 'selected' : ''}>אסיפה שנתית</option>
+            <option value="special" ${meeting?.type === 'special' ? 'selected' : ''}>ישיבה מיוחדת</option>
           </select>
         </div>
         <div class="form-group">
@@ -255,25 +202,18 @@ const Meetings = {
     const formData = new FormData(form);
     const data = {
       title: formData.get('title'),
-      date: new Date(formData.get('date')).getTime(),
+      date: formData.get('date'),
       location: formData.get('location'),
       type: formData.get('type'),
-      agenda: formData.get('agenda'),
-      updatedAt: Date.now(),
-      updatedBy: Auth.getUid()
+      agenda: formData.get('agenda')
     };
-
-    if (!existingId) {
-      data.createdAt = Date.now();
-      data.createdBy = Auth.getUid();
-    }
 
     try {
       if (existingId) {
-        await firebaseDB.ref(`meetings/${existingId}`).update(data);
+        await API.put(`/api/meetings/${existingId}`, data);
         Utils.toast('הישיבה עודכנה', 'success');
       } else {
-        await firebaseDB.ref('meetings').push(data);
+        await API.post('/api/meetings', data);
         Utils.toast('הישיבה נוצרה', 'success');
       }
 
@@ -285,26 +225,116 @@ const Meetings = {
     }
   },
 
-  viewMeeting(id) {
-    // TODO: Show meeting details modal
-    Utils.toast('פרטי ישיבה יוצגו בקרוב', 'info');
+  async viewMeeting(id) {
+    try {
+      const meeting = await API.get(`/api/meetings/${id}`);
+
+      if (!meeting) {
+        Utils.toast('הישיבה לא נמצאה', 'error');
+        return;
+      }
+
+      const date = new Date(meeting.date);
+      const content = `
+        <div class="meeting-detail">
+          <div class="detail-row">
+            <span class="detail-label">תאריך:</span>
+            <span class="detail-value">${Utils.formatDate(date.getTime(), 'full')}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">שעה:</span>
+            <span class="detail-value">${Utils.formatTime(date.getTime())}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">מיקום:</span>
+            <span class="detail-value">${meeting.location || 'לא צוין'}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">סוג:</span>
+            <span class="detail-value">${meeting.type === 'regular' ? 'ישיבה רגילה' : meeting.type === 'emergency' ? 'ישיבה דחופה' : meeting.type === 'annual' ? 'אסיפה שנתית' : 'ישיבה מיוחדת'}</span>
+          </div>
+          ${meeting.agenda ? `
+            <div class="detail-row full">
+              <span class="detail-label">סדר יום:</span>
+              <div class="detail-value" style="white-space: pre-wrap;">${meeting.agenda}</div>
+            </div>
+          ` : ''}
+        </div>
+      `;
+
+      const footer = `
+        <button class="btn btn-secondary" onclick="Utils.closeModal()">סגור</button>
+        <button class="btn btn-primary" onclick="Meetings.editMeeting('${id}')">עריכה</button>
+      `;
+
+      Utils.openModal(meeting.title, content, footer);
+
+    } catch (error) {
+      console.error('Error viewing meeting:', error);
+      Utils.toast('שגיאה בטעינת הישיבה', 'error');
+    }
   },
 
-  viewProtocol(id) {
-    Utils.toast('צפייה בפרוטוקול...', 'info');
+  async editMeeting(id) {
+    try {
+      const meeting = await API.get(`/api/meetings/${id}`);
+
+      if (!meeting) {
+        Utils.toast('הישיבה לא נמצאה', 'error');
+        return;
+      }
+
+      Utils.closeModal();
+      setTimeout(() => {
+        this.showAddMeetingModal({ id, ...meeting });
+      }, 300);
+
+    } catch (error) {
+      console.error('Error editing meeting:', error);
+      Utils.toast('שגיאה בטעינת הישיבה', 'error');
+    }
   },
 
-  downloadProtocol(id) {
-    Utils.toast('הורדת פרוטוקול...', 'info');
-  },
+  async viewProtocol(id) {
+    try {
+      const protocol = await API.get(`/api/meetings/protocols/${id}`);
 
-  handleProtocolUpload(file) {
-    Utils.toast(`מעלה קובץ: ${file.name}`, 'info');
-    // TODO: Upload file to Firebase Storage
-    // TODO: Send to transcription service (Otter.ai, Fireflies.ai)
-    setTimeout(() => {
-      Utils.toast('העלאת קבצים והמרה לפרוטוקול תהיה זמינה בקרוב', 'warning');
-    }, 1500);
+      if (!protocol) {
+        Utils.toast('הפרוטוקול לא נמצא', 'error');
+        return;
+      }
+
+      const content = `
+        <div class="protocol-detail">
+          <div class="detail-row">
+            <span class="detail-label">תאריך:</span>
+            <span class="detail-value">${protocol.meeting_date ? Utils.formatDate(new Date(protocol.meeting_date).getTime()) : '-'}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">סוג ישיבה:</span>
+            <span class="detail-value">${protocol.meeting_type || 'ישיבת וועד'}</span>
+          </div>
+          <div class="detail-row">
+            <span class="detail-label">משתתפים:</span>
+            <span class="detail-value">${protocol.participants || '-'}</span>
+          </div>
+          <div class="detail-row full">
+            <span class="detail-label">תוכן:</span>
+            <div class="detail-value" style="white-space: pre-wrap; max-height: 400px; overflow-y: auto;">${protocol.content || 'אין תוכן'}</div>
+          </div>
+        </div>
+      `;
+
+      const footer = `
+        <button class="btn btn-secondary" onclick="Utils.closeModal()">סגור</button>
+      `;
+
+      Utils.openModal('פרוטוקול', content, footer);
+
+    } catch (error) {
+      console.error('Error viewing protocol:', error);
+      Utils.toast('שגיאה בטעינת הפרוטוקול', 'error');
+    }
   },
 
   cleanup() {}
