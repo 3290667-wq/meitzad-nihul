@@ -474,18 +474,18 @@ const API = {
   token: null,
   defaultTimeout: 30000, // 30 seconds default timeout
 
-  // Initialize with token from storage
+  // Initialize with token from storage (use same key as Auth module)
   init() {
-    this.token = localStorage.getItem('auth_token');
+    this.token = localStorage.getItem('meitzad_token');
   },
 
-  // Set auth token
+  // Set auth token (use same key as Auth module)
   setToken(token) {
     this.token = token;
     if (token) {
-      localStorage.setItem('auth_token', token);
+      localStorage.setItem('meitzad_token', token);
     } else {
-      localStorage.removeItem('auth_token');
+      localStorage.removeItem('meitzad_token');
     }
   },
 
@@ -625,10 +625,14 @@ const API = {
 
   // Handle unauthorized (redirect to login)
   handleUnauthorized() {
+    // Only handle if we actually had a token (avoid logout loops)
+    if (!this.token) return;
+
     this.setToken(null);
     // Clear auth and redirect to login without confirmation dialog
-    if (typeof Auth !== 'undefined') {
+    if (typeof Auth !== 'undefined' && Auth.isAuthenticated && Auth.isAuthenticated()) {
       Auth.clearAuth();
+      Utils.toast('פג תוקף ההתחברות, אנא התחבר מחדש', 'warning');
       Auth.onAuthFailure();
     }
   }
