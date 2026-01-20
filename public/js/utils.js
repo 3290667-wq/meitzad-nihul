@@ -626,9 +626,10 @@ const API = {
   // Handle unauthorized (redirect to login)
   handleUnauthorized() {
     this.setToken(null);
-    // Only redirect if we're not already on login page
-    if (typeof Auth !== 'undefined' && Auth.logout) {
-      Auth.logout();
+    // Clear auth and redirect to login without confirmation dialog
+    if (typeof Auth !== 'undefined') {
+      Auth.clearAuth();
+      Auth.onAuthFailure();
     }
   }
 };

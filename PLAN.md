@@ -272,7 +272,7 @@ git push origin main
 ### Render
 - Auto-deploy מופעל על main branch
 - Environment variables מוגדרים
-- URL: https://meitzad-nihul.onrender.com
+- URL: https://meitzad-docker.onrender.com
 
 ---
 
