@@ -159,6 +159,135 @@
               </table>
             </div>
           </section>
+
+          <!-- Inquiry Categories Section -->
+          <section class="dashboard-section full-width">
+            <div class="section-header">
+              <h2>📂 קטגוריות פניות</h2>
+              <button class="btn btn-primary btn-small" onclick="showAddCategoryModal()">➕ הוסף קטגוריה</button>
+            </div>
+            <p class="section-description">קטגוריות לסיווג פניות תושבים. ניתן להוסיף, לערוך או להסיר קטגוריות לפי הצרכים של היישוב.</p>
+            <div class="categories-grid" id="categoriesGrid">
+              <div class="loading-text">טוען קטגוריות...</div>
+            </div>
+          </section>
+
+          <!-- Email Settings Section -->
+          <section class="dashboard-section">
+            <div class="section-header"><h2>📧 הגדרות אימייל</h2></div>
+            <form class="settings-form" id="emailForm">
+              <div class="form-group">
+                <label>אימייל לפניות תושבים</label>
+                <input type="email" id="inquiriesEmail" placeholder="pniyot@meitzad.org.il">
+                <small class="form-help">פניות שנשלחות לכתובת זו יעלו אוטומטית למערכת</small>
+              </div>
+              <div class="form-group">
+                <label>אימייל לשליחת הודעות</label>
+                <input type="email" id="outgoingEmail" placeholder="vaad@meitzad.org.il">
+                <small class="form-help">כתובת לשליחת הודעות מהאתר לתושבים</small>
+              </div>
+              <div class="form-group">
+                <label>שרת SMTP</label>
+                <input type="text" id="smtpHost" placeholder="smtp.gmail.com">
+              </div>
+              <div class="form-row-inline">
+                <div class="form-group">
+                  <label>פורט</label>
+                  <input type="number" id="smtpPort" placeholder="587">
+                </div>
+                <div class="form-group">
+                  <label>סיסמה / App Password</label>
+                  <input type="password" id="smtpPass" placeholder="••••••••">
+                </div>
+              </div>
+              <div class="toggle-setting">
+                <label>חיבור מאובטח (TLS)</label>
+                <input type="checkbox" id="smtpSecure">
+              </div>
+              <button type="button" class="btn btn-secondary" onclick="testEmailConnection()">🔌 בדיקת חיבור</button>
+              <button type="button" class="btn btn-primary" onclick="saveEmailSettings()">שמירת הגדרות אימייל</button>
+            </form>
+          </section>
+
+          <!-- WhatsApp Settings Section -->
+          <section class="dashboard-section">
+            <div class="section-header"><h2>💬 הגדרות וואטסאפ</h2></div>
+            <form class="settings-form" id="whatsappForm">
+              <div class="toggle-setting">
+                <label>הפעל התראות וואטסאפ</label>
+                <input type="checkbox" id="whatsappEnabled">
+              </div>
+
+              <div class="subsection">
+                <h4>🏛️ קבוצת ועד היישוב</h4>
+                <p class="form-help">התראות על פניות חדשות יועברו אוטומטית לקבוצת הוועד</p>
+                <div class="form-group">
+                  <label>מזהה קבוצת וואטסאפ</label>
+                  <input type="text" id="whatsappGroupId" placeholder="120363...@g.us">
+                </div>
+                <div class="form-group">
+                  <label>כתובת שרת Bridge</label>
+                  <input type="text" id="whatsappBridgeUrl" placeholder="http://localhost:3001">
+                  <small class="form-help">שרת WhatsApp-Web.js לשליחת הודעות</small>
+                </div>
+                <div class="connection-status" id="whatsappStatus">
+                  <span class="status-indicator"></span>
+                  <span class="status-text">לא מחובר</span>
+                </div>
+                <button type="button" class="btn btn-secondary" onclick="checkWhatsAppConnection()">🔌 בדיקת חיבור</button>
+              </div>
+
+              <div class="subsection">
+                <h4>👷 בוט עובדים</h4>
+                <p class="form-help">עובדים יכולים לדווח זמני עבודה ולברר שכר דרך וואטסאפ</p>
+                <div class="toggle-setting">
+                  <label>הפעל בוט עובדים</label>
+                  <input type="checkbox" id="employeeBotEnabled">
+                </div>
+                <div class="form-group">
+                  <label>מספר וואטסאפ לבוט</label>
+                  <input type="tel" id="employeeBotNumber" placeholder="972501234567">
+                </div>
+              </div>
+              <button type="button" class="btn btn-primary" onclick="saveWhatsAppSettings()">שמירת הגדרות וואטסאפ</button>
+            </form>
+          </section>
+
+          <!-- Data Backup Section -->
+          <section class="dashboard-section">
+            <div class="section-header"><h2>💾 גיבוי נתונים</h2></div>
+            <div class="settings-form">
+              <p class="section-description">גיבוי אוטומטי מבוצע מדי יום בחצות. ניתן ליצור גיבוי ידני או לשחזר מגיבוי קיים.</p>
+
+              <div class="backup-actions">
+                <button type="button" class="btn btn-primary" onclick="createManualBackup()">
+                  <span>💾</span> צור גיבוי עכשיו
+                </button>
+                <button type="button" class="btn btn-secondary" onclick="exportAllData()">
+                  <span>📥</span> ייצוא לקובץ JSON
+                </button>
+              </div>
+
+              <div class="backup-list">
+                <h4>גיבויים קיימים</h4>
+                <div id="backupsList" class="backups-container">
+                  <div class="loading-text">טוען רשימת גיבויים...</div>
+                </div>
+              </div>
+
+              <div class="restore-section">
+                <h4>שחזור מגיבוי</h4>
+                <p class="warning-text">⚠️ שחזור יחליף את כל הנתונים הקיימים. פעולה זו לא ניתנת לביטול!</p>
+                <div class="form-group">
+                  <label>בחר קובץ גיבוי לשחזור</label>
+                  <select id="restoreBackupSelect">
+                    <option value="">בחר גיבוי...</option>
+                  </select>
+                </div>
+                <button type="button" class="btn btn-danger" onclick="confirmRestoreBackup()">🔄 שחזר מגיבוי</button>
+              </div>
+            </div>
+          </section>
         </div>
       </div>
     </main>
@@ -206,6 +335,47 @@
     </div>
   </div>
 
+  <!-- Category Modal -->
+  <div id="categoryModal" class="modal-overlay hidden">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3 id="categoryModalTitle">הוספת קטגוריה חדשה</h3>
+        <button class="modal-close" onclick="closeCategoryModal()">&times;</button>
+      </div>
+      <form id="categoryForm" class="settings-form">
+        <input type="hidden" id="editCategoryId">
+        <div class="form-group">
+          <label>שם הקטגוריה (עברית) *</label>
+          <input type="text" id="categoryNameHe" required placeholder="תשתיות">
+        </div>
+        <div class="form-group">
+          <label>שם הקטגוריה (אנגלית) *</label>
+          <input type="text" id="categoryName" required placeholder="infrastructure">
+        </div>
+        <div class="form-group">
+          <label>תיאור</label>
+          <input type="text" id="categoryDescription" placeholder="כבישים, תאורה, ביוב, מים">
+        </div>
+        <div class="form-group">
+          <label>אייקון (אימוג'י)</label>
+          <input type="text" id="categoryIcon" placeholder="🛠️" maxlength="4">
+        </div>
+        <div class="form-group">
+          <label>סדר הצגה</label>
+          <input type="number" id="categorySortOrder" value="0" min="0">
+        </div>
+        <div class="toggle-setting">
+          <label>קטגוריה פעילה</label>
+          <input type="checkbox" id="categoryActive" checked>
+        </div>
+        <div class="modal-actions">
+          <button type="button" class="btn btn-secondary" onclick="closeCategoryModal()">ביטול</button>
+          <button type="submit" class="btn btn-primary">שמירה</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
   <div id="toast" class="toast hidden"></div>
 
   <script>
@@ -213,6 +383,8 @@
     let authToken = localStorage.getItem('meitzad_token') || localStorage.getItem('authToken');
     let currentUser = null;
     let allUsers = [];
+    let allCategories = [];
+    let allBackups = [];
 
     // Initialize
     document.addEventListener('DOMContentLoaded', () => {
@@ -223,8 +395,13 @@
       loadCurrentUser();
       loadSiteSettings();
       loadUsers();
+      loadCategories();
+      loadEmailSettings();
+      loadWhatsAppSettings();
+      loadBackups();
 
       document.getElementById('userForm').addEventListener('submit', handleUserFormSubmit);
+      document.getElementById('categoryForm').addEventListener('submit', handleCategoryFormSubmit);
     });
 
     async function apiRequest(url, options = {}) {
@@ -530,6 +707,359 @@
       toast.classList.remove('hidden');
       setTimeout(() => toast.classList.add('hidden'), 4000);
     }
+
+    // ========== CATEGORIES MANAGEMENT ==========
+    async function loadCategories() {
+      try {
+        allCategories = await apiRequest(`${API_BASE}/categories`);
+        renderCategories();
+      } catch (error) {
+        console.error('Load categories error:', error);
+        document.getElementById('categoriesGrid').innerHTML =
+          '<div class="error-text">שגיאה בטעינת קטגוריות</div>';
+      }
+    }
+
+    function renderCategories() {
+      const grid = document.getElementById('categoriesGrid');
+      if (allCategories.length === 0) {
+        grid.innerHTML = '<div class="empty-text">אין קטגוריות במערכת</div>';
+        return;
+      }
+
+      grid.innerHTML = allCategories.map(cat => `
+        <div class="category-card ${!cat.is_active ? 'inactive' : ''}">
+          <div class="category-icon">${cat.icon || '📁'}</div>
+          <div class="category-info">
+            <span class="category-name">${cat.name_he}</span>
+            <span class="category-desc">${cat.description || ''}</span>
+          </div>
+          <div class="category-actions">
+            <button class="btn btn-icon" onclick="editCategory(${cat.id})" title="עריכה">✏️</button>
+            <button class="btn btn-icon btn-danger" onclick="deleteCategory(${cat.id})" title="מחיקה">🗑️</button>
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function showAddCategoryModal() {
+      document.getElementById('categoryModalTitle').textContent = 'הוספת קטגוריה חדשה';
+      document.getElementById('editCategoryId').value = '';
+      document.getElementById('categoryNameHe').value = '';
+      document.getElementById('categoryName').value = '';
+      document.getElementById('categoryDescription').value = '';
+      document.getElementById('categoryIcon').value = '';
+      document.getElementById('categorySortOrder').value = '0';
+      document.getElementById('categoryActive').checked = true;
+      document.getElementById('categoryModal').classList.remove('hidden');
+    }
+
+    function editCategory(categoryId) {
+      const cat = allCategories.find(c => c.id === categoryId);
+      if (!cat) return;
+
+      document.getElementById('categoryModalTitle').textContent = 'עריכת קטגוריה';
+      document.getElementById('editCategoryId').value = categoryId;
+      document.getElementById('categoryNameHe').value = cat.name_he;
+      document.getElementById('categoryName').value = cat.name;
+      document.getElementById('categoryDescription').value = cat.description || '';
+      document.getElementById('categoryIcon').value = cat.icon || '';
+      document.getElementById('categorySortOrder').value = cat.sort_order || 0;
+      document.getElementById('categoryActive').checked = cat.is_active;
+      document.getElementById('categoryModal').classList.remove('hidden');
+    }
+
+    function closeCategoryModal() {
+      document.getElementById('categoryModal').classList.add('hidden');
+    }
+
+    async function handleCategoryFormSubmit(e) {
+      e.preventDefault();
+      const categoryId = document.getElementById('editCategoryId').value;
+      const data = {
+        name: document.getElementById('categoryName').value.trim(),
+        name_he: document.getElementById('categoryNameHe').value.trim(),
+        description: document.getElementById('categoryDescription').value.trim(),
+        icon: document.getElementById('categoryIcon').value.trim(),
+        sort_order: parseInt(document.getElementById('categorySortOrder').value) || 0,
+        is_active: document.getElementById('categoryActive').checked ? 1 : 0
+      };
+
+      try {
+        if (categoryId) {
+          await apiRequest(`${API_BASE}/categories/${categoryId}`, {
+            method: 'PUT',
+            body: JSON.stringify(data)
+          });
+          showToast('הקטגוריה עודכנה בהצלחה', 'success');
+        } else {
+          await apiRequest(`${API_BASE}/categories`, {
+            method: 'POST',
+            body: JSON.stringify(data)
+          });
+          showToast('הקטגוריה נוצרה בהצלחה', 'success');
+        }
+        closeCategoryModal();
+        loadCategories();
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
+    }
+
+    async function deleteCategory(categoryId) {
+      if (!confirm('האם למחוק את הקטגוריה? פניות קיימות לא ימחקו.')) return;
+
+      try {
+        await apiRequest(`${API_BASE}/categories/${categoryId}`, { method: 'DELETE' });
+        showToast('הקטגוריה נמחקה', 'success');
+        loadCategories();
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
+    }
+
+    // ========== EMAIL SETTINGS ==========
+    async function loadEmailSettings() {
+      try {
+        const settings = await apiRequest(`${API_BASE}/settings`);
+        document.getElementById('inquiriesEmail').value = settings.inquiries_email || '';
+        document.getElementById('outgoingEmail').value = settings.outgoing_email || '';
+        document.getElementById('smtpHost').value = settings.smtp_host || '';
+        document.getElementById('smtpPort').value = settings.smtp_port || '587';
+        document.getElementById('smtpSecure').checked = settings.smtp_secure === 'true';
+      } catch (error) {
+        console.error('Load email settings error:', error);
+      }
+    }
+
+    async function saveEmailSettings() {
+      const settings = {
+        inquiries_email: document.getElementById('inquiriesEmail').value.trim(),
+        outgoing_email: document.getElementById('outgoingEmail').value.trim(),
+        smtp_host: document.getElementById('smtpHost').value.trim(),
+        smtp_port: document.getElementById('smtpPort').value.trim(),
+        smtp_pass: document.getElementById('smtpPass').value.trim(),
+        smtp_secure: document.getElementById('smtpSecure').checked ? 'true' : 'false'
+      };
+
+      // Don't send empty password (keeps existing one)
+      if (!settings.smtp_pass) delete settings.smtp_pass;
+
+      try {
+        await apiRequest(`${API_BASE}/settings/bulk`, {
+          method: 'POST',
+          body: JSON.stringify(settings)
+        });
+        showToast('הגדרות האימייל נשמרו', 'success');
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
+    }
+
+    async function testEmailConnection() {
+      showToast('בודק חיבור לשרת אימייל...', 'info');
+      try {
+        const result = await apiRequest(`${API_BASE}/settings/test-email`, { method: 'POST' });
+        if (result.success) {
+          showToast('חיבור לשרת האימייל תקין!', 'success');
+        } else {
+          showToast('שגיאה בחיבור: ' + (result.error || 'לא ידוע'), 'error');
+        }
+      } catch (error) {
+        showToast('שגיאה בבדיקת חיבור: ' + error.message, 'error');
+      }
+    }
+
+    // ========== WHATSAPP SETTINGS ==========
+    async function loadWhatsAppSettings() {
+      try {
+        const settings = await apiRequest(`${API_BASE}/settings`);
+        document.getElementById('whatsappEnabled').checked = settings.whatsapp_notifications === 'true';
+        document.getElementById('whatsappGroupId').value = settings.whatsapp_group_id || '';
+        document.getElementById('whatsappBridgeUrl').value = settings.whatsapp_bridge_url || 'http://localhost:3001';
+        document.getElementById('employeeBotEnabled').checked = settings.employee_bot_enabled === 'true';
+        document.getElementById('employeeBotNumber').value = settings.employee_bot_number || '';
+      } catch (error) {
+        console.error('Load WhatsApp settings error:', error);
+      }
+    }
+
+    async function saveWhatsAppSettings() {
+      const settings = {
+        whatsapp_notifications: document.getElementById('whatsappEnabled').checked ? 'true' : 'false',
+        whatsapp_group_id: document.getElementById('whatsappGroupId').value.trim(),
+        whatsapp_bridge_url: document.getElementById('whatsappBridgeUrl').value.trim(),
+        employee_bot_enabled: document.getElementById('employeeBotEnabled').checked ? 'true' : 'false',
+        employee_bot_number: document.getElementById('employeeBotNumber').value.trim()
+      };
+
+      try {
+        await apiRequest(`${API_BASE}/settings/bulk`, {
+          method: 'POST',
+          body: JSON.stringify(settings)
+        });
+        showToast('הגדרות הוואטסאפ נשמרו', 'success');
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
+    }
+
+    async function checkWhatsAppConnection() {
+      const statusEl = document.getElementById('whatsappStatus');
+      statusEl.innerHTML = '<span class="status-indicator checking"></span><span class="status-text">בודק...</span>';
+
+      try {
+        const bridgeUrl = document.getElementById('whatsappBridgeUrl').value.trim() || 'http://localhost:3001';
+        const result = await apiRequest(`${API_BASE}/settings/test-whatsapp`, {
+          method: 'POST',
+          body: JSON.stringify({ bridgeUrl })
+        });
+
+        if (result.connected) {
+          statusEl.innerHTML = '<span class="status-indicator connected"></span><span class="status-text">מחובר</span>';
+          showToast('חיבור לוואטסאפ תקין!', 'success');
+        } else {
+          statusEl.innerHTML = '<span class="status-indicator disconnected"></span><span class="status-text">לא מחובר</span>';
+          showToast('לא ניתן להתחבר לשרת הוואטסאפ', 'error');
+        }
+      } catch (error) {
+        statusEl.innerHTML = '<span class="status-indicator disconnected"></span><span class="status-text">שגיאה</span>';
+        showToast('שגיאה בבדיקת חיבור: ' + error.message, 'error');
+      }
+    }
+
+    // ========== BACKUP MANAGEMENT ==========
+    async function loadBackups() {
+      try {
+        allBackups = await apiRequest(`${API_BASE}/settings/backups`);
+        renderBackups();
+      } catch (error) {
+        console.error('Load backups error:', error);
+        document.getElementById('backupsList').innerHTML =
+          '<div class="error-text">שגיאה בטעינת רשימת גיבויים</div>';
+      }
+    }
+
+    function renderBackups() {
+      const container = document.getElementById('backupsList');
+      const select = document.getElementById('restoreBackupSelect');
+
+      if (!allBackups || allBackups.length === 0) {
+        container.innerHTML = '<div class="empty-text">אין גיבויים קיימים</div>';
+        select.innerHTML = '<option value="">אין גיבויים זמינים</option>';
+        return;
+      }
+
+      container.innerHTML = allBackups.map(backup => `
+        <div class="backup-item">
+          <div class="backup-info">
+            <span class="backup-name">${backup.name}</span>
+            <span class="backup-meta">${formatFileSize(backup.size)} | ${formatDate(backup.created)}</span>
+          </div>
+          <button class="btn btn-icon btn-small" onclick="downloadBackup('${backup.name}')" title="הורדה">📥</button>
+        </div>
+      `).join('');
+
+      select.innerHTML = '<option value="">בחר גיבוי...</option>' +
+        allBackups.map(b => `<option value="${b.name}">${b.name} (${formatDate(b.created)})</option>`).join('');
+    }
+
+    async function createManualBackup() {
+      showToast('יוצר גיבוי...', 'info');
+      try {
+        const result = await apiRequest(`${API_BASE}/settings/backup`, { method: 'POST' });
+        if (result.success) {
+          showToast('הגיבוי נוצר בהצלחה!', 'success');
+          loadBackups();
+        } else {
+          showToast('שגיאה ביצירת גיבוי', 'error');
+        }
+      } catch (error) {
+        showToast('שגיאה: ' + error.message, 'error');
+      }
+    }
+
+    async function exportAllData() {
+      showToast('מייצא נתונים...', 'info');
+      try {
+        const data = await apiRequest(`${API_BASE}/settings/export`);
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `meitzad_backup_${new Date().toISOString().split('T')[0]}.json`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+        showToast('הנתונים יוצאו בהצלחה', 'success');
+      } catch (error) {
+        showToast('שגיאה בייצוא: ' + error.message, 'error');
+      }
+    }
+
+    async function downloadBackup(filename) {
+      try {
+        const response = await fetch(`${API_BASE}/settings/backups/${filename}`, {
+          headers: { 'Authorization': `Bearer ${authToken}` }
+        });
+        if (!response.ok) throw new Error('שגיאה בהורדה');
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+      } catch (error) {
+        showToast('שגיאה בהורדת הגיבוי', 'error');
+      }
+    }
+
+    async function confirmRestoreBackup() {
+      const filename = document.getElementById('restoreBackupSelect').value;
+      if (!filename) {
+        showToast('נא לבחור גיבוי לשחזור', 'error');
+        return;
+      }
+
+      if (!confirm('⚠️ פעולה זו תחליף את כל הנתונים הקיימים בגיבוי שנבחר.\n\nהאם להמשיך?')) return;
+      if (!confirm('אישור סופי: האם אתה בטוח שברצונך לשחזר את הגיבוי?\nפעולה זו לא ניתנת לביטול!')) return;
+
+      showToast('משחזר מגיבוי...', 'info');
+      try {
+        const result = await apiRequest(`${API_BASE}/settings/restore`, {
+          method: 'POST',
+          body: JSON.stringify({ filename })
+        });
+        if (result.success) {
+          showToast('השחזור הושלם בהצלחה! הדף יטען מחדש...', 'success');
+          setTimeout(() => window.location.reload(), 2000);
+        } else {
+          showToast('שגיאה בשחזור: ' + (result.error || 'לא ידוע'), 'error');
+        }
+      } catch (error) {
+        showToast('שגיאה: ' + error.message, 'error');
+      }
+    }
+
+    // ========== UTILITY FUNCTIONS ==========
+    function formatFileSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function formatDate(dateStr) {
+      const date = new Date(dateStr);
+      return date.toLocaleDateString('he-IL', {
+        year: 'numeric', month: '2-digit', day: '2-digit',
+        hour: '2-digit', minute: '2-digit'
+      });
+    }
   </script>
 
   <style>
@@ -572,6 +1102,49 @@
     @media (max-width: 768px) {
       .settings-grid { grid-template-columns: 1fr; }
     }
+
+    /* Categories Grid */
+    .categories-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: var(--space-4); margin-top: var(--space-4); }
+    .category-card { display: flex; align-items: center; gap: var(--space-3); padding: var(--space-4); background: var(--gray-50); border-radius: 8px; border: 1px solid var(--gray-100); }
+    .category-card.inactive { opacity: 0.5; }
+    .category-icon { font-size: 1.5rem; width: 40px; text-align: center; }
+    .category-info { flex: 1; }
+    .category-name { font-weight: 600; display: block; }
+    .category-desc { font-size: 0.85rem; color: var(--gray-500); }
+    .category-actions { display: flex; gap: 4px; }
+    .section-description { color: var(--gray-600); font-size: 0.9rem; margin-bottom: var(--space-2); }
+
+    /* Form improvements */
+    .form-row-inline { display: flex; gap: var(--space-4); }
+    .form-row-inline .form-group { flex: 1; }
+    .form-help { display: block; margin-top: 4px; font-size: 0.8rem; color: var(--gray-500); }
+    .subsection { background: var(--gray-50); padding: var(--space-4); border-radius: 8px; margin: var(--space-4) 0; }
+    .subsection h4 { margin: 0 0 var(--space-2) 0; }
+
+    /* Connection status */
+    .connection-status { display: flex; align-items: center; gap: var(--space-2); margin: var(--space-3) 0; }
+    .status-indicator { width: 12px; height: 12px; border-radius: 50%; }
+    .status-indicator.connected { background: #10b981; }
+    .status-indicator.disconnected { background: #ef4444; }
+    .status-indicator.checking { background: #f59e0b; animation: pulse 1s infinite; }
+    @keyframes pulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.5; } }
+
+    /* Backup section */
+    .backup-actions { display: flex; gap: var(--space-3); margin: var(--space-4) 0; }
+    .backup-list { margin-top: var(--space-4); }
+    .backup-list h4 { margin-bottom: var(--space-2); }
+    .backups-container { max-height: 200px; overflow-y: auto; border: 1px solid var(--gray-100); border-radius: 8px; }
+    .backup-item { display: flex; justify-content: space-between; align-items: center; padding: var(--space-3); border-bottom: 1px solid var(--gray-100); }
+    .backup-item:last-child { border-bottom: none; }
+    .backup-name { font-weight: 500; }
+    .backup-meta { font-size: 0.8rem; color: var(--gray-500); }
+    .restore-section { margin-top: var(--space-4); padding: var(--space-4); background: #fef2f2; border-radius: 8px; }
+    .restore-section h4 { margin-top: 0; color: #dc2626; }
+    .warning-text { color: #dc2626; font-size: 0.9rem; margin-bottom: var(--space-3); }
+
+    .btn-danger { background: #dc2626; color: white; }
+    .btn-danger:hover { background: #b91c1c; }
+    .empty-text { text-align: center; color: var(--gray-500); padding: var(--space-4); }
   </style>
 </body>
 </html>

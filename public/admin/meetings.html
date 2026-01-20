@@ -1,0 +1,888 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ישיבות ופרוטוקולים - מערכת ניהול יישוב מיצד</title>
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/admin/admin.css">
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div class="admin-layout">
+    <!-- Sidebar -->
+    <aside class="admin-sidebar">
+      <div class="sidebar-header">
+        <h2>מיצד</h2>
+        <span>מערכת ניהול יישוב</span>
+      </div>
+      <nav class="sidebar-nav">
+        <div class="nav-section">
+          <span class="nav-section-title">ראשי</span>
+          <a href="/admin/dashboard.html" class="nav-item">
+            <span class="nav-icon">📊</span>
+            <span class="nav-text">לוח בקרה</span>
+          </a>
+          <a href="/admin/requests.html" class="nav-item">
+            <span class="nav-icon">📬</span>
+            <span class="nav-text">פניות תושבים</span>
+          </a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-section-title">קהילה</span>
+          <a href="/admin/events.html" class="nav-item">
+            <span class="nav-icon">📅</span>
+            <span class="nav-text">לוח אירועים</span>
+          </a>
+          <a href="/admin/meetings.html" class="nav-item active">
+            <span class="nav-icon">📋</span>
+            <span class="nav-text">ישיבות ופרוטוקולים</span>
+          </a>
+          <a href="/admin/announcements.html" class="nav-item">
+            <span class="nav-icon">📢</span>
+            <span class="nav-text">הודעות</span>
+          </a>
+        </div>
+        <div class="nav-section">
+          <span class="nav-section-title">ניהול</span>
+          <a href="/admin/employees.html" class="nav-item">
+            <span class="nav-icon">👥</span>
+            <span class="nav-text">ניהול עובדים</span>
+          </a>
+          <a href="/admin/budget.html" class="nav-item">
+            <span class="nav-icon">💰</span>
+            <span class="nav-text">ניהול תקציב</span>
+          </a>
+          <a href="/admin/planning.html" class="nav-item">
+            <span class="nav-icon">📋</span>
+            <span class="nav-text">תכנון לטווח ארוך</span>
+          </a>
+          <a href="/admin/settings.html" class="nav-item">
+            <span class="nav-icon">⚙️</span>
+            <span class="nav-text">הגדרות</span>
+          </a>
+        </div>
+      </nav>
+      <div class="sidebar-footer">
+        <a href="/" class="nav-item">
+          <span class="nav-icon">🏠</span>
+          <span class="nav-text">לאתר הראשי</span>
+        </a>
+        <a href="#" class="nav-item" onclick="logout()">
+          <span class="nav-icon">🚪</span>
+          <span class="nav-text">התנתקות</span>
+        </a>
+      </div>
+    </aside>
+
+    <button class="admin-menu-toggle" onclick="toggleSidebar()">☰</button>
+
+    <main class="admin-main">
+      <header class="admin-header">
+        <div class="header-right">
+          <h1>ישיבות ופרוטוקולים</h1>
+        </div>
+        <div class="header-left">
+          <button class="btn btn-secondary" onclick="openAITranscription()">
+            <span>🤖</span> תמלול AI
+          </button>
+          <button class="btn btn-primary" onclick="showCreateMeetingModal()">
+            <span>➕</span> ישיבה חדשה
+          </button>
+          <div class="header-user">
+            <span id="userName">שלום</span>
+          </div>
+        </div>
+      </header>
+
+      <div class="admin-content">
+        <!-- Stats -->
+        <section class="stats-grid small">
+          <div class="stat-card mini">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);">📅</div>
+            <div class="stat-info">
+              <span class="stat-value" id="upcomingCount">0</span>
+              <span class="stat-label">ישיבות קרובות</span>
+            </div>
+          </div>
+          <div class="stat-card mini">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);">📋</div>
+            <div class="stat-info">
+              <span class="stat-value" id="protocolsCount">0</span>
+              <span class="stat-label">פרוטוקולים</span>
+            </div>
+          </div>
+          <div class="stat-card mini">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);">⏳</div>
+            <div class="stat-info">
+              <span class="stat-value" id="pendingProtocols">0</span>
+              <span class="stat-label">ממתינים לאישור</span>
+            </div>
+          </div>
+          <div class="stat-card mini">
+            <div class="stat-icon" style="background: linear-gradient(135deg, #ede9fe 0%, #ddd6fe 100%);">📊</div>
+            <div class="stat-info">
+              <span class="stat-value" id="totalMeetings">0</span>
+              <span class="stat-label">סה"כ ישיבות</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- AI Transcription Info -->
+        <section class="dashboard-section ai-info">
+          <div class="ai-banner">
+            <div class="ai-icon">🤖</div>
+            <div class="ai-text">
+              <h3>תמלול אוטומטי עם AI</h3>
+              <p>העלה הקלטת ישיבה וקבל תמלול מלא וסיכום אוטומטי תוך דקות</p>
+            </div>
+            <button class="btn btn-primary" onclick="openAITranscription()">התחל תמלול</button>
+          </div>
+        </section>
+
+        <!-- Upcoming Meetings -->
+        <section class="dashboard-section">
+          <div class="section-header">
+            <h2>📅 ישיבות קרובות</h2>
+          </div>
+          <div class="meetings-grid" id="upcomingMeetings">
+            <div class="loading-text">טוען ישיבות...</div>
+          </div>
+        </section>
+
+        <!-- Meetings List -->
+        <section class="dashboard-section">
+          <div class="section-header">
+            <h2>📋 כל הישיבות והפרוטוקולים</h2>
+            <div class="filter-tabs">
+              <button class="tab active" onclick="filterMeetings('all')">הכל</button>
+              <button class="tab" onclick="filterMeetings('with-protocol')">עם פרוטוקול</button>
+              <button class="tab" onclick="filterMeetings('pending')">ממתין לפרוטוקול</button>
+            </div>
+          </div>
+          <div class="table-container">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>תאריך</th>
+                  <th>כותרת</th>
+                  <th>סוג</th>
+                  <th>משתתפים</th>
+                  <th>פרוטוקול</th>
+                  <th>פעולות</th>
+                </tr>
+              </thead>
+              <tbody id="meetingsTable">
+                <tr><td colspan="6" class="loading">טוען...</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </section>
+      </div>
+    </main>
+  </div>
+
+  <!-- Meeting Modal -->
+  <div id="meetingModal" class="modal-overlay hidden">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h3 id="meetingModalTitle">ישיבה חדשה</h3>
+        <button class="modal-close" onclick="closeMeetingModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="meetingForm">
+          <input type="hidden" id="meetingId">
+          <div class="form-row">
+            <div class="form-group">
+              <label>כותרת הישיבה *</label>
+              <input type="text" id="meetingTitle" required placeholder="ישיבת ועד חודשית">
+            </div>
+            <div class="form-group">
+              <label>סוג ישיבה</label>
+              <select id="meetingType">
+                <option value="regular">ישיבה רגילה</option>
+                <option value="emergency">ישיבת חירום</option>
+                <option value="annual">אסיפה שנתית</option>
+                <option value="special">ישיבה מיוחדת</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label>תאריך ושעה *</label>
+              <input type="datetime-local" id="meetingDate" required>
+            </div>
+            <div class="form-group">
+              <label>מיקום</label>
+              <input type="text" id="meetingLocation" placeholder="חדר ישיבות / זום">
+            </div>
+          </div>
+          <div class="form-group full">
+            <label>משתתפים</label>
+            <input type="text" id="meetingParticipants" placeholder="שמות המשתתפים, מופרדים בפסיקים">
+          </div>
+          <div class="form-group full">
+            <label>סדר יום</label>
+            <textarea id="meetingAgenda" rows="4" placeholder="1. פתיחה&#10;2. אישור פרוטוקול קודם&#10;3. ..."></textarea>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeMeetingModal()">ביטול</button>
+        <button class="btn btn-primary" onclick="saveMeeting()">שמירה</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Transcription Modal -->
+  <div id="aiModal" class="modal-overlay hidden">
+    <div class="modal modal-lg">
+      <div class="modal-header">
+        <h3>תמלול AI אוטומטי</h3>
+        <button class="modal-close" onclick="closeAIModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="ai-steps">
+          <!-- Step 1: Upload -->
+          <div class="ai-step active" id="step1">
+            <h4>שלב 1: העלאת הקלטה</h4>
+            <div class="upload-zone" id="uploadZone">
+              <input type="file" id="audioFile" accept="audio/*,video/*" onchange="handleFileUpload(event)" hidden>
+              <div class="upload-content" onclick="document.getElementById('audioFile').click()">
+                <span class="upload-icon">🎙️</span>
+                <p>לחץ להעלאת קובץ אודיו/וידאו</p>
+                <small>MP3, WAV, M4A, MP4 - עד 500MB</small>
+              </div>
+            </div>
+            <div class="file-info hidden" id="fileInfo">
+              <span class="file-name"></span>
+              <span class="file-size"></span>
+              <button class="btn btn-sm" onclick="clearFile()">הסר</button>
+            </div>
+            <div class="form-group" style="margin-top: 20px;">
+              <label>בחר ישיבה להצמדת התמלול</label>
+              <select id="aiMeetingSelect">
+                <option value="">צור ישיבה חדשה</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Step 2: Processing -->
+          <div class="ai-step hidden" id="step2">
+            <h4>שלב 2: מעבד...</h4>
+            <div class="processing-animation">
+              <div class="spinner-large"></div>
+              <p id="processingStatus">מעלה קובץ...</p>
+            </div>
+            <div class="progress-bar">
+              <div class="progress-fill" id="progressFill"></div>
+            </div>
+          </div>
+
+          <!-- Step 3: Results -->
+          <div class="ai-step hidden" id="step3">
+            <h4>שלב 3: תוצאות</h4>
+            <div class="transcription-tabs">
+              <button class="tab active" onclick="showTab('summary')">סיכום</button>
+              <button class="tab" onclick="showTab('full')">תמלול מלא</button>
+            </div>
+            <div class="transcription-content" id="summaryContent">
+              <div class="summary-box" id="aiSummary"></div>
+            </div>
+            <div class="transcription-content hidden" id="fullContent">
+              <div class="full-transcript" id="aiTranscript"></div>
+            </div>
+            <div class="transcription-actions">
+              <button class="btn btn-secondary" onclick="editTranscription()">✏️ עריכה</button>
+              <button class="btn btn-primary" onclick="generateProtocol()">📄 צור פרוטוקול</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeAIModal()">סגור</button>
+        <button class="btn btn-primary hidden" id="startTranscriptionBtn" onclick="startTranscription()">התחל תמלול</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Protocol Modal -->
+  <div id="protocolModal" class="modal-overlay hidden">
+    <div class="modal modal-xl">
+      <div class="modal-header">
+        <h3>פרוטוקול ישיבה</h3>
+        <button class="modal-close" onclick="closeProtocolModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="protocol-preview" id="protocolPreview">
+          <!-- Protocol content will be injected here -->
+        </div>
+        <div class="protocol-editor hidden" id="protocolEditor">
+          <textarea id="protocolContent" rows="20"></textarea>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeProtocolModal()">סגור</button>
+        <button class="btn btn-secondary" onclick="toggleProtocolEdit()">✏️ עריכה</button>
+        <button class="btn btn-secondary" onclick="exportProtocolPDF()">📥 הורד PDF</button>
+        <button class="btn btn-primary" onclick="approveProtocol()">✅ אשר ופרסם</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div id="toast" class="toast hidden"></div>
+
+  <style>
+    .ai-banner {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8a 100%);
+      color: white;
+      padding: 20px 30px;
+      border-radius: 12px;
+    }
+    .ai-icon { font-size: 3rem; }
+    .ai-text { flex: 1; }
+    .ai-text h3 { margin: 0 0 5px 0; }
+    .ai-text p { margin: 0; opacity: 0.9; }
+    .ai-banner .btn { background: white; color: var(--primary); }
+
+    .meetings-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+      gap: 16px;
+    }
+    .meeting-card {
+      background: var(--gray-50);
+      border-radius: 12px;
+      padding: 20px;
+      border: 1px solid var(--gray-100);
+    }
+    .meeting-card .meeting-date {
+      font-size: 0.9rem;
+      color: var(--gray-500);
+      margin-bottom: 8px;
+    }
+    .meeting-card h4 { margin: 0 0 8px 0; }
+    .meeting-card .meeting-type {
+      display: inline-block;
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+      background: var(--primary-100);
+      color: var(--primary);
+    }
+    .meeting-card .meeting-actions {
+      display: flex;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .filter-tabs { display: flex; gap: 8px; }
+    .tab {
+      padding: 6px 14px;
+      border: 1px solid var(--gray-200);
+      border-radius: 20px;
+      background: white;
+      cursor: pointer;
+      font-size: 0.9rem;
+    }
+    .tab.active {
+      background: var(--primary);
+      color: white;
+      border-color: var(--primary);
+    }
+
+    .protocol-badge {
+      padding: 4px 10px;
+      border-radius: 12px;
+      font-size: 0.8rem;
+    }
+    .protocol-badge.ready { background: #d1fae5; color: #059669; }
+    .protocol-badge.pending { background: #fef3c7; color: #d97706; }
+    .protocol-badge.none { background: #f3f4f6; color: #6b7280; }
+
+    /* AI Modal Styles */
+    .ai-steps { padding: 10px; }
+    .ai-step { display: none; }
+    .ai-step.active { display: block; }
+    .ai-step h4 { margin: 0 0 20px 0; color: var(--primary); }
+
+    .upload-zone {
+      border: 2px dashed var(--gray-300);
+      border-radius: 12px;
+      padding: 40px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .upload-zone:hover {
+      border-color: var(--primary);
+      background: var(--primary-50);
+    }
+    .upload-icon { font-size: 3rem; display: block; margin-bottom: 10px; }
+
+    .file-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px;
+      background: var(--gray-50);
+      border-radius: 8px;
+      margin-top: 10px;
+    }
+
+    .processing-animation {
+      text-align: center;
+      padding: 40px;
+    }
+    .spinner-large {
+      width: 60px;
+      height: 60px;
+      border: 4px solid var(--gray-200);
+      border-top-color: var(--primary);
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin: 0 auto 20px;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    .progress-bar {
+      height: 8px;
+      background: var(--gray-200);
+      border-radius: 4px;
+      overflow: hidden;
+      margin-top: 20px;
+    }
+    .progress-fill {
+      height: 100%;
+      background: var(--primary);
+      width: 0%;
+      transition: width 0.3s;
+    }
+
+    .transcription-tabs {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 16px;
+    }
+    .transcription-content {
+      background: var(--gray-50);
+      border-radius: 12px;
+      padding: 20px;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+    .summary-box, .full-transcript {
+      white-space: pre-wrap;
+      line-height: 1.8;
+    }
+    .transcription-actions {
+      display: flex;
+      gap: 12px;
+      margin-top: 16px;
+      justify-content: center;
+    }
+
+    .protocol-preview {
+      background: white;
+      border: 1px solid var(--gray-200);
+      border-radius: 8px;
+      padding: 40px;
+      max-height: 500px;
+      overflow-y: auto;
+    }
+    .protocol-header {
+      text-align: center;
+      border-bottom: 2px solid var(--primary);
+      padding-bottom: 20px;
+      margin-bottom: 20px;
+    }
+    .protocol-header h2 { margin: 0; }
+    .protocol-header .meeting-info { color: var(--gray-600); margin-top: 10px; }
+
+    .modal-xl { max-width: 900px; }
+  </style>
+
+  <script>
+    const API_BASE = '/api';
+    let authToken = localStorage.getItem('meitzad_token') || localStorage.getItem('authToken');
+    let allMeetings = [];
+    let currentFilter = 'all';
+    let uploadedFile = null;
+    let currentMeetingId = null;
+
+    document.addEventListener('DOMContentLoaded', () => {
+      if (!authToken) {
+        window.location.href = '/#login';
+        return;
+      }
+      loadMeetings();
+      loadStats();
+    });
+
+    async function apiRequest(url, options = {}) {
+      const headers = {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${authToken}`,
+        ...options.headers
+      };
+      const response = await fetch(url, { ...options, headers });
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: 'שגיאה' }));
+        throw new Error(error.error || 'שגיאת שרת');
+      }
+      return response.json();
+    }
+
+    async function loadStats() {
+      try {
+        const stats = await apiRequest(`${API_BASE}/meetings/stats`);
+        document.getElementById('upcomingCount').textContent = stats.upcoming || 0;
+        document.getElementById('protocolsCount').textContent = stats.withProtocol || 0;
+        document.getElementById('pendingProtocols').textContent = stats.pendingProtocol || 0;
+        document.getElementById('totalMeetings').textContent = stats.total || 0;
+      } catch (error) {
+        console.error('Stats error:', error);
+      }
+    }
+
+    async function loadMeetings() {
+      try {
+        allMeetings = await apiRequest(`${API_BASE}/meetings`);
+        renderUpcomingMeetings();
+        renderMeetingsTable();
+        populateMeetingSelect();
+      } catch (error) {
+        console.error('Load meetings error:', error);
+        document.getElementById('meetingsTable').innerHTML =
+          '<tr><td colspan="6" class="error">שגיאה בטעינת ישיבות</td></tr>';
+      }
+    }
+
+    function renderUpcomingMeetings() {
+      const container = document.getElementById('upcomingMeetings');
+      const upcoming = allMeetings.filter(m => new Date(m.date) >= new Date()).slice(0, 4);
+
+      if (upcoming.length === 0) {
+        container.innerHTML = '<div class="empty-text">אין ישיבות קרובות</div>';
+        return;
+      }
+
+      const typeLabels = { regular: 'ישיבה רגילה', emergency: 'ישיבת חירום', annual: 'אסיפה שנתית', special: 'מיוחדת' };
+
+      container.innerHTML = upcoming.map(m => `
+        <div class="meeting-card">
+          <div class="meeting-date">${formatDate(m.date)}</div>
+          <h4>${m.title}</h4>
+          <span class="meeting-type">${typeLabels[m.type] || m.type}</span>
+          <div class="meeting-actions">
+            <button class="btn btn-sm btn-secondary" onclick="viewMeeting(${m.id})">פרטים</button>
+            ${m.has_protocol ? `<button class="btn btn-sm btn-primary" onclick="viewProtocol(${m.id})">פרוטוקול</button>` : ''}
+          </div>
+        </div>
+      `).join('');
+    }
+
+    function renderMeetingsTable() {
+      const tbody = document.getElementById('meetingsTable');
+      let filtered = allMeetings;
+
+      if (currentFilter === 'with-protocol') {
+        filtered = allMeetings.filter(m => m.has_protocol);
+      } else if (currentFilter === 'pending') {
+        filtered = allMeetings.filter(m => !m.has_protocol);
+      }
+
+      if (filtered.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" class="empty">אין ישיבות להצגה</td></tr>';
+        return;
+      }
+
+      const typeLabels = { regular: 'רגילה', emergency: 'חירום', annual: 'שנתית', special: 'מיוחדת' };
+
+      tbody.innerHTML = filtered.map(m => `
+        <tr>
+          <td>${formatDate(m.date)}</td>
+          <td><strong>${m.title}</strong></td>
+          <td><span class="meeting-type">${typeLabels[m.type] || m.type}</span></td>
+          <td>${m.participants ? m.participants.split(',').length : '-'} משתתפים</td>
+          <td>
+            ${m.has_protocol
+              ? (m.protocol_status === 'approved'
+                ? '<span class="protocol-badge ready">מאושר</span>'
+                : '<span class="protocol-badge pending">טיוטה</span>')
+              : '<span class="protocol-badge none">אין</span>'}
+          </td>
+          <td>
+            <button class="btn btn-sm" onclick="viewMeeting(${m.id})">👁️</button>
+            <button class="btn btn-sm" onclick="editMeeting(${m.id})">✏️</button>
+            ${m.has_protocol
+              ? `<button class="btn btn-sm" onclick="viewProtocol(${m.id})">📄</button>`
+              : `<button class="btn btn-sm" onclick="createProtocol(${m.id})">➕📄</button>`}
+          </td>
+        </tr>
+      `).join('');
+    }
+
+    function filterMeetings(filter) {
+      currentFilter = filter;
+      document.querySelectorAll('.filter-tabs .tab').forEach(t => t.classList.remove('active'));
+      event.target.classList.add('active');
+      renderMeetingsTable();
+    }
+
+    function showCreateMeetingModal() {
+      document.getElementById('meetingModalTitle').textContent = 'ישיבה חדשה';
+      document.getElementById('meetingId').value = '';
+      document.getElementById('meetingForm').reset();
+      document.getElementById('meetingModal').classList.remove('hidden');
+    }
+
+    function closeMeetingModal() {
+      document.getElementById('meetingModal').classList.add('hidden');
+    }
+
+    async function saveMeeting() {
+      const id = document.getElementById('meetingId').value;
+      const data = {
+        title: document.getElementById('meetingTitle').value,
+        type: document.getElementById('meetingType').value,
+        date: document.getElementById('meetingDate').value,
+        location: document.getElementById('meetingLocation').value,
+        participants: document.getElementById('meetingParticipants').value,
+        agenda: document.getElementById('meetingAgenda').value
+      };
+
+      try {
+        if (id) {
+          await apiRequest(`${API_BASE}/meetings/${id}`, { method: 'PUT', body: JSON.stringify(data) });
+          showToast('הישיבה עודכנה', 'success');
+        } else {
+          await apiRequest(`${API_BASE}/meetings`, { method: 'POST', body: JSON.stringify(data) });
+          showToast('הישיבה נוצרה', 'success');
+        }
+        closeMeetingModal();
+        loadMeetings();
+      } catch (error) {
+        showToast(error.message, 'error');
+      }
+    }
+
+    function editMeeting(id) {
+      const meeting = allMeetings.find(m => m.id === id);
+      if (!meeting) return;
+
+      document.getElementById('meetingModalTitle').textContent = 'עריכת ישיבה';
+      document.getElementById('meetingId').value = id;
+      document.getElementById('meetingTitle').value = meeting.title;
+      document.getElementById('meetingType').value = meeting.type;
+      document.getElementById('meetingDate').value = meeting.date?.slice(0, 16);
+      document.getElementById('meetingLocation').value = meeting.location || '';
+      document.getElementById('meetingParticipants').value = meeting.participants || '';
+      document.getElementById('meetingAgenda').value = meeting.agenda || '';
+      document.getElementById('meetingModal').classList.remove('hidden');
+    }
+
+    // AI Transcription
+    function openAITranscription() {
+      document.getElementById('aiModal').classList.remove('hidden');
+      document.getElementById('step1').classList.add('active');
+      document.getElementById('step2').classList.add('hidden');
+      document.getElementById('step3').classList.add('hidden');
+    }
+
+    function closeAIModal() {
+      document.getElementById('aiModal').classList.add('hidden');
+      clearFile();
+    }
+
+    function handleFileUpload(event) {
+      const file = event.target.files[0];
+      if (!file) return;
+
+      uploadedFile = file;
+      document.getElementById('uploadZone').classList.add('hidden');
+      const fileInfo = document.getElementById('fileInfo');
+      fileInfo.classList.remove('hidden');
+      fileInfo.querySelector('.file-name').textContent = file.name;
+      fileInfo.querySelector('.file-size').textContent = formatFileSize(file.size);
+      document.getElementById('startTranscriptionBtn').classList.remove('hidden');
+    }
+
+    function clearFile() {
+      uploadedFile = null;
+      document.getElementById('uploadZone').classList.remove('hidden');
+      document.getElementById('fileInfo').classList.add('hidden');
+      document.getElementById('startTranscriptionBtn').classList.add('hidden');
+      document.getElementById('audioFile').value = '';
+    }
+
+    async function startTranscription() {
+      if (!uploadedFile) {
+        showToast('נא להעלות קובץ', 'error');
+        return;
+      }
+
+      // Switch to processing step
+      document.getElementById('step1').classList.remove('active');
+      document.getElementById('step2').classList.add('active');
+      document.getElementById('startTranscriptionBtn').classList.add('hidden');
+
+      // Simulate AI processing (In real implementation, this would call an AI service)
+      simulateTranscription();
+    }
+
+    async function simulateTranscription() {
+      const statuses = [
+        'מעלה קובץ...',
+        'מתמלל אודיו...',
+        'מנתח תוכן...',
+        'מסכם ישיבה...',
+        'מסיים...'
+      ];
+
+      for (let i = 0; i <= 100; i += 5) {
+        await new Promise(r => setTimeout(r, 200));
+        document.getElementById('progressFill').style.width = i + '%';
+        document.getElementById('processingStatus').textContent = statuses[Math.floor(i / 25)] || statuses[statuses.length - 1];
+      }
+
+      // Show results (demo data)
+      showTranscriptionResults({
+        summary: `סיכום ישיבה
+
+נושאים שנדונו:
+1. אישור פרוטוקול קודם - אושר פה אחד
+2. עדכון תקציבי - הוצג מצב התקציב הנוכחי
+3. פרויקט שיפוץ גינה - אושר להתחיל בעבודות
+4. תלונות תושבים - נדונו 3 תלונות עיקריות
+
+החלטות:
+- להתחיל בפרויקט השיפוץ תוך חודש
+- להקצות 50,000 ש"ח לשיפוץ
+- לזמן אסיפת תושבים בנושא הביטחון
+
+משימות להמשך:
+- יו"ר: לפנות לקבלן לקבלת הצעת מחיר
+- גזבר: להכין דו"ח תקציבי מפורט
+- מזכיר: לשלוח הודעה לתושבים`,
+
+        transcript: `[00:00] פתיחה - יו"ר מברך את הנוכחים
+[00:45] "שלום לכולם, פותח את ישיבת הוועד החודשית..."
+[02:30] אישור פרוטוקול קודם
+[05:00] "האם יש הערות לפרוטוקול? אין, מאושר."
+[06:00] עדכון תקציבי - גזבר מציג
+[15:00] "סה"כ בקופה 250,000 ש"ח..."
+[20:00] פרויקט שיפוץ גינה
+[35:00] "מציע להקצות 50,000 ש"ח..."
+[40:00] תלונות תושבים
+[55:00] סיום וקביעת ישיבה הבאה
+[57:00] "הישיבה הבאה תתקיים ב-15 לחודש הבא"`
+      });
+    }
+
+    function showTranscriptionResults(data) {
+      document.getElementById('step2').classList.remove('active');
+      document.getElementById('step3').classList.add('active');
+
+      document.getElementById('aiSummary').textContent = data.summary;
+      document.getElementById('aiTranscript').textContent = data.transcript;
+    }
+
+    function showTab(tab) {
+      document.querySelectorAll('.transcription-tabs .tab').forEach(t => t.classList.remove('active'));
+      event.target.classList.add('active');
+
+      if (tab === 'summary') {
+        document.getElementById('summaryContent').classList.remove('hidden');
+        document.getElementById('fullContent').classList.add('hidden');
+      } else {
+        document.getElementById('summaryContent').classList.add('hidden');
+        document.getElementById('fullContent').classList.remove('hidden');
+      }
+    }
+
+    function generateProtocol() {
+      const summary = document.getElementById('aiSummary').textContent;
+      const meetingSelect = document.getElementById('aiMeetingSelect');
+      const meetingId = meetingSelect.value;
+
+      closeAIModal();
+
+      // Open protocol modal with the summary
+      showProtocolPreview({
+        title: 'ישיבת ועד',
+        date: new Date().toLocaleDateString('he-IL'),
+        content: summary
+      });
+    }
+
+    function showProtocolPreview(data) {
+      document.getElementById('protocolPreview').innerHTML = `
+        <div class="protocol-header">
+          <img src="/assets/images/logo.png" alt="לוגו" style="max-height: 60px; margin-bottom: 10px;" onerror="this.style.display='none'">
+          <h2>פרוטוקול - ${data.title}</h2>
+          <div class="meeting-info">תאריך: ${data.date}</div>
+        </div>
+        <div class="protocol-body">
+          <pre style="white-space: pre-wrap; font-family: inherit;">${data.content}</pre>
+        </div>
+      `;
+      document.getElementById('protocolContent').value = data.content;
+      document.getElementById('protocolModal').classList.remove('hidden');
+    }
+
+    function closeProtocolModal() {
+      document.getElementById('protocolModal').classList.add('hidden');
+    }
+
+    function toggleProtocolEdit() {
+      document.getElementById('protocolPreview').classList.toggle('hidden');
+      document.getElementById('protocolEditor').classList.toggle('hidden');
+    }
+
+    function populateMeetingSelect() {
+      const select = document.getElementById('aiMeetingSelect');
+      select.innerHTML = '<option value="">צור ישיבה חדשה</option>' +
+        allMeetings.slice(0, 10).map(m =>
+          `<option value="${m.id}">${m.title} - ${formatDate(m.date)}</option>`
+        ).join('');
+    }
+
+    function formatDate(dateStr) {
+      if (!dateStr) return '-';
+      return new Date(dateStr).toLocaleDateString('he-IL', {
+        year: 'numeric', month: 'long', day: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+      });
+    }
+
+    function formatFileSize(bytes) {
+      if (bytes < 1024) return bytes + ' B';
+      if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB';
+      return (bytes / (1024 * 1024)).toFixed(1) + ' MB';
+    }
+
+    function showToast(message, type = 'info') {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = `toast ${type}`;
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 4000);
+    }
+
+    function toggleSidebar() {
+      document.querySelector('.admin-sidebar').classList.toggle('open');
+    }
+
+    function logout() {
+      localStorage.removeItem('meitzad_token');
+      localStorage.removeItem('authToken');
+      window.location.href = '/#login';
+    }
+  </script>
+</body>
+</html>

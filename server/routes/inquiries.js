@@ -277,4 +277,156 @@ router.get('/stats/summary', authenticateToken, (req, res) => {
   }
 });
 
+// ========== PUBLIC CITIZEN ENDPOINTS ==========
+
+// Public inquiry submission (no auth required)
+router.post('/public', (req, res) => {
+  try {
+    const db = getDb();
+    const {
+      name, email, phone, address, subject, description, category, priority, location, source
+    } = req.body;
+
+    // Validate required fields
+    if (!name || !email || !subject || !description) {
+      return res.status(400).json({ error: 'נא למלא את כל שדות החובה' });
+    }
+
+    const inquiry_number = generateInquiryNumber(db);
+
+    const result = db.prepare(`
+      INSERT INTO inquiries (
+        inquiry_number, name, email, phone, address, subject, description,
+        category, priority, source, status
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'new')
+    `).run(
+      inquiry_number, name, email, phone, address, subject,
+      description + (location ? `\n\nמיקום: ${location}` : ''),
+      category || 'other', priority || 'normal', source || 'web'
+    );
+
+    const newInquiry = db.prepare('SELECT * FROM inquiries WHERE id = ?').get(result.lastInsertRowid);
+
+    // Emit real-time event
+    const io = req.app.get('io');
+    if (io) {
+      io.emit('inquiry:created', newInquiry);
+    }
+
+    // TODO: Send confirmation email with inquiry number
+    // sendConfirmationEmail(email, inquiry_number, name, subject);
+
+    res.status(201).json({
+      success: true,
+      inquiry_number: newInquiry.inquiry_number,
+      message: 'הפנייה התקבלה בהצלחה'
+    });
+  } catch (error) {
+    console.error('Create public inquiry error:', error);
+    res.status(500).json({ error: 'שגיאה בשליחת הפנייה. נסה שוב.' });
+  }
+});
+
+// Public inquiry status check (no auth required)
+router.get('/public/status', (req, res) => {
+  try {
+    const db = getDb();
+    const { number, email } = req.query;
+
+    if (!number || !email) {
+      return res.status(400).json({ error: 'נדרש מספר פנייה ואימייל' });
+    }
+
+    // Find inquiry by number and email (for verification)
+    const inquiry = db.prepare(`
+      SELECT id, inquiry_number, subject, description, category, status, created_at, updated_at, resolved_at
+      FROM inquiries
+      WHERE inquiry_number = ? AND LOWER(email) = LOWER(?)
+    `).get(number.toUpperCase(), email.toLowerCase());
+
+    if (!inquiry) {
+      return res.status(404).json({ error: 'הפנייה לא נמצאה' });
+    }
+
+    // Get public updates only
+    inquiry.updates = db.prepare(`
+      SELECT iu.status, iu.note as comment, iu.created_at, 1 as is_public
+      FROM inquiry_updates iu
+      WHERE iu.inquiry_id = ? AND (iu.note IS NOT NULL AND iu.note != '')
+      ORDER BY iu.created_at DESC
+      LIMIT 10
+    `).all(inquiry.id);
+
+    res.json(inquiry);
+  } catch (error) {
+    console.error('Public status check error:', error);
+    res.status(500).json({ error: 'שגיאה בבדיקת סטטוס' });
+  }
+});
+
+// Response time statistics (for admin dashboard)
+router.get('/stats/response-times', authenticateToken, (req, res) => {
+  try {
+    const db = getDb();
+    const { period } = req.query; // week, month, quarter, year
+
+    let dateFilter = "date(created_at) >= date('now', '-30 days')";
+    if (period === 'week') dateFilter = "date(created_at) >= date('now', '-7 days')";
+    else if (period === 'quarter') dateFilter = "date(created_at) >= date('now', '-90 days')";
+    else if (period === 'year') dateFilter = "date(created_at) >= date('now', '-365 days')";
+
+    // Average resolution time by category
+    const byCategory = db.prepare(`
+      SELECT
+        category,
+        COUNT(*) as total,
+        AVG(CASE WHEN resolved_at IS NOT NULL THEN
+          ROUND((julianday(resolved_at) - julianday(created_at)) * 24, 1)
+        ELSE NULL END) as avg_hours,
+        SUM(CASE WHEN status = 'resolved' OR status = 'closed' THEN 1 ELSE 0 END) as resolved_count
+      FROM inquiries
+      WHERE ${dateFilter}
+      GROUP BY category
+    `).all();
+
+    // Daily inquiry counts
+    const dailyCounts = db.prepare(`
+      SELECT
+        date(created_at) as date,
+        COUNT(*) as total,
+        SUM(CASE WHEN status = 'resolved' OR status = 'closed' THEN 1 ELSE 0 END) as resolved
+      FROM inquiries
+      WHERE ${dateFilter}
+      GROUP BY date(created_at)
+      ORDER BY date DESC
+      LIMIT 30
+    `).all();
+
+    // Response time distribution (hours)
+    const timeDistribution = db.prepare(`
+      SELECT
+        CASE
+          WHEN (julianday(resolved_at) - julianday(created_at)) * 24 < 24 THEN '0-24 שעות'
+          WHEN (julianday(resolved_at) - julianday(created_at)) * 24 < 48 THEN '24-48 שעות'
+          WHEN (julianday(resolved_at) - julianday(created_at)) * 24 < 72 THEN '48-72 שעות'
+          WHEN (julianday(resolved_at) - julianday(created_at)) * 24 < 168 THEN '3-7 ימים'
+          ELSE 'יותר משבוע'
+        END as range,
+        COUNT(*) as count
+      FROM inquiries
+      WHERE resolved_at IS NOT NULL AND ${dateFilter}
+      GROUP BY range
+    `).all();
+
+    res.json({
+      byCategory,
+      dailyCounts: dailyCounts.reverse(),
+      timeDistribution
+    });
+  } catch (error) {
+    console.error('Response times stats error:', error);
+    res.status(500).json({ error: 'שגיאה בטעינת סטטיסטיקות זמני תגובה' });
+  }
+});
+
 module.exports = router;

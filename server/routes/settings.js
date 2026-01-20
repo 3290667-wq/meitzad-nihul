@@ -1,7 +1,11 @@
 const express = require('express');
 const router = express.Router();
+const path = require('path');
+const fs = require('fs');
+const nodemailer = require('nodemailer');
 const { getDb } = require('../database/db');
 const { authenticateToken, requireRole } = require('../middleware/auth');
+const { createBackup, listBackups, restoreBackup } = require('../services/backup');
 
 // Get all settings
 router.get('/', authenticateToken, (req, res) => {
@@ -218,6 +222,158 @@ router.put('/user/preferences', authenticateToken, (req, res) => {
   } catch (error) {
     console.error('Update user preferences error:', error);
     res.status(500).json({ error: 'שגיאה בעדכון העדפות' });
+  }
+});
+
+// ========== BACKUP MANAGEMENT ==========
+
+// Get list of backups
+router.get('/backups', authenticateToken, requireRole(['super_admin', 'admin']), (req, res) => {
+  try {
+    const backups = listBackups();
+    res.json(backups);
+  } catch (error) {
+    console.error('List backups error:', error);
+    res.status(500).json({ error: 'שגיאה בטעינת רשימת גיבויים' });
+  }
+});
+
+// Create manual backup
+router.post('/backup', authenticateToken, requireRole(['super_admin']), (req, res) => {
+  try {
+    const backupPath = createBackup(true);
+    if (backupPath) {
+      res.json({ success: true, path: backupPath });
+    } else {
+      res.status(500).json({ success: false, error: 'יצירת הגיבוי נכשלה' });
+    }
+  } catch (error) {
+    console.error('Create backup error:', error);
+    res.status(500).json({ error: 'שגיאה ביצירת גיבוי' });
+  }
+});
+
+// Download specific backup
+router.get('/backups/:filename', authenticateToken, requireRole(['super_admin']), (req, res) => {
+  try {
+    const filename = req.params.filename;
+    // Sanitize filename to prevent path traversal
+    if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+      return res.status(400).json({ error: 'שם קובץ לא חוקי' });
+    }
+
+    const dataDir = process.env.NODE_ENV === 'production'
+      ? (fs.existsSync('/var/data') ? '/var/data' : '/tmp/meitzad-data')
+      : path.join(__dirname, '../../data');
+    const backupPath = path.join(dataDir, 'backups', filename);
+
+    if (!fs.existsSync(backupPath)) {
+      return res.status(404).json({ error: 'קובץ הגיבוי לא נמצא' });
+    }
+
+    res.download(backupPath, filename);
+  } catch (error) {
+    console.error('Download backup error:', error);
+    res.status(500).json({ error: 'שגיאה בהורדת גיבוי' });
+  }
+});
+
+// Restore from backup
+router.post('/restore', authenticateToken, requireRole(['super_admin']), (req, res) => {
+  try {
+    const { filename } = req.body;
+
+    if (!filename) {
+      return res.status(400).json({ error: 'לא צוין קובץ גיבוי' });
+    }
+
+    // Sanitize filename
+    if (filename.includes('..') || filename.includes('/') || filename.includes('\\')) {
+      return res.status(400).json({ error: 'שם קובץ לא חוקי' });
+    }
+
+    const success = restoreBackup(filename);
+    if (success) {
+      res.json({ success: true, message: 'השחזור הושלם בהצלחה' });
+    } else {
+      res.status(500).json({ success: false, error: 'השחזור נכשל' });
+    }
+  } catch (error) {
+    console.error('Restore backup error:', error);
+    res.status(500).json({ error: 'שגיאה בשחזור גיבוי' });
+  }
+});
+
+// ========== EMAIL TEST ==========
+
+// Test email connection
+router.post('/test-email', authenticateToken, requireRole(['super_admin', 'admin']), async (req, res) => {
+  try {
+    const db = getDb();
+
+    // Get SMTP settings from database
+    const getSetting = (key) => {
+      const row = db.prepare('SELECT value FROM settings WHERE key = ?').get(key);
+      return row?.value || null;
+    };
+
+    const smtpHost = getSetting('smtp_host') || process.env.SMTP_HOST;
+    const smtpPort = getSetting('smtp_port') || process.env.SMTP_PORT || 587;
+    const smtpUser = getSetting('outgoing_email') || process.env.SMTP_USER;
+    const smtpPass = getSetting('smtp_pass') || process.env.SMTP_PASS;
+    const smtpSecure = getSetting('smtp_secure') === 'true' || process.env.SMTP_SECURE === 'true';
+
+    if (!smtpHost || !smtpUser) {
+      return res.json({ success: false, error: 'הגדרות SMTP חסרות' });
+    }
+
+    const transporter = nodemailer.createTransport({
+      host: smtpHost,
+      port: parseInt(smtpPort),
+      secure: smtpSecure,
+      auth: smtpPass ? { user: smtpUser, pass: smtpPass } : undefined,
+      connectionTimeout: 10000
+    });
+
+    await transporter.verify();
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Test email error:', error);
+    res.json({ success: false, error: error.message });
+  }
+});
+
+// ========== WHATSAPP TEST ==========
+
+// Test WhatsApp connection
+router.post('/test-whatsapp', authenticateToken, requireRole(['super_admin', 'admin']), async (req, res) => {
+  try {
+    const { bridgeUrl } = req.body;
+    const url = bridgeUrl || process.env.WHATSAPP_BRIDGE_URL || 'http://localhost:3001';
+
+    // Try to connect to the WhatsApp bridge
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 5000);
+
+    try {
+      const response = await fetch(`${url}/api/status`, {
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+
+      if (response.ok) {
+        const data = await response.json();
+        res.json({ connected: data.connected || data.status === 'connected' });
+      } else {
+        res.json({ connected: false });
+      }
+    } catch (fetchError) {
+      clearTimeout(timeoutId);
+      res.json({ connected: false, error: fetchError.message });
+    }
+  } catch (error) {
+    console.error('Test WhatsApp error:', error);
+    res.json({ connected: false, error: error.message });
   }
 });
 

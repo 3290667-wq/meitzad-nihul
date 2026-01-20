@@ -251,4 +251,117 @@ router.get('/by-category', authenticateToken, (req, res) => {
   }
 });
 
+// Export to CSV
+router.get('/export/:reportType', authenticateToken, (req, res) => {
+  try {
+    const db = getDb();
+    const { reportType } = req.params;
+    const year = req.query.year || new Date().getFullYear();
+    const month = req.query.month;
+
+    const categoryLabels = {
+      infrastructure: 'תשתיות', maintenance: 'תחזוקה', security: 'ביטחון',
+      education: 'חינוך', welfare: 'רווחה', employees: 'עובדים',
+      taxes: 'מיסים', other: 'אחר'
+    };
+
+    let transactions = [];
+    let filename = `budget_${reportType}_${year}`;
+
+    switch (reportType) {
+      case 'monthly':
+        transactions = db.prepare(`
+          SELECT * FROM transactions
+          WHERE strftime('%Y', date) = ? AND strftime('%m', date) = ?
+          ORDER BY date DESC
+        `).all(String(year), String(month || new Date().getMonth() + 1).padStart(2, '0'));
+        filename += month ? `_${month}` : '';
+        break;
+
+      case 'quarterly':
+        const quarter = req.query.quarter || Math.ceil((new Date().getMonth() + 1) / 3);
+        const startMonth = (quarter - 1) * 3 + 1;
+        const endMonth = quarter * 3;
+        transactions = db.prepare(`
+          SELECT * FROM transactions
+          WHERE strftime('%Y', date) = ?
+          AND CAST(strftime('%m', date) AS INTEGER) BETWEEN ? AND ?
+          ORDER BY date DESC
+        `).all(String(year), startMonth, endMonth);
+        filename += `_Q${quarter}`;
+        break;
+
+      case 'annual':
+        transactions = db.prepare(`
+          SELECT * FROM transactions
+          WHERE strftime('%Y', date) = ?
+          ORDER BY date DESC
+        `).all(String(year));
+        break;
+
+      case 'category':
+        const categoryData = db.prepare(`
+          SELECT category,
+            SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END) as income,
+            SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END) as expense
+          FROM transactions
+          WHERE strftime('%Y', date) = ?
+          GROUP BY category
+        `).all(String(year));
+
+        // Build CSV for category report
+        let csvContent = '\uFEFF' + 'קטגוריה,הכנסות,הוצאות,מאזן\n';
+        categoryData.forEach(row => {
+          const balance = (row.income || 0) - (row.expense || 0);
+          csvContent += `${categoryLabels[row.category] || row.category},${row.income || 0},${row.expense || 0},${balance}\n`;
+        });
+
+        res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}.csv"`);
+        return res.send(csvContent);
+
+      case 'all':
+      default:
+        transactions = db.prepare(`
+          SELECT * FROM transactions
+          WHERE strftime('%Y', date) = ?
+          ORDER BY date DESC
+        `).all(String(year));
+        break;
+    }
+
+    // Build CSV content
+    const headers = ['תאריך', 'תיאור', 'קטגוריה', 'סוג', 'סכום', 'מספר קבלה', 'הערות'];
+    let csvContent = '\uFEFF' + headers.join(',') + '\n';
+
+    transactions.forEach(tx => {
+      csvContent += [
+        new Date(tx.date).toLocaleDateString('he-IL'),
+        `"${(tx.description || '').replace(/"/g, '""')}"`,
+        categoryLabels[tx.category] || tx.category,
+        tx.type === 'income' ? 'הכנסה' : 'הוצאה',
+        tx.amount,
+        tx.receipt_number || '',
+        `"${(tx.notes || '').replace(/"/g, '""')}"`
+      ].join(',') + '\n';
+    });
+
+    // Add summary
+    const totalIncome = transactions.filter(t => t.type === 'income').reduce((sum, t) => sum + t.amount, 0);
+    const totalExpense = transactions.filter(t => t.type === 'expense').reduce((sum, t) => sum + t.amount, 0);
+    csvContent += '\n';
+    csvContent += `סה"כ הכנסות,,,הכנסה,${totalIncome},,\n`;
+    csvContent += `סה"כ הוצאות,,,הוצאה,${totalExpense},,\n`;
+    csvContent += `מאזן,,,,${totalIncome - totalExpense},,\n`;
+
+    res.setHeader('Content-Type', 'text/csv; charset=utf-8');
+    res.setHeader('Content-Disposition', `attachment; filename="${filename}.csv"`);
+    res.send(csvContent);
+
+  } catch (error) {
+    console.error('Export error:', error);
+    res.status(500).json({ error: 'שגיאה בייצוא דו"ח' });
+  }
+});
+
 module.exports = router;

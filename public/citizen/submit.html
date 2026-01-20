@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>הגשת פנייה - יישוב מיצד</title>
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --primary: #1e3a5f;
+      --primary-light: #2d5a8a;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --error: #ef4444;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-500: #6b7280;
+      --gray-700: #374151;
+      --gray-900: #111827;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: 'Heebo', sans-serif;
+      background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8a 100%);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 20px;
+    }
+
+    .container { max-width: 700px; width: 100%; }
+
+    .header {
+      text-align: center;
+      color: white;
+      margin-bottom: 30px;
+    }
+    .header h1 { font-size: 2rem; margin-bottom: 8px; }
+    .header p { opacity: 0.9; font-size: 1.1rem; }
+
+    .card {
+      background: white;
+      border-radius: 16px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      overflow: hidden;
+    }
+
+    .card-header {
+      background: var(--primary);
+      color: white;
+      padding: 20px 24px;
+    }
+    .card-header h2 { font-size: 1.3rem; margin-bottom: 4px; }
+    .card-header p { opacity: 0.9; font-size: 0.9rem; }
+
+    .card-body { padding: 30px; }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    .form-group {
+      margin-bottom: 20px;
+    }
+
+    .form-group.full { grid-column: 1 / -1; }
+
+    .form-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 8px;
+      color: var(--gray-700);
+    }
+
+    .form-group label .required {
+      color: var(--error);
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 12px 14px;
+      border: 2px solid var(--gray-200);
+      border-radius: 10px;
+      font-size: 1rem;
+      font-family: inherit;
+      transition: all 0.2s;
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 120px;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.1);
+    }
+
+    .form-group input::placeholder,
+    .form-group textarea::placeholder {
+      color: var(--gray-500);
+    }
+
+    .form-group small {
+      display: block;
+      margin-top: 6px;
+      color: var(--gray-500);
+      font-size: 0.85rem;
+    }
+
+    .btn {
+      padding: 14px 24px;
+      border: none;
+      border-radius: 10px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all 0.2s;
+      width: 100%;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+    .btn-primary:hover {
+      background: var(--primary-light);
+      transform: translateY(-1px);
+    }
+    .btn-primary:disabled {
+      background: var(--gray-500);
+      cursor: not-allowed;
+    }
+
+    /* Success Message */
+    .success-message {
+      display: none;
+      text-align: center;
+      padding: 40px 20px;
+    }
+
+    .success-icon {
+      width: 80px;
+      height: 80px;
+      background: var(--success);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 20px;
+      font-size: 2.5rem;
+    }
+
+    .success-message h3 {
+      color: var(--gray-900);
+      margin-bottom: 12px;
+      font-size: 1.5rem;
+    }
+
+    .success-message p {
+      color: var(--gray-600);
+      margin-bottom: 8px;
+    }
+
+    .inquiry-number-box {
+      background: var(--gray-100);
+      border: 2px dashed var(--primary);
+      padding: 16px;
+      border-radius: 12px;
+      margin: 20px 0;
+    }
+
+    .inquiry-number-box span {
+      display: block;
+      font-size: 0.9rem;
+      color: var(--gray-500);
+      margin-bottom: 4px;
+    }
+
+    .inquiry-number-box strong {
+      font-size: 1.5rem;
+      color: var(--primary);
+    }
+
+    .btn-secondary {
+      background: var(--gray-100);
+      color: var(--gray-700);
+      margin-top: 16px;
+    }
+    .btn-secondary:hover {
+      background: var(--gray-200);
+    }
+
+    /* Footer Links */
+    .footer-links {
+      display: flex;
+      gap: 20px;
+      justify-content: center;
+      margin-top: 30px;
+    }
+
+    .footer-links a {
+      color: white;
+      text-decoration: none;
+      opacity: 0.9;
+      transition: opacity 0.2s;
+    }
+
+    .footer-links a:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+
+    /* Toast */
+    .toast {
+      position: fixed;
+      bottom: 20px;
+      left: 50%;
+      transform: translateX(-50%);
+      padding: 12px 24px;
+      background: var(--gray-900);
+      color: white;
+      border-radius: 8px;
+      opacity: 0;
+      transition: opacity 0.3s;
+      z-index: 1000;
+    }
+
+    .toast.show { opacity: 1; }
+    .toast.error { background: var(--error); }
+    .toast.success { background: var(--success); }
+
+    @media (max-width: 600px) {
+      .form-row { grid-template-columns: 1fr; }
+      .header h1 { font-size: 1.5rem; }
+      .card-body { padding: 20px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>יישוב מיצד</h1>
+      <p>מערכת פניות תושבים</p>
+    </div>
+
+    <div class="card">
+      <div class="card-header">
+        <h2>הגשת פנייה חדשה</h2>
+        <p>אנא מלא את הפרטים הבאים ונחזור אליך בהקדם</p>
+      </div>
+      <div class="card-body">
+        <form id="inquiryForm" onsubmit="submitInquiry(event)">
+          <div class="form-row">
+            <div class="form-group">
+              <label>שם מלא <span class="required">*</span></label>
+              <input type="text" id="name" name="name" required placeholder="ישראל ישראלי">
+            </div>
+            <div class="form-group">
+              <label>טלפון <span class="required">*</span></label>
+              <input type="tel" id="phone" name="phone" required placeholder="050-1234567">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>אימייל <span class="required">*</span></label>
+              <input type="email" id="email" name="email" required placeholder="example@email.com">
+              <small>מספר הפנייה יישלח לכתובת זו</small>
+            </div>
+            <div class="form-group">
+              <label>כתובת</label>
+              <input type="text" id="address" name="address" placeholder="רחוב ומספר בית">
+            </div>
+          </div>
+
+          <div class="form-row">
+            <div class="form-group">
+              <label>קטגוריה <span class="required">*</span></label>
+              <select id="category" name="category" required>
+                <option value="">בחר קטגוריה</option>
+                <option value="infrastructure">תשתיות</option>
+                <option value="security">ביטחון ובטיחות</option>
+                <option value="environment">סביבה ונוף</option>
+                <option value="education">חינוך</option>
+                <option value="welfare">רווחה</option>
+                <option value="other">אחר</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>דחיפות</label>
+              <select id="priority" name="priority">
+                <option value="normal">רגילה</option>
+                <option value="high">גבוהה</option>
+                <option value="urgent">דחופה</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="form-group full">
+            <label>נושא הפנייה <span class="required">*</span></label>
+            <input type="text" id="subject" name="subject" required placeholder="תאר בקצרה את נושא הפנייה">
+          </div>
+
+          <div class="form-group full">
+            <label>תיאור מפורט <span class="required">*</span></label>
+            <textarea id="description" name="description" required placeholder="פרט את הבעיה או הבקשה בצורה מלאה..."></textarea>
+          </div>
+
+          <div class="form-group full">
+            <label>מיקום (אם רלוונטי)</label>
+            <input type="text" id="location" name="location" placeholder="לדוגמא: ליד גן המשחקים ברחוב הזית">
+          </div>
+
+          <button type="submit" class="btn btn-primary" id="submitBtn">שלח פנייה</button>
+        </form>
+
+        <div class="success-message" id="successMessage">
+          <div class="success-icon">✓</div>
+          <h3>הפנייה נשלחה בהצלחה!</h3>
+          <p>תודה על פנייתך. נטפל בה בהקדם האפשרי.</p>
+          <div class="inquiry-number-box">
+            <span>מספר הפנייה שלך:</span>
+            <strong id="newInquiryNumber">-</strong>
+          </div>
+          <p>שמור את מספר הפנייה לצורך מעקב</p>
+          <p style="font-size: 0.9rem;">אימייל עם פרטי הפנייה נשלח לכתובת שהזנת</p>
+          <button class="btn btn-secondary" onclick="resetForm()">פנייה נוספת</button>
+          <a href="/citizen/portal.html" class="btn btn-primary" style="display: block; text-decoration: none; margin-top: 10px;">מעקב אחר הפנייה</a>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer-links">
+      <a href="/citizen/portal.html">מעקב פניות</a>
+      <a href="/">דף הבית</a>
+      <a href="tel:*">צור קשר</a>
+    </div>
+  </div>
+
+  <div class="toast" id="toast"></div>
+
+  <script>
+    const API_BASE = '/api';
+
+    async function submitInquiry(event) {
+      event.preventDefault();
+
+      const submitBtn = document.getElementById('submitBtn');
+      submitBtn.disabled = true;
+      submitBtn.textContent = 'שולח...';
+
+      const formData = {
+        name: document.getElementById('name').value.trim(),
+        email: document.getElementById('email').value.trim(),
+        phone: document.getElementById('phone').value.trim(),
+        address: document.getElementById('address').value.trim(),
+        category: document.getElementById('category').value,
+        priority: document.getElementById('priority').value,
+        subject: document.getElementById('subject').value.trim(),
+        description: document.getElementById('description').value.trim(),
+        location: document.getElementById('location').value.trim(),
+        source: 'web'
+      };
+
+      try {
+        const response = await fetch(`${API_BASE}/inquiries/public`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData)
+        });
+
+        if (!response.ok) {
+          const error = await response.json();
+          throw new Error(error.error || 'שגיאה בשליחת הפנייה');
+        }
+
+        const result = await response.json();
+
+        // Show success message
+        document.getElementById('inquiryForm').style.display = 'none';
+        document.getElementById('successMessage').style.display = 'block';
+        document.getElementById('newInquiryNumber').textContent = result.inquiry_number;
+
+        showToast('הפנייה נשלחה בהצלחה!', 'success');
+
+      } catch (error) {
+        console.error('Submit error:', error);
+        showToast(error.message || 'שגיאה בשליחת הפנייה. נסה שוב.', 'error');
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'שלח פנייה';
+      }
+    }
+
+    function resetForm() {
+      document.getElementById('inquiryForm').reset();
+      document.getElementById('inquiryForm').style.display = 'block';
+      document.getElementById('successMessage').style.display = 'none';
+      document.getElementById('submitBtn').disabled = false;
+      document.getElementById('submitBtn').textContent = 'שלח פנייה';
+    }
+
+    function showToast(message, type = 'info') {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = `toast show ${type}`;
+      setTimeout(() => toast.className = 'toast', 4000);
+    }
+  </script>
+</body>
+</html>

@@ -196,11 +196,53 @@
           </div>
         </section>
 
+        <!-- Reports Section -->
+        <section class="dashboard-section reports-section">
+          <div class="section-header">
+            <h2>📊 ייצוא דוחות</h2>
+          </div>
+          <div class="reports-grid">
+            <div class="report-card" onclick="exportToExcel('monthly')">
+              <span class="report-icon">📅</span>
+              <h4>דו"ח חודשי</h4>
+              <p>סיכום הכנסות והוצאות לחודש נבחר</p>
+            </div>
+            <div class="report-card" onclick="exportToExcel('quarterly')">
+              <span class="report-icon">📈</span>
+              <h4>דו"ח רבעוני</h4>
+              <p>השוואה רבעונית של תקציב מול ביצוע</p>
+            </div>
+            <div class="report-card" onclick="exportToExcel('annual')">
+              <span class="report-icon">📊</span>
+              <h4>דו"ח שנתי</h4>
+              <p>סיכום מלא של השנה הנבחרת</p>
+            </div>
+            <div class="report-card" onclick="exportToExcel('category')">
+              <span class="report-icon">📂</span>
+              <h4>פירוט לפי קטגוריה</h4>
+              <p>התפלגות הוצאות והכנסות לפי קטגוריה</p>
+            </div>
+            <div class="report-card" onclick="exportToExcel('all')">
+              <span class="report-icon">📋</span>
+              <h4>כל התנועות</h4>
+              <p>ייצוא מלא של כל התנועות לאקסל</p>
+            </div>
+            <div class="report-card" onclick="connectFinanceAPI()">
+              <span class="report-icon">🔗</span>
+              <h4>חיבור למערכת חשבונות</h4>
+              <p>סנכרון עם תוכנה פיננסית חיצונית</p>
+            </div>
+          </div>
+        </section>
+
         <!-- Recent Transactions -->
         <section class="dashboard-section">
           <div class="section-header">
             <h2>📝 תנועות אחרונות</h2>
-            <a href="#" class="btn btn-secondary btn-sm" onclick="showAllTransactions()">כל התנועות</a>
+            <div class="section-actions">
+              <button class="btn btn-secondary btn-sm" onclick="exportToExcel('all')">📥 אקסל</button>
+              <a href="#" class="btn btn-secondary btn-sm" onclick="showAllTransactions()">כל התנועות</a>
+            </div>
           </div>
           <div class="table-container">
             <table class="data-table">
@@ -290,6 +332,280 @@
   <!-- Toast -->
   <div id="toast" class="toast hidden"></div>
 
+  <!-- Finance API Connection Modal -->
+  <div id="financeAPIModal" class="modal-overlay hidden">
+    <div class="modal">
+      <div class="modal-header">
+        <h3>חיבור למערכת חשבונות</h3>
+        <button class="modal-close" onclick="closeFinanceModal()">&times;</button>
+      </div>
+      <div class="modal-body">
+        <p class="info-text">בחר את תוכנת ניהול החשבונות שלך לסנכרון נתונים:</p>
+        <div class="finance-options">
+          <div class="finance-option" onclick="selectFinanceSystem('hashavshevet')">
+            <span class="system-icon">📊</span>
+            <span class="system-name">חשבשבת</span>
+          </div>
+          <div class="finance-option" onclick="selectFinanceSystem('priority')">
+            <span class="system-icon">🏢</span>
+            <span class="system-name">Priority ERP</span>
+          </div>
+          <div class="finance-option" onclick="selectFinanceSystem('rivhit')">
+            <span class="system-icon">💹</span>
+            <span class="system-name">רווחית</span>
+          </div>
+          <div class="finance-option" onclick="selectFinanceSystem('custom')">
+            <span class="system-icon">⚙️</span>
+            <span class="system-name">API מותאם</span>
+          </div>
+        </div>
+        <div id="apiConfigSection" class="hidden" style="margin-top: 20px;">
+          <div class="form-group">
+            <label>כתובת API</label>
+            <input type="url" id="financeApiUrl" placeholder="https://api.yourfinance.com">
+          </div>
+          <div class="form-group">
+            <label>מפתח API</label>
+            <input type="password" id="financeApiKey" placeholder="••••••••">
+          </div>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button class="btn btn-secondary" onclick="closeFinanceModal()">ביטול</button>
+        <button class="btn btn-primary" onclick="saveFinanceConnection()">שמור ובדוק חיבור</button>
+      </div>
+    </div>
+  </div>
+
+  <style>
+    /* Reports Grid */
+    .reports-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: var(--space-4);
+      margin-top: var(--space-4);
+    }
+    .report-card {
+      background: var(--gray-50);
+      border: 1px solid var(--gray-100);
+      border-radius: 12px;
+      padding: var(--space-4);
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+    .report-card:hover {
+      background: var(--primary-50);
+      border-color: var(--primary-200);
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+    .report-icon {
+      font-size: 2rem;
+      display: block;
+      margin-bottom: var(--space-2);
+    }
+    .report-card h4 {
+      margin: 0 0 var(--space-1) 0;
+      font-size: 1rem;
+      color: var(--gray-800);
+    }
+    .report-card p {
+      margin: 0;
+      font-size: 0.8rem;
+      color: var(--gray-500);
+    }
+    .section-actions {
+      display: flex;
+      gap: var(--space-2);
+    }
+
+    /* Finance API Modal */
+    .finance-options {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-3);
+      margin-top: var(--space-4);
+    }
+    .finance-option {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: var(--space-4);
+      border: 2px solid var(--gray-200);
+      border-radius: 12px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .finance-option:hover {
+      border-color: var(--primary-500);
+      background: var(--primary-50);
+    }
+    .finance-option.selected {
+      border-color: var(--primary-600);
+      background: var(--primary-100);
+    }
+    .system-icon { font-size: 2rem; margin-bottom: var(--space-2); }
+    .system-name { font-weight: 600; }
+    .info-text { color: var(--gray-600); margin-bottom: var(--space-2); }
+  </style>
+
   <script src="/js/budget.js"></script>
+  <script>
+    // Excel Export Functions
+    async function exportToExcel(reportType) {
+      const year = document.getElementById('yearSelect').value;
+      showToast('מכין דו"ח...', 'info');
+
+      try {
+        const response = await fetch(`/api/budget/export/${reportType}?year=${year}`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('meitzad_token') || localStorage.getItem('authToken')}`
+          }
+        });
+
+        if (!response.ok) throw new Error('שגיאה בייצוא');
+
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `budget_${reportType}_${year}.xlsx`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        showToast('הדו"ח הורד בהצלחה', 'success');
+      } catch (error) {
+        console.error('Export error:', error);
+        // Fallback to CSV export
+        exportToCSV(reportType, year);
+      }
+    }
+
+    async function exportToCSV(reportType, year) {
+      try {
+        const response = await fetch(`/api/budget/transactions?year=${year}&limit=9999`, {
+          headers: {
+            'Authorization': `Bearer ${localStorage.getItem('meitzad_token') || localStorage.getItem('authToken')}`
+          }
+        });
+        const transactions = await response.json();
+
+        if (!transactions || transactions.length === 0) {
+          showToast('אין נתונים לייצוא', 'warning');
+          return;
+        }
+
+        // Create CSV content
+        const headers = ['תאריך', 'תיאור', 'קטגוריה', 'סוג', 'סכום', 'הערות'];
+        const categoryLabels = {
+          infrastructure: 'תשתיות', maintenance: 'תחזוקה', security: 'ביטחון',
+          education: 'חינוך', welfare: 'רווחה', employees: 'עובדים',
+          taxes: 'מיסים', other: 'אחר'
+        };
+
+        let csv = '\uFEFF' + headers.join(',') + '\n'; // BOM for Hebrew
+        transactions.forEach(tx => {
+          csv += [
+            new Date(tx.date).toLocaleDateString('he-IL'),
+            `"${tx.description || ''}"`,
+            categoryLabels[tx.category] || tx.category,
+            tx.type === 'income' ? 'הכנסה' : 'הוצאה',
+            tx.amount,
+            `"${tx.notes || ''}"`
+          ].join(',') + '\n';
+        });
+
+        // Download CSV
+        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `budget_${reportType}_${year}.csv`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        URL.revokeObjectURL(url);
+
+        showToast('הדו"ח הורד כקובץ CSV', 'success');
+      } catch (error) {
+        showToast('שגיאה בייצוא: ' + error.message, 'error');
+      }
+    }
+
+    // Finance API Connection
+    let selectedFinanceSystem = null;
+
+    function connectFinanceAPI() {
+      document.getElementById('financeAPIModal').classList.remove('hidden');
+    }
+
+    function closeFinanceModal() {
+      document.getElementById('financeAPIModal').classList.add('hidden');
+      selectedFinanceSystem = null;
+      document.querySelectorAll('.finance-option').forEach(o => o.classList.remove('selected'));
+      document.getElementById('apiConfigSection').classList.add('hidden');
+    }
+
+    function selectFinanceSystem(system) {
+      selectedFinanceSystem = system;
+      document.querySelectorAll('.finance-option').forEach(o => o.classList.remove('selected'));
+      event.currentTarget.classList.add('selected');
+
+      if (system === 'custom') {
+        document.getElementById('apiConfigSection').classList.remove('hidden');
+      } else {
+        document.getElementById('apiConfigSection').classList.add('hidden');
+      }
+    }
+
+    async function saveFinanceConnection() {
+      if (!selectedFinanceSystem) {
+        showToast('נא לבחור מערכת חשבונות', 'error');
+        return;
+      }
+
+      const config = {
+        system: selectedFinanceSystem,
+        apiUrl: document.getElementById('financeApiUrl').value,
+        apiKey: document.getElementById('financeApiKey').value
+      };
+
+      try {
+        await fetch('/api/settings/bulk', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${localStorage.getItem('meitzad_token') || localStorage.getItem('authToken')}`
+          },
+          body: JSON.stringify({
+            finance_system: config.system,
+            finance_api_url: config.apiUrl,
+            finance_api_key: config.apiKey
+          })
+        });
+
+        showToast('הגדרות החיבור נשמרו. שים לב: יש להגדיר API במערכת החיצונית', 'success');
+        closeFinanceModal();
+      } catch (error) {
+        showToast('שגיאה בשמירת הגדרות', 'error');
+      }
+    }
+
+    function exportReport() {
+      // Scroll to reports section
+      document.querySelector('.reports-section').scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function showToast(message, type = 'info') {
+      const toast = document.getElementById('toast');
+      toast.textContent = message;
+      toast.className = `toast ${type}`;
+      toast.classList.remove('hidden');
+      setTimeout(() => toast.classList.add('hidden'), 4000);
+    }
+  </script>
 </body>
 </html>

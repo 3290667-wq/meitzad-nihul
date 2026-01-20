@@ -3,6 +3,27 @@ const router = express.Router();
 const { getDb } = require('../database/db');
 const { authenticateToken, requireRole } = require('../middleware/auth');
 
+// Get meetings statistics
+router.get('/stats', authenticateToken, (req, res) => {
+  try {
+    const db = getDb();
+
+    const stats = db.prepare(`
+      SELECT
+        COUNT(*) as total,
+        SUM(CASE WHEN date >= datetime('now') THEN 1 ELSE 0 END) as upcoming,
+        SUM(CASE WHEN has_protocol = 1 THEN 1 ELSE 0 END) as withProtocol,
+        SUM(CASE WHEN has_protocol = 0 OR has_protocol IS NULL THEN 1 ELSE 0 END) as pendingProtocol
+      FROM meetings
+    `).get();
+
+    res.json(stats);
+  } catch (error) {
+    console.error('Meetings stats error:', error);
+    res.status(500).json({ error: 'שגיאה בטעינת סטטיסטיקות' });
+  }
+});
+
 // Get all meetings
 router.get('/', authenticateToken, (req, res) => {
   try {

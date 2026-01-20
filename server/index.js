@@ -25,6 +25,7 @@ const employeesRoutes = require('./routes/employees');
 const meetingsRoutes = require('./routes/meetings');
 const projectsRoutes = require('./routes/projects');
 const settingsRoutes = require('./routes/settings');
+const categoriesRoutes = require('./routes/categories');
 
 // Initialize Express app
 const app = express();
@@ -55,6 +56,7 @@ app.use('/api/employees', employeesRoutes);
 app.use('/api/meetings', meetingsRoutes);
 app.use('/api/projects', projectsRoutes);
 app.use('/api/settings', settingsRoutes);
+app.use('/api/categories', categoriesRoutes);
 
 // Community management routes
 app.use('/api', communityRoutes);
