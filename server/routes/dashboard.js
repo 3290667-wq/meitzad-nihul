@@ -8,76 +8,100 @@ router.get('/stats', authenticateToken, (req, res) => {
   try {
     const db = getDb();
 
-    // Get requests/inquiries stats
-    const inquiryStats = db.prepare(`
-      SELECT
-        COUNT(*) as total,
-        SUM(CASE WHEN status = 'new' THEN 1 ELSE 0 END) as new_count,
-        SUM(CASE WHEN status = 'in-progress' THEN 1 ELSE 0 END) as in_progress,
-        SUM(CASE WHEN status = 'resolved' THEN 1 ELSE 0 END) as resolved
-      FROM inquiries
-    `).get() || { total: 0, new_count: 0, in_progress: 0, resolved: 0 };
+    // Get requests/inquiries stats with safe defaults
+    let inquiryStats = { total: 0, new_count: 0, in_progress: 0, resolved: 0 };
+    try {
+      inquiryStats = db.prepare(`
+        SELECT
+          COUNT(*) as total,
+          SUM(CASE WHEN status = 'new' THEN 1 ELSE 0 END) as new_count,
+          SUM(CASE WHEN status = 'in-progress' THEN 1 ELSE 0 END) as in_progress,
+          SUM(CASE WHEN status = 'resolved' THEN 1 ELSE 0 END) as resolved
+        FROM inquiries
+      `).get() || inquiryStats;
+    } catch (e) { /* Table might not exist */ }
 
     // Also check requests table
-    const requestStats = db.prepare(`
-      SELECT
-        COUNT(*) as total,
-        SUM(CASE WHEN status = 'new' THEN 1 ELSE 0 END) as new_count,
-        SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) as in_progress,
-        SUM(CASE WHEN status = 'resolved' THEN 1 ELSE 0 END) as resolved
-      FROM requests
-    `).get() || { total: 0, new_count: 0, in_progress: 0, resolved: 0 };
+    let requestStats = { total: 0, new_count: 0, in_progress: 0, resolved: 0 };
+    try {
+      requestStats = db.prepare(`
+        SELECT
+          COUNT(*) as total,
+          SUM(CASE WHEN status = 'new' THEN 1 ELSE 0 END) as new_count,
+          SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) as in_progress,
+          SUM(CASE WHEN status = 'resolved' THEN 1 ELSE 0 END) as resolved
+        FROM requests
+      `).get() || requestStats;
+    } catch (e) { /* Table might not exist */ }
 
     // Combine stats
     const totalInquiries = (inquiryStats.total || 0) + (requestStats.total || 0);
     const openInquiries = (inquiryStats.new_count || 0) + (requestStats.new_count || 0) +
                           (inquiryStats.in_progress || 0) + (requestStats.in_progress || 0);
 
-    // Get meetings stats
-    const meetingStats = db.prepare(`
-      SELECT
-        COUNT(*) as total,
-        SUM(CASE WHEN date > datetime('now') THEN 1 ELSE 0 END) as upcoming,
-        SUM(CASE WHEN has_protocol = 1 THEN 1 ELSE 0 END) as with_protocol
-      FROM meetings
-    `).get() || { total: 0, upcoming: 0, with_protocol: 0 };
+    // Get meetings stats with safe defaults
+    let meetingStats = { total: 0, upcoming: 0, with_protocol: 0 };
+    try {
+      meetingStats = db.prepare(`
+        SELECT
+          COUNT(*) as total,
+          SUM(CASE WHEN date > datetime('now') THEN 1 ELSE 0 END) as upcoming,
+          SUM(CASE WHEN has_protocol = 1 THEN 1 ELSE 0 END) as with_protocol
+        FROM meetings
+      `).get() || meetingStats;
+    } catch (e) { /* Table might not exist */ }
 
-    // Get budget stats
-    const budgetStats = db.prepare(`
-      SELECT
-        COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) as total_income,
-        COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) as total_expense
-      FROM transactions
-      WHERE strftime('%Y', date) = strftime('%Y', 'now')
-    `).get() || { total_income: 0, total_expense: 0 };
+    // Get budget stats with safe defaults
+    let budgetStats = { total_income: 0, total_expense: 0 };
+    try {
+      budgetStats = db.prepare(`
+        SELECT
+          COALESCE(SUM(CASE WHEN type = 'income' THEN amount ELSE 0 END), 0) as total_income,
+          COALESCE(SUM(CASE WHEN type = 'expense' THEN amount ELSE 0 END), 0) as total_expense
+        FROM transactions
+        WHERE strftime('%Y', date) = strftime('%Y', 'now')
+      `).get() || budgetStats;
+    } catch (e) { /* Table might not exist */ }
 
-    // Get employees count
-    const employeeStats = db.prepare(`
-      SELECT
-        COUNT(*) as total,
-        SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active
-      FROM employees
-    `).get() || { total: 0, active: 0 };
+    // Get employees count with safe defaults
+    let employeeStats = { total: 0, active: 0 };
+    try {
+      employeeStats = db.prepare(`
+        SELECT
+          COUNT(*) as total,
+          SUM(CASE WHEN status = 'active' THEN 1 ELSE 0 END) as active
+        FROM employees
+      `).get() || employeeStats;
+    } catch (e) { /* Table might not exist */ }
 
-    // Get projects stats
-    const projectStats = db.prepare(`
-      SELECT
-        COUNT(*) as total,
-        SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) as in_progress
-      FROM projects
-    `).get() || { total: 0, in_progress: 0 };
+    // Get projects stats with safe defaults
+    let projectStats = { total: 0, in_progress: 0 };
+    try {
+      projectStats = db.prepare(`
+        SELECT
+          COUNT(*) as total,
+          SUM(CASE WHEN status = 'in_progress' THEN 1 ELSE 0 END) as in_progress
+        FROM projects
+      `).get() || projectStats;
+    } catch (e) { /* Table might not exist */ }
 
-    // Get pending announcements
-    const pendingAnnouncements = db.prepare(`
-      SELECT COUNT(*) as count FROM announcements
-      WHERE publish_date > datetime('now') OR status = 'draft'
-    `).get()?.count || 0;
+    // Get pending announcements with safe defaults
+    let pendingAnnouncements = 0;
+    try {
+      pendingAnnouncements = db.prepare(`
+        SELECT COUNT(*) as count FROM announcements
+        WHERE publish_date > datetime('now') OR status = 'draft'
+      `).get()?.count || 0;
+    } catch (e) { /* Table might not exist */ }
 
-    // Get upcoming events count
-    const upcomingEvents = db.prepare(`
-      SELECT COUNT(*) as count FROM events
-      WHERE start_date > datetime('now') AND status = 'published'
-    `).get()?.count || 0;
+    // Get upcoming events count with safe defaults
+    let upcomingEvents = 0;
+    try {
+      upcomingEvents = db.prepare(`
+        SELECT COUNT(*) as count FROM events
+        WHERE start_date > datetime('now') AND status = 'published'
+      `).get()?.count || 0;
+    } catch (e) { /* Table might not exist */ }
 
     res.json({
       inquiries: {
