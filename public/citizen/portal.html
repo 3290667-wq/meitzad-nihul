@@ -4,399 +4,410 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>מעקב פניות - יישוב מיצד</title>
-  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/admin/admin.css">
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --primary: #1e3a5f;
-      --primary-light: #2d5a8a;
-      --success: #10b981;
-      --warning: #f59e0b;
-      --error: #ef4444;
-      --gray-50: #f9fafb;
-      --gray-100: #f3f4f6;
-      --gray-200: #e5e7eb;
-      --gray-500: #6b7280;
-      --gray-700: #374151;
-      --gray-900: #111827;
-    }
-
-    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: 'Heebo', sans-serif;
-      background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8a 100%);
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 20px;
+      padding: var(--space-6);
     }
-
-    .container {
-      max-width: 600px;
+    .citizen-container {
+      max-width: 800px;
       width: 100%;
     }
-
-    .header {
+    .citizen-header {
       text-align: center;
       color: white;
-      margin-bottom: 30px;
+      margin-bottom: var(--space-8);
     }
-    .header h1 { font-size: 2rem; margin-bottom: 8px; }
-    .header p { opacity: 0.9; font-size: 1.1rem; }
-
-    .card {
+    .citizen-header h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin-bottom: var(--space-2);
+      background: linear-gradient(135deg, #fff 0%, var(--primary-200) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .citizen-header p {
+      opacity: 0.9;
+      font-size: 1.1rem;
+    }
+    .citizen-card {
       background: white;
-      border-radius: 16px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-xl);
       overflow: hidden;
     }
-
     .card-header {
-      background: var(--primary);
+      background: var(--gradient-primary);
       color: white;
-      padding: 20px 24px;
-      text-align: center;
+      padding: var(--space-6) var(--space-8);
     }
-    .card-header h2 { font-size: 1.3rem; }
-
-    .card-body { padding: 30px; }
-
+    .card-header h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: var(--space-1);
+    }
+    .card-header p {
+      opacity: 0.9;
+    }
+    .card-body {
+      padding: var(--space-8);
+    }
     .search-form {
       display: flex;
+      gap: var(--space-4);
+      margin-bottom: var(--space-6);
+    }
+    .search-form .form-group {
+      flex: 1;
+      display: flex;
       flex-direction: column;
-      gap: 16px;
+      gap: var(--space-2);
     }
-
-    .form-group label {
-      display: block;
+    .search-form label {
       font-weight: 600;
-      margin-bottom: 8px;
       color: var(--gray-700);
+      font-size: 0.95rem;
     }
-
-    .form-group input {
-      width: 100%;
-      padding: 14px 16px;
+    .search-form input {
+      padding: var(--space-3) var(--space-4);
       border: 2px solid var(--gray-200);
-      border-radius: 10px;
-      font-size: 1.1rem;
+      border-radius: var(--radius-md);
+      font-size: 1rem;
       font-family: inherit;
-      transition: all 0.2s;
+      transition: all var(--transition-fast);
     }
-
-    .form-group input:focus {
+    .search-form input:focus {
       outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.1);
+      border-color: var(--primary-500);
+      box-shadow: 0 0 0 3px var(--primary-50);
     }
-
-    .form-group input::placeholder {
-      color: var(--gray-500);
-    }
-
-    .btn {
-      padding: 14px 24px;
+    .btn-search {
+      align-self: flex-end;
+      padding: var(--space-3) var(--space-6);
+      background: var(--gradient-primary);
+      color: white;
       border: none;
-      border-radius: 10px;
-      font-size: 1.1rem;
+      border-radius: var(--radius-md);
+      font-size: 1rem;
       font-weight: 600;
       cursor: pointer;
       font-family: inherit;
-      transition: all 0.2s;
+      transition: all var(--transition-base);
+      white-space: nowrap;
     }
-
-    .btn-primary {
-      background: var(--primary);
-      color: white;
+    .btn-search:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
     }
-    .btn-primary:hover {
-      background: var(--primary-light);
-      transform: translateY(-1px);
+    .btn-search:disabled {
+      background: var(--gray-400);
+      cursor: not-allowed;
+      transform: none;
     }
-
-    .btn-secondary {
-      background: var(--gray-100);
-      color: var(--gray-700);
-      margin-top: 10px;
-    }
-    .btn-secondary:hover {
-      background: var(--gray-200);
-    }
-
     /* Results Section */
-    #resultsSection {
+    .results-section {
       display: none;
-      margin-top: 20px;
+      margin-top: var(--space-6);
+      padding-top: var(--space-6);
+      border-top: 2px solid var(--gray-100);
     }
-
-    .inquiry-result {
+    .inquiry-details {
       background: var(--gray-50);
-      border-radius: 12px;
-      padding: 20px;
+      border-radius: var(--radius-lg);
+      padding: var(--space-6);
+      margin-bottom: var(--space-6);
     }
-
     .inquiry-header {
       display: flex;
       justify-content: space-between;
       align-items: flex-start;
-      margin-bottom: 16px;
-      padding-bottom: 16px;
-      border-bottom: 1px solid var(--gray-200);
+      margin-bottom: var(--space-5);
+      flex-wrap: wrap;
+      gap: var(--space-3);
     }
-
     .inquiry-number {
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       color: var(--gray-500);
+      margin-bottom: var(--space-1);
     }
-    .inquiry-number strong {
-      color: var(--primary);
-      font-size: 1.1rem;
-    }
-
-    .status-badge {
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-size: 0.9rem;
-      font-weight: 600;
-    }
-    .status-new { background: #dbeafe; color: #1d4ed8; }
-    .status-in-progress { background: #fef3c7; color: #d97706; }
-    .status-pending { background: #e0e7ff; color: #4f46e5; }
-    .status-resolved { background: #d1fae5; color: #059669; }
-    .status-closed { background: #f3f4f6; color: #6b7280; }
-
-    .inquiry-details {
-      display: grid;
-      gap: 12px;
-    }
-
-    .detail-row {
-      display: flex;
-      justify-content: space-between;
-    }
-
-    .detail-label {
-      color: var(--gray-500);
-      font-size: 0.9rem;
-    }
-
-    .detail-value {
-      font-weight: 500;
+    .inquiry-subject {
+      font-size: 1.25rem;
+      font-weight: 700;
       color: var(--gray-900);
     }
-
-    .inquiry-description {
-      margin-top: 16px;
-      padding: 16px;
-      background: white;
-      border-radius: 8px;
-      border: 1px solid var(--gray-200);
-    }
-
-    .inquiry-description h4 {
-      color: var(--gray-700);
-      margin-bottom: 8px;
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: var(--space-2) var(--space-4);
+      border-radius: var(--radius-full);
       font-size: 0.9rem;
+      font-weight: 600;
+      gap: var(--space-2);
     }
-
-    .inquiry-description p {
-      color: var(--gray-600);
-      line-height: 1.6;
+    .status-badge::before {
+      content: '';
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
     }
-
+    .status-new {
+      background: var(--info-light);
+      color: var(--info-dark);
+    }
+    .status-new::before { background: var(--info-main); }
+    .status-in_progress, .status-in-progress {
+      background: var(--warning-light);
+      color: var(--warning-dark);
+    }
+    .status-in_progress::before, .status-in-progress::before {
+      background: var(--warning-main);
+      animation: pulse 1.5s infinite;
+    }
+    .status-pending {
+      background: #fce4ec;
+      color: #c2185b;
+    }
+    .status-pending::before { background: #e91e63; }
+    .status-resolved {
+      background: var(--success-light);
+      color: var(--success-dark);
+    }
+    .status-resolved::before { background: var(--success-main); }
+    .status-closed {
+      background: var(--gray-200);
+      color: var(--gray-700);
+    }
+    .status-closed::before { background: var(--gray-500); }
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.6; transform: scale(0.9); }
+    }
+    .inquiry-info-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: var(--space-4);
+      margin-bottom: var(--space-5);
+    }
+    .info-item {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-1);
+    }
+    .info-item label {
+      font-size: 0.8rem;
+      color: var(--gray-500);
+      font-weight: 600;
+      text-transform: uppercase;
+    }
+    .info-item span {
+      font-weight: 500;
+      color: var(--gray-800);
+    }
+    .inquiry-description {
+      background: white;
+      padding: var(--space-4);
+      border-radius: var(--radius-md);
+      border: 1px solid var(--gray-200);
+      color: var(--gray-700);
+      line-height: 1.7;
+    }
+    .inquiry-description h4 {
+      font-size: 0.85rem;
+      color: var(--gray-500);
+      margin-bottom: var(--space-2);
+      font-weight: 600;
+    }
     /* Updates Timeline */
     .updates-section {
-      margin-top: 20px;
+      margin-top: var(--space-6);
     }
-
-    .updates-section h4 {
-      color: var(--gray-700);
-      margin-bottom: 12px;
+    .updates-section h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--gray-800);
+      margin-bottom: var(--space-4);
+      display: flex;
+      align-items: center;
+      gap: var(--space-2);
     }
-
-    .timeline {
-      position: relative;
-      padding-right: 20px;
+    .updates-timeline {
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-4);
     }
-
-    .timeline::before {
-      content: '';
-      position: absolute;
-      right: 6px;
-      top: 0;
-      bottom: 0;
-      width: 2px;
-      background: var(--gray-200);
-    }
-
     .timeline-item {
-      position: relative;
-      padding-bottom: 16px;
-      padding-right: 24px;
+      display: flex;
+      gap: var(--space-4);
+      padding: var(--space-4);
+      background: var(--gray-50);
+      border-radius: var(--radius-md);
+      border-right: 4px solid var(--primary-400);
     }
-
-    .timeline-item::before {
-      content: '';
-      position: absolute;
-      right: 0;
-      top: 4px;
-      width: 14px;
-      height: 14px;
+    .timeline-icon {
+      width: 40px;
+      height: 40px;
       border-radius: 50%;
-      background: var(--primary);
-      border: 2px solid white;
-      box-shadow: 0 0 0 2px var(--primary);
+      background: linear-gradient(135deg, var(--primary-100) 0%, var(--primary-200) 100%);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+      font-size: 1rem;
     }
-
+    .timeline-content {
+      flex: 1;
+    }
+    .timeline-header {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: var(--space-1);
+      flex-wrap: wrap;
+      gap: var(--space-2);
+    }
+    .timeline-status {
+      font-weight: 600;
+      color: var(--gray-800);
+    }
     .timeline-date {
       font-size: 0.8rem;
       color: var(--gray-500);
-      margin-bottom: 4px;
     }
-
-    .timeline-content {
-      background: white;
-      padding: 10px 14px;
-      border-radius: 8px;
-      border: 1px solid var(--gray-200);
-    }
-
-    .timeline-action {
-      font-weight: 600;
-      color: var(--gray-700);
-      margin-bottom: 4px;
-    }
-
     .timeline-comment {
-      font-size: 0.9rem;
       color: var(--gray-600);
+      font-size: 0.95rem;
+      line-height: 1.5;
     }
-
-    /* Not Found */
-    .not-found {
+    .no-updates {
       text-align: center;
-      padding: 30px;
+      padding: var(--space-6);
+      color: var(--gray-500);
+      background: var(--gray-50);
+      border-radius: var(--radius-md);
     }
-
-    .not-found-icon {
-      font-size: 3rem;
-      margin-bottom: 16px;
+    /* No Results */
+    .no-results {
+      text-align: center;
+      padding: var(--space-10);
     }
-
-    .not-found h3 {
+    .no-results-icon {
+      font-size: 4rem;
+      margin-bottom: var(--space-4);
+      opacity: 0.5;
+    }
+    .no-results h3 {
       color: var(--gray-700);
-      margin-bottom: 8px;
+      margin-bottom: var(--space-2);
     }
-
-    .not-found p {
+    .no-results p {
       color: var(--gray-500);
     }
-
+    /* New Inquiry Link */
+    .new-inquiry-link {
+      display: block;
+      text-align: center;
+      margin-top: var(--space-6);
+      padding: var(--space-4);
+      background: var(--gray-50);
+      border-radius: var(--radius-md);
+      text-decoration: none;
+      color: var(--primary-700);
+      font-weight: 600;
+      transition: all var(--transition-fast);
+    }
+    .new-inquiry-link:hover {
+      background: var(--primary-50);
+    }
     /* Footer Links */
     .footer-links {
       display: flex;
-      gap: 20px;
+      gap: var(--space-6);
       justify-content: center;
-      margin-top: 30px;
+      margin-top: var(--space-8);
     }
-
     .footer-links a {
-      color: white;
+      color: rgba(255,255,255,0.8);
       text-decoration: none;
-      opacity: 0.9;
-      transition: opacity 0.2s;
+      font-weight: 500;
+      transition: all var(--transition-fast);
     }
-
     .footer-links a:hover {
-      opacity: 1;
-      text-decoration: underline;
+      color: white;
     }
-
-    /* Loading */
-    .loading {
-      display: none;
-      text-align: center;
-      padding: 20px;
-    }
-
-    .spinner {
-      width: 40px;
-      height: 40px;
-      border: 3px solid var(--gray-200);
-      border-top-color: var(--primary);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-      margin: 0 auto 10px;
-    }
-
-    @keyframes spin {
-      to { transform: rotate(360deg); }
-    }
-
     /* Toast */
     .toast {
       position: fixed;
-      bottom: 20px;
+      bottom: var(--space-6);
       left: 50%;
       transform: translateX(-50%);
-      padding: 12px 24px;
+      padding: var(--space-3) var(--space-6);
       background: var(--gray-900);
       color: white;
-      border-radius: 8px;
+      border-radius: var(--radius-md);
       opacity: 0;
-      transition: opacity 0.3s;
+      transition: opacity var(--transition-base);
       z-index: 1000;
+      box-shadow: var(--shadow-lg);
     }
-
     .toast.show { opacity: 1; }
-    .toast.error { background: var(--error); }
-
-    @media (max-width: 480px) {
-      .header h1 { font-size: 1.5rem; }
-      .card-body { padding: 20px; }
+    .toast.error { background: var(--error-main); }
+    .toast.success { background: var(--success-main); }
+    @media (max-width: 600px) {
+      .search-form { flex-direction: column; }
+      .btn-search { width: 100%; }
+      .citizen-header h1 { font-size: 1.75rem; }
+      .card-body { padding: var(--space-5); }
+      .card-header { padding: var(--space-5); }
+      .inquiry-info-grid { grid-template-columns: 1fr; }
+      .inquiry-header { flex-direction: column; }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
+  <div class="citizen-container">
+    <div class="citizen-header">
       <h1>יישוב מיצד</h1>
-      <p>פורטל מעקב פניות תושבים</p>
+      <p>מעקב אחר פניות</p>
     </div>
 
-    <div class="card">
+    <div class="citizen-card">
       <div class="card-header">
         <h2>בדיקת סטטוס פנייה</h2>
+        <p>הזן את מספר הפנייה והאימייל לצפייה בסטטוס</p>
       </div>
       <div class="card-body">
         <form class="search-form" onsubmit="searchInquiry(event)">
           <div class="form-group">
-            <label for="inquiryNumber">מספר פנייה</label>
-            <input type="text" id="inquiryNumber" placeholder="לדוגמא: INQ-2026-0001" required>
+            <label>מספר פנייה</label>
+            <input type="text" id="inquiryNumber" placeholder="INQ-2026-0001" required>
           </div>
           <div class="form-group">
-            <label for="email">אימייל (לאימות)</label>
-            <input type="email" id="email" placeholder="הזן את האימייל שהזנת בעת הגשת הפנייה" required>
+            <label>אימייל (לאימות)</label>
+            <input type="email" id="email" placeholder="example@email.com" required>
           </div>
-          <button type="submit" class="btn btn-primary">חפש פנייה</button>
-          <a href="/citizen/submit.html" class="btn btn-secondary" style="text-align: center; text-decoration: none;">הגשת פנייה חדשה</a>
+          <button type="submit" class="btn-search" id="searchBtn">חפש פנייה</button>
         </form>
 
-        <div class="loading" id="loading">
-          <div class="spinner"></div>
-          <p>מחפש...</p>
+        <div class="results-section" id="resultsSection">
+          <div id="inquiryDetails"></div>
         </div>
 
-        <div id="resultsSection">
-          <!-- Results will be injected here -->
-        </div>
+        <a href="/citizen/submit.html" class="new-inquiry-link">
+          הגשת פנייה חדשה
+        </a>
       </div>
     </div>
 
     <div class="footer-links">
-      <a href="/citizen/submit.html">הגשת פנייה</a>
+      <a href="/citizen/submit.html">פנייה חדשה</a>
       <a href="/">דף הבית</a>
-      <a href="tel:*">צור קשר</a>
     </div>
   </div>
 
@@ -404,173 +415,146 @@
 
   <script>
     const API_BASE = '/api';
+
     const statusLabels = {
-      'new': 'חדשה',
-      'in-progress': 'בטיפול',
+      'new': 'חדש',
       'in_progress': 'בטיפול',
-      'pending': 'ממתינה',
-      'resolved': 'נפתרה',
-      'closed': 'סגורה'
+      'in-progress': 'בטיפול',
+      'pending': 'ממתין',
+      'resolved': 'נפתר',
+      'closed': 'סגור'
     };
 
-    const statusClasses = {
-      'new': 'status-new',
-      'in-progress': 'status-in-progress',
-      'in_progress': 'status-in-progress',
-      'pending': 'status-pending',
-      'resolved': 'status-resolved',
-      'closed': 'status-closed'
+    const categoryLabels = {
+      'infrastructure': 'תשתיות',
+      'security': 'ביטחון ובטיחות',
+      'environment': 'סביבה ונוף',
+      'education': 'חינוך',
+      'welfare': 'רווחה',
+      'other': 'אחר'
     };
 
     async function searchInquiry(event) {
       event.preventDefault();
 
-      const inquiryNumber = document.getElementById('inquiryNumber').value.trim().toUpperCase();
-      const email = document.getElementById('email').value.trim().toLowerCase();
+      const searchBtn = document.getElementById('searchBtn');
+      searchBtn.disabled = true;
+      searchBtn.textContent = 'מחפש...';
 
-      if (!inquiryNumber || !email) {
-        showToast('נא למלא את כל השדות', 'error');
-        return;
-      }
-
-      document.getElementById('loading').style.display = 'block';
-      document.getElementById('resultsSection').style.display = 'none';
+      const number = document.getElementById('inquiryNumber').value.trim().toUpperCase();
+      const email = document.getElementById('email').value.trim();
 
       try {
-        const response = await fetch(`${API_BASE}/inquiries/public/status?number=${encodeURIComponent(inquiryNumber)}&email=${encodeURIComponent(email)}`);
-
-        document.getElementById('loading').style.display = 'none';
+        const response = await fetch(`${API_BASE}/inquiries/public/status?number=${encodeURIComponent(number)}&email=${encodeURIComponent(email)}`);
 
         if (!response.ok) {
-          if (response.status === 404) {
-            showNotFound();
-            return;
-          }
-          throw new Error('שגיאה בחיפוש');
+          const error = await response.json();
+          throw new Error(error.error || 'הפנייה לא נמצאה');
         }
 
         const inquiry = await response.json();
         displayInquiry(inquiry);
 
       } catch (error) {
-        document.getElementById('loading').style.display = 'none';
         console.error('Search error:', error);
-        showToast('שגיאה בחיפוש. נסה שוב.', 'error');
+        displayNoResults(error.message);
+      } finally {
+        searchBtn.disabled = false;
+        searchBtn.textContent = 'חפש פנייה';
       }
     }
 
     function displayInquiry(inquiry) {
       const resultsSection = document.getElementById('resultsSection');
+      const detailsDiv = document.getElementById('inquiryDetails');
 
-      const statusClass = statusClasses[inquiry.status] || 'status-new';
-      const statusLabel = statusLabels[inquiry.status] || inquiry.status;
+      const statusClass = inquiry.status.replace('_', '-');
 
-      let html = `
-        <div class="inquiry-result">
+      detailsDiv.innerHTML = `
+        <div class="inquiry-details">
           <div class="inquiry-header">
-            <div class="inquiry-number">
-              פנייה מספר<br>
-              <strong>${inquiry.inquiry_number}</strong>
+            <div>
+              <div class="inquiry-number">${inquiry.inquiry_number}</div>
+              <div class="inquiry-subject">${inquiry.subject}</div>
             </div>
-            <span class="status-badge ${statusClass}">${statusLabel}</span>
+            <span class="status-badge status-${statusClass}">${statusLabels[inquiry.status] || inquiry.status}</span>
           </div>
 
-          <div class="inquiry-details">
-            <div class="detail-row">
-              <span class="detail-label">נושא:</span>
-              <span class="detail-value">${inquiry.subject}</span>
+          <div class="inquiry-info-grid">
+            <div class="info-item">
+              <label>קטגוריה</label>
+              <span>${categoryLabels[inquiry.category] || inquiry.category}</span>
             </div>
-            <div class="detail-row">
-              <span class="detail-label">קטגוריה:</span>
-              <span class="detail-value">${getCategoryLabel(inquiry.category)}</span>
+            <div class="info-item">
+              <label>תאריך פתיחה</label>
+              <span>${new Date(inquiry.created_at).toLocaleDateString('he-IL', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
             </div>
-            <div class="detail-row">
-              <span class="detail-label">תאריך הגשה:</span>
-              <span class="detail-value">${formatDate(inquiry.created_at)}</span>
+            <div class="info-item">
+              <label>עדכון אחרון</label>
+              <span>${inquiry.updated_at ? new Date(inquiry.updated_at).toLocaleDateString('he-IL', { year: 'numeric', month: 'long', day: 'numeric' }) : '-'}</span>
             </div>
             ${inquiry.resolved_at ? `
-            <div class="detail-row">
-              <span class="detail-label">תאריך פתרון:</span>
-              <span class="detail-value">${formatDate(inquiry.resolved_at)}</span>
+            <div class="info-item">
+              <label>תאריך סגירה</label>
+              <span>${new Date(inquiry.resolved_at).toLocaleDateString('he-IL', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
             </div>
             ` : ''}
           </div>
 
           <div class="inquiry-description">
             <h4>תיאור הפנייה</h4>
-            <p>${inquiry.description || 'ללא תיאור'}</p>
+            ${inquiry.description}
           </div>
         </div>
-      `;
 
-      // Add updates timeline if available
-      if (inquiry.updates && inquiry.updates.length > 0) {
-        const publicUpdates = inquiry.updates.filter(u => u.is_public);
-        if (publicUpdates.length > 0) {
-          html += `
-            <div class="updates-section">
-              <h4>עדכונים</h4>
-              <div class="timeline">
-                ${publicUpdates.map(update => `
-                  <div class="timeline-item">
-                    <div class="timeline-date">${formatDate(update.created_at)}</div>
-                    <div class="timeline-content">
-                      <div class="timeline-action">${update.action || 'עדכון סטטוס'}</div>
-                      ${update.comment ? `<div class="timeline-comment">${update.comment}</div>` : ''}
+        <div class="updates-section">
+          <h3>היסטוריית עדכונים</h3>
+          ${inquiry.updates && inquiry.updates.length > 0 ? `
+            <div class="updates-timeline">
+              ${inquiry.updates.map(update => `
+                <div class="timeline-item">
+                  <div class="timeline-icon">📝</div>
+                  <div class="timeline-content">
+                    <div class="timeline-header">
+                      <span class="timeline-status">${statusLabels[update.status] || update.status}</span>
+                      <span class="timeline-date">${new Date(update.created_at).toLocaleDateString('he-IL', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</span>
                     </div>
+                    ${update.comment ? `<div class="timeline-comment">${update.comment}</div>` : ''}
                   </div>
-                `).join('')}
-              </div>
+                </div>
+              `).join('')}
             </div>
-          `;
-        }
-      }
-
-      resultsSection.innerHTML = html;
-      resultsSection.style.display = 'block';
-    }
-
-    function showNotFound() {
-      const resultsSection = document.getElementById('resultsSection');
-      resultsSection.innerHTML = `
-        <div class="not-found">
-          <div class="not-found-icon">🔍</div>
-          <h3>הפנייה לא נמצאה</h3>
-          <p>וודא שמספר הפנייה והאימייל שהזנת נכונים</p>
+          ` : `
+            <div class="no-updates">
+              <p>אין עדכונים להצגה כרגע</p>
+            </div>
+          `}
         </div>
       `;
+
       resultsSection.style.display = 'block';
     }
 
-    function getCategoryLabel(category) {
-      const labels = {
-        'infrastructure': 'תשתיות',
-        'security': 'ביטחון',
-        'environment': 'סביבה',
-        'education': 'חינוך',
-        'welfare': 'רווחה',
-        'other': 'אחר'
-      };
-      return labels[category] || category || 'כללי';
-    }
+    function displayNoResults(message) {
+      const resultsSection = document.getElementById('resultsSection');
+      const detailsDiv = document.getElementById('inquiryDetails');
 
-    function formatDate(dateStr) {
-      if (!dateStr) return '-';
-      const date = new Date(dateStr);
-      return date.toLocaleDateString('he-IL', {
-        year: 'numeric',
-        month: 'long',
-        day: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit'
-      });
+      detailsDiv.innerHTML = `
+        <div class="no-results">
+          <div class="no-results-icon">🔍</div>
+          <h3>הפנייה לא נמצאה</h3>
+          <p>${message || 'ודא שמספר הפנייה והאימייל נכונים ונסה שוב'}</p>
+        </div>
+      `;
+
+      resultsSection.style.display = 'block';
     }
 
     function showToast(message, type = 'info') {
       const toast = document.getElementById('toast');
       toast.textContent = message;
       toast.className = `toast show ${type}`;
-      setTimeout(() => toast.className = 'toast', 3000);
+      setTimeout(() => toast.className = 'toast', 4000);
     }
   </script>
 </body>

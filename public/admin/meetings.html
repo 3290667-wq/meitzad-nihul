@@ -16,6 +16,7 @@
         <h2>מיצד</h2>
         <span>מערכת ניהול יישוב</span>
       </div>
+
       <nav class="sidebar-nav">
         <div class="nav-section">
           <span class="nav-section-title">ראשי</span>
@@ -26,36 +27,69 @@
           <a href="/admin/requests.html" class="nav-item">
             <span class="nav-icon">📬</span>
             <span class="nav-text">פניות תושבים</span>
+            <span class="nav-badge" id="newRequestsBadge">0</span>
           </a>
         </div>
+
         <div class="nav-section">
           <span class="nav-section-title">קהילה</span>
           <a href="/admin/events.html" class="nav-item">
             <span class="nav-icon">📅</span>
             <span class="nav-text">לוח אירועים</span>
           </a>
-          <a href="/admin/meetings.html" class="nav-item active">
-            <span class="nav-icon">📋</span>
-            <span class="nav-text">ישיבות ופרוטוקולים</span>
-          </a>
           <a href="/admin/announcements.html" class="nav-item">
             <span class="nav-icon">📢</span>
-            <span class="nav-text">הודעות</span>
+            <span class="nav-text">הודעות והכרזות</span>
+            <span class="nav-badge urgent" id="urgentAnnouncementsBadge" style="display:none">!</span>
+          </a>
+          <a href="/admin/directory.html" class="nav-item">
+            <span class="nav-icon">📖</span>
+            <span class="nav-text">ספר טלפונים</span>
+          </a>
+          <a href="/admin/polls.html" class="nav-item">
+            <span class="nav-icon">🗳️</span>
+            <span class="nav-text">סקרים והצבעות</span>
           </a>
         </div>
+
+        <div class="nav-section">
+          <span class="nav-section-title">משאבים</span>
+          <a href="/admin/facilities.html" class="nav-item">
+            <span class="nav-icon">🏛️</span>
+            <span class="nav-text">הזמנת מתקנים</span>
+            <span class="nav-badge" id="pendingBookingsBadge" style="display:none">0</span>
+          </a>
+          <a href="/admin/documents.html" class="nav-item">
+            <span class="nav-icon">📄</span>
+            <span class="nav-text">מסמכים ונהלים</span>
+          </a>
+          <a href="/admin/maintenance.html" class="nav-item">
+            <span class="nav-icon">🔧</span>
+            <span class="nav-text">תחזוקה</span>
+          </a>
+        </div>
+
         <div class="nav-section">
           <span class="nav-section-title">ניהול</span>
-          <a href="/admin/employees.html" class="nav-item">
-            <span class="nav-icon">👥</span>
-            <span class="nav-text">ניהול עובדים</span>
+          <a href="/admin/meetings.html" class="nav-item active">
+            <span class="nav-icon">🗓️</span>
+            <span class="nav-text">ישיבות ופרוטוקולים</span>
           </a>
           <a href="/admin/budget.html" class="nav-item">
             <span class="nav-icon">💰</span>
-            <span class="nav-text">ניהול תקציב</span>
+            <span class="nav-text">תקציב וכספים</span>
           </a>
           <a href="/admin/planning.html" class="nav-item">
             <span class="nav-icon">📋</span>
-            <span class="nav-text">תכנון לטווח ארוך</span>
+            <span class="nav-text">תכנון ופרויקטים</span>
+          </a>
+          <a href="/admin/employees.html" class="nav-item">
+            <span class="nav-icon">👥</span>
+            <span class="nav-text">עובדים</span>
+          </a>
+          <a href="/admin/infrastructure.html" class="nav-item">
+            <span class="nav-icon">🏗️</span>
+            <span class="nav-text">תשתיות</span>
           </a>
           <a href="/admin/settings.html" class="nav-item">
             <span class="nav-icon">⚙️</span>
@@ -63,7 +97,12 @@
           </a>
         </div>
       </nav>
+
       <div class="sidebar-footer">
+        <a href="/citizen/submit.html" class="nav-item" target="_blank">
+          <span class="nav-icon">📝</span>
+          <span class="nav-text">פורטל תושבים</span>
+        </a>
         <a href="/" class="nav-item">
           <span class="nav-icon">🏠</span>
           <span class="nav-text">לאתר הראשי</span>

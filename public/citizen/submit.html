@@ -4,258 +4,258 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>הגשת פנייה - יישוב מיצד</title>
-  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/styles.css">
+  <link rel="stylesheet" href="/admin/admin.css">
+  <link href="https://fonts.googleapis.com/css2?family=Heebo:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
   <style>
-    :root {
-      --primary: #1e3a5f;
-      --primary-light: #2d5a8a;
-      --success: #10b981;
-      --warning: #f59e0b;
-      --error: #ef4444;
-      --gray-50: #f9fafb;
-      --gray-100: #f3f4f6;
-      --gray-200: #e5e7eb;
-      --gray-500: #6b7280;
-      --gray-700: #374151;
-      --gray-900: #111827;
-    }
-
-    * { margin: 0; padding: 0; box-sizing: border-box; }
     body {
-      font-family: 'Heebo', sans-serif;
-      background: linear-gradient(135deg, #1e3a5f 0%, #2d5a8a 100%);
+      background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
       min-height: 100vh;
       display: flex;
       flex-direction: column;
       align-items: center;
-      padding: 20px;
+      padding: var(--space-6);
     }
-
-    .container { max-width: 700px; width: 100%; }
-
-    .header {
+    .citizen-container {
+      max-width: 800px;
+      width: 100%;
+    }
+    .citizen-header {
       text-align: center;
       color: white;
-      margin-bottom: 30px;
+      margin-bottom: var(--space-8);
     }
-    .header h1 { font-size: 2rem; margin-bottom: 8px; }
-    .header p { opacity: 0.9; font-size: 1.1rem; }
-
-    .card {
+    .citizen-header h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin-bottom: var(--space-2);
+      background: linear-gradient(135deg, #fff 0%, var(--primary-200) 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .citizen-header p {
+      opacity: 0.9;
+      font-size: 1.1rem;
+    }
+    .citizen-card {
       background: white;
-      border-radius: 16px;
-      box-shadow: 0 10px 40px rgba(0,0,0,0.2);
+      border-radius: var(--radius-xl);
+      box-shadow: var(--shadow-xl);
       overflow: hidden;
     }
-
     .card-header {
-      background: var(--primary);
+      background: var(--gradient-primary);
       color: white;
-      padding: 20px 24px;
+      padding: var(--space-6) var(--space-8);
     }
-    .card-header h2 { font-size: 1.3rem; margin-bottom: 4px; }
-    .card-header p { opacity: 0.9; font-size: 0.9rem; }
-
-    .card-body { padding: 30px; }
-
+    .card-header h2 {
+      font-size: 1.5rem;
+      font-weight: 700;
+      margin-bottom: var(--space-1);
+    }
+    .card-header p {
+      opacity: 0.9;
+    }
+    .card-body {
+      padding: var(--space-8);
+    }
     .form-row {
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 16px;
+      gap: var(--space-4);
+      margin-bottom: var(--space-4);
     }
-
     .form-group {
-      margin-bottom: 20px;
+      display: flex;
+      flex-direction: column;
+      gap: var(--space-2);
     }
-
-    .form-group.full { grid-column: 1 / -1; }
-
+    .form-group.full {
+      grid-column: 1 / -1;
+    }
     .form-group label {
-      display: block;
       font-weight: 600;
-      margin-bottom: 8px;
       color: var(--gray-700);
+      font-size: 0.95rem;
     }
-
     .form-group label .required {
-      color: var(--error);
+      color: var(--error-main);
     }
-
     .form-group input,
     .form-group select,
     .form-group textarea {
-      width: 100%;
-      padding: 12px 14px;
+      padding: var(--space-3) var(--space-4);
       border: 2px solid var(--gray-200);
-      border-radius: 10px;
+      border-radius: var(--radius-md);
       font-size: 1rem;
       font-family: inherit;
-      transition: all 0.2s;
+      transition: all var(--transition-fast);
     }
-
-    .form-group textarea {
-      resize: vertical;
-      min-height: 120px;
-    }
-
     .form-group input:focus,
     .form-group select:focus,
     .form-group textarea:focus {
       outline: none;
-      border-color: var(--primary);
-      box-shadow: 0 0 0 3px rgba(30, 58, 95, 0.1);
+      border-color: var(--primary-500);
+      box-shadow: 0 0 0 3px var(--primary-50);
     }
-
-    .form-group input::placeholder,
-    .form-group textarea::placeholder {
-      color: var(--gray-500);
+    .form-group textarea {
+      resize: vertical;
+      min-height: 120px;
     }
-
     .form-group small {
-      display: block;
-      margin-top: 6px;
       color: var(--gray-500);
       font-size: 0.85rem;
     }
-
-    .btn {
-      padding: 14px 24px;
+    .btn-submit {
+      width: 100%;
+      padding: var(--space-4) var(--space-6);
+      background: var(--gradient-primary);
+      color: white;
       border: none;
-      border-radius: 10px;
+      border-radius: var(--radius-md);
       font-size: 1.1rem;
-      font-weight: 600;
+      font-weight: 700;
       cursor: pointer;
       font-family: inherit;
-      transition: all 0.2s;
-      width: 100%;
+      transition: all var(--transition-base);
+      margin-top: var(--space-4);
     }
-
-    .btn-primary {
-      background: var(--primary);
-      color: white;
+    .btn-submit:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
     }
-    .btn-primary:hover {
-      background: var(--primary-light);
-      transform: translateY(-1px);
-    }
-    .btn-primary:disabled {
-      background: var(--gray-500);
+    .btn-submit:disabled {
+      background: var(--gray-400);
       cursor: not-allowed;
+      transform: none;
     }
-
     /* Success Message */
     .success-message {
       display: none;
       text-align: center;
-      padding: 40px 20px;
+      padding: var(--space-10) var(--space-6);
     }
-
     .success-icon {
-      width: 80px;
-      height: 80px;
-      background: var(--success);
+      width: 100px;
+      height: 100px;
+      background: linear-gradient(135deg, var(--success-main) 0%, var(--success-dark) 100%);
       border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      margin: 0 auto 20px;
-      font-size: 2.5rem;
+      margin: 0 auto var(--space-6);
+      font-size: 3rem;
+      color: white;
+      box-shadow: 0 8px 24px rgba(76, 175, 80, 0.4);
     }
-
     .success-message h3 {
       color: var(--gray-900);
-      margin-bottom: 12px;
-      font-size: 1.5rem;
+      font-size: 1.75rem;
+      margin-bottom: var(--space-3);
     }
-
     .success-message p {
       color: var(--gray-600);
-      margin-bottom: 8px;
+      margin-bottom: var(--space-2);
     }
-
     .inquiry-number-box {
-      background: var(--gray-100);
-      border: 2px dashed var(--primary);
-      padding: 16px;
-      border-radius: 12px;
-      margin: 20px 0;
+      background: var(--gray-50);
+      border: 2px dashed var(--primary-500);
+      padding: var(--space-5);
+      border-radius: var(--radius-lg);
+      margin: var(--space-6) 0;
     }
-
     .inquiry-number-box span {
       display: block;
       font-size: 0.9rem;
       color: var(--gray-500);
-      margin-bottom: 4px;
+      margin-bottom: var(--space-1);
     }
-
     .inquiry-number-box strong {
-      font-size: 1.5rem;
-      color: var(--primary);
+      font-size: 2rem;
+      color: var(--primary-700);
+      font-weight: 800;
     }
-
     .btn-secondary {
+      width: 100%;
+      padding: var(--space-3) var(--space-5);
       background: var(--gray-100);
       color: var(--gray-700);
-      margin-top: 16px;
+      border: 1px solid var(--gray-200);
+      border-radius: var(--radius-md);
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+      transition: all var(--transition-fast);
+      margin-top: var(--space-3);
     }
     .btn-secondary:hover {
       background: var(--gray-200);
     }
-
+    .btn-link {
+      display: block;
+      text-align: center;
+      padding: var(--space-3);
+      color: var(--primary-600);
+      text-decoration: none;
+      font-weight: 600;
+      margin-top: var(--space-3);
+    }
+    .btn-link:hover {
+      color: var(--primary-800);
+      text-decoration: underline;
+    }
     /* Footer Links */
     .footer-links {
       display: flex;
-      gap: 20px;
+      gap: var(--space-6);
       justify-content: center;
-      margin-top: 30px;
+      margin-top: var(--space-8);
     }
-
     .footer-links a {
-      color: white;
+      color: rgba(255,255,255,0.8);
       text-decoration: none;
-      opacity: 0.9;
-      transition: opacity 0.2s;
+      font-weight: 500;
+      transition: all var(--transition-fast);
     }
-
     .footer-links a:hover {
-      opacity: 1;
-      text-decoration: underline;
+      color: white;
     }
-
     /* Toast */
     .toast {
       position: fixed;
-      bottom: 20px;
+      bottom: var(--space-6);
       left: 50%;
       transform: translateX(-50%);
-      padding: 12px 24px;
+      padding: var(--space-3) var(--space-6);
       background: var(--gray-900);
       color: white;
-      border-radius: 8px;
+      border-radius: var(--radius-md);
       opacity: 0;
-      transition: opacity 0.3s;
+      transition: opacity var(--transition-base);
       z-index: 1000;
+      box-shadow: var(--shadow-lg);
     }
-
     .toast.show { opacity: 1; }
-    .toast.error { background: var(--error); }
-    .toast.success { background: var(--success); }
-
+    .toast.error { background: var(--error-main); }
+    .toast.success { background: var(--success-main); }
     @media (max-width: 600px) {
       .form-row { grid-template-columns: 1fr; }
-      .header h1 { font-size: 1.5rem; }
-      .card-body { padding: 20px; }
+      .citizen-header h1 { font-size: 1.75rem; }
+      .card-body { padding: var(--space-5); }
+      .card-header { padding: var(--space-5); }
     }
   </style>
 </head>
 <body>
-  <div class="container">
-    <div class="header">
+  <div class="citizen-container">
+    <div class="citizen-header">
       <h1>יישוב מיצד</h1>
       <p>מערכת פניות תושבים</p>
     </div>
 
-    <div class="card">
+    <div class="citizen-card">
       <div class="card-header">
         <h2>הגשת פנייה חדשה</h2>
         <p>אנא מלא את הפרטים הבאים ונחזור אליך בהקדם</p>
@@ -323,11 +323,11 @@
             <input type="text" id="location" name="location" placeholder="לדוגמא: ליד גן המשחקים ברחוב הזית">
           </div>
 
-          <button type="submit" class="btn btn-primary" id="submitBtn">שלח פנייה</button>
+          <button type="submit" class="btn-submit" id="submitBtn">שלח פנייה</button>
         </form>
 
         <div class="success-message" id="successMessage">
-          <div class="success-icon">✓</div>
+          <div class="success-icon">&#10003;</div>
           <h3>הפנייה נשלחה בהצלחה!</h3>
           <p>תודה על פנייתך. נטפל בה בהקדם האפשרי.</p>
           <div class="inquiry-number-box">
@@ -335,9 +335,9 @@
             <strong id="newInquiryNumber">-</strong>
           </div>
           <p>שמור את מספר הפנייה לצורך מעקב</p>
-          <p style="font-size: 0.9rem;">אימייל עם פרטי הפנייה נשלח לכתובת שהזנת</p>
-          <button class="btn btn-secondary" onclick="resetForm()">פנייה נוספת</button>
-          <a href="/citizen/portal.html" class="btn btn-primary" style="display: block; text-decoration: none; margin-top: 10px;">מעקב אחר הפנייה</a>
+          <p style="font-size: 0.9rem; color: var(--gray-500);">אימייל עם פרטי הפנייה נשלח לכתובת שהזנת</p>
+          <button class="btn-secondary" onclick="resetForm()">פנייה נוספת</button>
+          <a href="/citizen/portal.html" class="btn-link">מעקב אחר הפנייה</a>
         </div>
       </div>
     </div>
@@ -345,7 +345,6 @@
     <div class="footer-links">
       <a href="/citizen/portal.html">מעקב פניות</a>
       <a href="/">דף הבית</a>
-      <a href="tel:*">צור קשר</a>
     </div>
   </div>
 
