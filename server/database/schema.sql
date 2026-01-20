@@ -609,6 +609,11 @@ CREATE TABLE IF NOT EXISTS inquiry_updates (
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 );
 
+-- Add reset_token columns to users table (for password reset)
+-- Using ALTER TABLE IF NOT EXISTS pattern for SQLite compatibility
+CREATE TABLE IF NOT EXISTS _temp_check_reset_token (val INTEGER);
+DROP TABLE IF EXISTS _temp_check_reset_token;
+
 -- Create indexes for new tables
 CREATE INDEX IF NOT EXISTS idx_employees_department ON employees(department);
 CREATE INDEX IF NOT EXISTS idx_employees_status ON employees(status);

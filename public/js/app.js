@@ -106,13 +106,19 @@ const App = {
 
     // Handle online/offline status
     window.addEventListener('online', () => {
+      this.hideOfflineBanner();
       Utils.toast('חזרת לרשת', 'success');
       this.refreshCurrentModule();
     });
 
     window.addEventListener('offline', () => {
-      Utils.toast('אין חיבור לאינטרנט', 'warning');
+      this.showOfflineBanner();
     });
+
+    // Check initial online status
+    if (!navigator.onLine) {
+      this.showOfflineBanner();
+    }
 
     // Handle keyboard shortcuts
     document.addEventListener('keydown', (e) => {
@@ -251,6 +257,58 @@ const App = {
       buildDate: '2026-01-20',
       developer: 'Meitzad Development Team'
     };
+  },
+
+  // Show offline banner
+  showOfflineBanner() {
+    // Check if banner already exists
+    if (document.getElementById('offline-banner')) return;
+
+    const banner = document.createElement('div');
+    banner.id = 'offline-banner';
+    banner.innerHTML = `
+      <span class="material-symbols-rounded">wifi_off</span>
+      <span>אין חיבור לאינטרנט - חלק מהפעולות לא יהיו זמינות</span>
+    `;
+    banner.style.cssText = `
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: var(--color-warning, #f59e0b);
+      color: white;
+      padding: 8px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      font-size: 14px;
+      font-weight: 500;
+      z-index: 10001;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    `;
+
+    document.body.insertBefore(banner, document.body.firstChild);
+
+    // Adjust main content
+    const mainScreen = document.getElementById('main-screen');
+    if (mainScreen) {
+      mainScreen.style.marginTop = '40px';
+    }
+  },
+
+  // Hide offline banner
+  hideOfflineBanner() {
+    const banner = document.getElementById('offline-banner');
+    if (banner) {
+      banner.remove();
+    }
+
+    // Reset main content margin
+    const mainScreen = document.getElementById('main-screen');
+    if (mainScreen) {
+      mainScreen.style.marginTop = '';
+    }
   }
 };
 

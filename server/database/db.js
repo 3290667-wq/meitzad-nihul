@@ -65,6 +65,19 @@ const schema = fs.readFileSync(schemaPath, 'utf8');
 db.exec(schema);
 console.log('Database schema initialized');
 
+// Add reset_token columns if they don't exist (for password reset feature)
+try {
+  const columns = db.prepare("PRAGMA table_info(users)").all();
+  const hasResetToken = columns.some(c => c.name === 'reset_token');
+  if (!hasResetToken) {
+    db.exec('ALTER TABLE users ADD COLUMN reset_token TEXT');
+    db.exec('ALTER TABLE users ADD COLUMN reset_token_expires DATETIME');
+    console.log('Added password reset columns to users table');
+  }
+} catch (e) {
+  // Columns might already exist, ignore error
+}
+
 // Initialize schema (kept for backwards compatibility, but no longer needed)
 function initializeDatabase() {
   console.log('Database already initialized');

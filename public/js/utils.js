@@ -131,6 +131,54 @@ const Utils = {
       }, 0) % 10 === 0;
   },
 
+  // Validate form fields and return errors array
+  validateForm(formElement, rules) {
+    const errors = [];
+    const formData = new FormData(formElement);
+
+    for (const [field, fieldRules] of Object.entries(rules)) {
+      const value = formData.get(field)?.trim() || '';
+      const label = fieldRules.label || field;
+
+      if (fieldRules.required && !value) {
+        errors.push(`${label} הוא שדה חובה`);
+        continue;
+      }
+
+      if (value) {
+        if (fieldRules.minLength && value.length < fieldRules.minLength) {
+          errors.push(`${label} חייב להכיל לפחות ${fieldRules.minLength} תווים`);
+        }
+        if (fieldRules.maxLength && value.length > fieldRules.maxLength) {
+          errors.push(`${label} לא יכול להכיל יותר מ-${fieldRules.maxLength} תווים`);
+        }
+        if (fieldRules.type === 'email' && !this.isValidEmail(value)) {
+          errors.push(`${label} לא תקין`);
+        }
+        if (fieldRules.type === 'phone' && !this.isValidPhone(value)) {
+          errors.push(`${label} לא תקין`);
+        }
+        if (fieldRules.match) {
+          const matchValue = formData.get(fieldRules.match)?.trim() || '';
+          if (value !== matchValue) {
+            errors.push(`${label} לא תואם`);
+          }
+        }
+      }
+    }
+
+    return errors;
+  },
+
+  // Show validation errors
+  showValidationErrors(errors) {
+    if (errors.length > 0) {
+      this.toast(errors[0], 'error');
+      return true;
+    }
+    return false;
+  },
+
   // ===== DOM Utilities =====
   $(selector) {
     return document.querySelector(selector);
@@ -217,6 +265,9 @@ const Utils = {
   },
 
   // ===== Modal Utilities =====
+  _modalOverlayHandler: null,
+  _modalEscHandler: null,
+
   openModal(title, content, footer = '') {
     const overlay = document.getElementById('modal-overlay');
     const modalTitle = document.getElementById('modal-title');
@@ -229,22 +280,38 @@ const Utils = {
 
     this.showElement(overlay, 'flex');
 
-    // Close on overlay click
-    overlay.addEventListener('click', (e) => {
-      if (e.target === overlay) this.closeModal();
-    });
+    // Remove old listeners before adding new ones (prevent memory leak)
+    if (this._modalOverlayHandler) {
+      overlay.removeEventListener('click', this._modalOverlayHandler);
+    }
+    if (this._modalEscHandler) {
+      document.removeEventListener('keydown', this._modalEscHandler);
+    }
 
-    // Close on ESC key
-    document.addEventListener('keydown', this.handleModalEsc);
+    // Create new handlers
+    this._modalOverlayHandler = (e) => {
+      if (e.target === overlay) this.closeModal();
+    };
+    this._modalEscHandler = (e) => {
+      if (e.key === 'Escape') this.closeModal();
+    };
+
+    // Add listeners
+    overlay.addEventListener('click', this._modalOverlayHandler);
+    document.addEventListener('keydown', this._modalEscHandler);
   },
 
   closeModal() {
+    const overlay = document.getElementById('modal-overlay');
     this.hideElement('#modal-overlay');
-    document.removeEventListener('keydown', this.handleModalEsc);
-  },
 
-  handleModalEsc(e) {
-    if (e.key === 'Escape') Utils.closeModal();
+    // Clean up listeners
+    if (this._modalOverlayHandler && overlay) {
+      overlay.removeEventListener('click', this._modalOverlayHandler);
+    }
+    if (this._modalEscHandler) {
+      document.removeEventListener('keydown', this._modalEscHandler);
+    }
   },
 
   // Confirm dialog
@@ -405,6 +472,7 @@ window.Utils = Utils;
 const API = {
   baseURL: '',
   token: null,
+  defaultTimeout: 30000, // 30 seconds default timeout
 
   // Initialize with token from storage
   init() {
@@ -432,13 +500,34 @@ const API = {
     return headers;
   },
 
-  // GET request
-  async get(url) {
+  // Fetch with timeout wrapper
+  async fetchWithTimeout(url, options = {}, timeout = this.defaultTimeout) {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), timeout);
+
     try {
-      const response = await fetch(this.baseURL + url, {
+      const response = await fetch(url, {
+        ...options,
+        signal: controller.signal
+      });
+      clearTimeout(timeoutId);
+      return response;
+    } catch (error) {
+      clearTimeout(timeoutId);
+      if (error.name === 'AbortError') {
+        throw new Error('הבקשה נכשלה - timeout. נסה שוב.');
+      }
+      throw error;
+    }
+  },
+
+  // GET request
+  async get(url, timeout) {
+    try {
+      const response = await this.fetchWithTimeout(this.baseURL + url, {
         method: 'GET',
         headers: this.getHeaders()
-      });
+      }, timeout);
 
       if (response.status === 401) {
         this.handleUnauthorized();
@@ -458,13 +547,13 @@ const API = {
   },
 
   // POST request
-  async post(url, data) {
+  async post(url, data, timeout) {
     try {
-      const response = await fetch(this.baseURL + url, {
+      const response = await this.fetchWithTimeout(this.baseURL + url, {
         method: 'POST',
         headers: this.getHeaders(),
         body: JSON.stringify(data)
-      });
+      }, timeout);
 
       if (response.status === 401) {
         this.handleUnauthorized();
@@ -484,13 +573,13 @@ const API = {
   },
 
   // PUT request
-  async put(url, data) {
+  async put(url, data, timeout) {
     try {
-      const response = await fetch(this.baseURL + url, {
+      const response = await this.fetchWithTimeout(this.baseURL + url, {
         method: 'PUT',
         headers: this.getHeaders(),
         body: JSON.stringify(data)
-      });
+      }, timeout);
 
       if (response.status === 401) {
         this.handleUnauthorized();
@@ -510,12 +599,12 @@ const API = {
   },
 
   // DELETE request
-  async delete(url) {
+  async delete(url, timeout) {
     try {
-      const response = await fetch(this.baseURL + url, {
+      const response = await this.fetchWithTimeout(this.baseURL + url, {
         method: 'DELETE',
         headers: this.getHeaders()
-      });
+      }, timeout);
 
       if (response.status === 401) {
         this.handleUnauthorized();

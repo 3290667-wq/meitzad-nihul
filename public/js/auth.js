@@ -172,7 +172,60 @@ const Auth = {
   // Handle forgot password
   async handleForgotPassword(e) {
     e.preventDefault();
-    Utils.toast('פונקציונליות איפוס סיסמה תתווסף בקרוב', 'info');
+
+    const content = `
+      <form id="forgot-password-form" class="settings-form">
+        <p style="color: var(--color-text-secondary); margin-bottom: var(--space-4);">
+          הזינו את כתובת האימייל שלכם ונשלח לכם קישור לאיפוס הסיסמה.
+        </p>
+        <div class="form-group">
+          <label for="reset-email">כתובת אימייל</label>
+          <input type="email" id="reset-email" name="email" required placeholder="your@email.com">
+        </div>
+      </form>
+    `;
+
+    const footer = `
+      <button class="btn btn-secondary" onclick="Utils.closeModal()">ביטול</button>
+      <button class="btn btn-primary" id="send-reset-btn">שלח קישור איפוס</button>
+    `;
+
+    Utils.openModal('איפוס סיסמה', content, footer);
+
+    // Handle form submission
+    document.getElementById('send-reset-btn').addEventListener('click', async () => {
+      const email = document.getElementById('reset-email').value.trim();
+
+      if (!email) {
+        Utils.toast('נא להזין כתובת אימייל', 'error');
+        return;
+      }
+
+      if (!Utils.isValidEmail(email)) {
+        Utils.toast('כתובת אימייל לא תקינה', 'error');
+        return;
+      }
+
+      const btn = document.getElementById('send-reset-btn');
+      btn.disabled = true;
+      btn.textContent = 'שולח...';
+
+      try {
+        await this.apiRequest('/api/auth/forgot-password', {
+          method: 'POST',
+          body: JSON.stringify({ email })
+        });
+
+        Utils.closeModal();
+        Utils.toast('אם האימייל קיים במערכת, נשלח אליך קישור לאיפוס סיסמה', 'success', 6000);
+      } catch (error) {
+        console.error('Forgot password error:', error);
+        Utils.toast(error.message || 'שגיאה בשליחת הבקשה', 'error');
+      } finally {
+        btn.disabled = false;
+        btn.textContent = 'שלח קישור איפוס';
+      }
+    });
   },
 
   // Save user data locally

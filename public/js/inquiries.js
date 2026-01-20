@@ -6,6 +6,29 @@ const Inquiries = {
   currentPage: 1,
   filters: { status: '', category: '', search: '' },
   listeners: [],
+  _abortController: null, // For cancelling pending requests
+  _searchRequestId: 0, // For tracking search request order
+
+  // Valid status transitions - prevents invalid status jumps
+  validTransitions: {
+    'new': ['in-progress', 'pending', 'closed'],
+    'in-progress': ['pending', 'resolved', 'closed'],
+    'pending': ['in-progress', 'resolved', 'closed'],
+    'resolved': ['closed', 'in-progress'], // Can reopen if needed
+    'closed': ['in-progress'] // Can reopen if needed
+  },
+
+  // Check if status transition is valid
+  isValidTransition(fromStatus, toStatus) {
+    if (fromStatus === toStatus) return true;
+    const validNext = this.validTransitions[fromStatus] || [];
+    return validNext.includes(toStatus);
+  },
+
+  // Get valid next statuses for current status
+  getValidNextStatuses(currentStatus) {
+    return this.validTransitions[currentStatus] || [];
+  },
 
   init() {
     this.setupEventListeners();
@@ -72,6 +95,9 @@ const Inquiries = {
     const tbody = document.getElementById('inquiries-body');
     if (!tbody) return;
 
+    // Increment request ID to track request order
+    const currentRequestId = ++this._searchRequestId;
+
     try {
       // Build query params
       const params = new URLSearchParams();
@@ -81,6 +107,12 @@ const Inquiries = {
       params.append('limit', '100');
 
       const inquiriesArray = await API.get(`/api/inquiries?${params.toString()}`);
+
+      // Check if this request is still the most recent one (prevent race condition)
+      if (currentRequestId !== this._searchRequestId) {
+        console.log('Skipping stale search results');
+        return;
+      }
 
       if (!inquiriesArray || inquiriesArray.length === 0) {
         tbody.innerHTML = `
@@ -215,6 +247,22 @@ const Inquiries = {
         return;
       }
 
+      // Get valid next statuses based on current status
+      const validStatuses = this.getValidNextStatuses(inquiry.status);
+      const allStatuses = [
+        { value: 'new', label: 'חדש' },
+        { value: 'in-progress', label: 'בטיפול' },
+        { value: 'pending', label: 'ממתין' },
+        { value: 'resolved', label: 'טופל' },
+        { value: 'closed', label: 'סגור' }
+      ];
+
+      // Build status options - current status + valid transitions
+      const statusOptions = allStatuses
+        .filter(s => s.value === inquiry.status || validStatuses.includes(s.value))
+        .map(s => `<option value="${s.value}" ${inquiry.status === s.value ? 'selected' : ''}>${s.label}</option>`)
+        .join('');
+
       const content = `
         <form id="status-form">
           <div class="form-group">
@@ -224,12 +272,11 @@ const Inquiries = {
           <div class="form-group">
             <label for="new-status">סטטוס חדש *</label>
             <select id="new-status" name="status" required>
-              <option value="new" ${inquiry.status === 'new' ? 'selected' : ''}>חדש</option>
-              <option value="in-progress" ${inquiry.status === 'in-progress' ? 'selected' : ''}>בטיפול</option>
-              <option value="pending" ${inquiry.status === 'pending' ? 'selected' : ''}>ממתין</option>
-              <option value="resolved" ${inquiry.status === 'resolved' ? 'selected' : ''}>טופל</option>
-              <option value="closed" ${inquiry.status === 'closed' ? 'selected' : ''}>סגור</option>
+              ${statusOptions}
             </select>
+            <small style="color: var(--color-text-tertiary); font-size: 0.8rem; margin-top: 4px; display: block;">
+              ניתן לעבור רק לסטטוסים המוצגים
+            </small>
           </div>
           <div class="form-group">
             <label for="status-note">הערה</label>
@@ -258,19 +305,30 @@ const Inquiries = {
 
   async saveStatus(id) {
     const form = document.getElementById('status-form');
-    const status = form.querySelector('#new-status').value;
+    const newStatus = form.querySelector('#new-status').value;
     const note = form.querySelector('#status-note').value;
     const notify = form.querySelector('#notify-citizen').checked;
 
+    // Get current status to validate transition
     try {
+      const inquiry = await API.get(`/api/inquiries/${id}`);
+      const currentStatus = inquiry?.status;
+
+      // Validate transition
+      if (currentStatus && !this.isValidTransition(currentStatus, newStatus)) {
+        Utils.toast(`לא ניתן לשנות סטטוס מ"${Utils.getStatusLabel(currentStatus)}" ל"${Utils.getStatusLabel(newStatus)}"`, 'error');
+        return;
+      }
+
       await API.put(`/api/inquiries/${id}`, {
-        status,
+        status: newStatus,
         note
       });
 
-      if (notify) {
-        // TODO: Send notification to citizen (email/WhatsApp)
-        console.log('Notification would be sent here');
+      if (notify && inquiry?.phone) {
+        // Send WhatsApp notification
+        const message = `שלום ${inquiry.name || ''},\nעדכון לגבי פנייתך (${inquiry.inquiry_number}):\nסטטוס חדש: ${Utils.getStatusLabel(newStatus)}${note ? '\nהערה: ' + note : ''}\n\nבברכה,\nועד יישוב מיצד`;
+        Utils.sendWhatsAppMessage(inquiry.phone, message);
       }
 
       Utils.toast('הסטטוס עודכן בהצלחה', 'success');
@@ -296,12 +354,28 @@ const Inquiries = {
     }
   },
 
+  // Escape CSV cell value to handle quotes, commas, and newlines
+  escapeCSVCell(value) {
+    if (value === null || value === undefined) return '';
+    const str = String(value);
+    // If contains quotes, commas, or newlines - escape quotes and wrap in quotes
+    if (str.includes('"') || str.includes(',') || str.includes('\n') || str.includes('\r')) {
+      return '"' + str.replace(/"/g, '""') + '"';
+    }
+    return '"' + str + '"';
+  },
+
   async exportInquiries() {
     Utils.toast('מייצא פניות...', 'info');
     try {
       const inquiries = await API.get('/api/inquiries');
 
-      // Create CSV
+      if (!inquiries || inquiries.length === 0) {
+        Utils.toast('אין פניות לייצוא', 'warning');
+        return;
+      }
+
+      // Create CSV with proper escaping
       const headers = ['מספר פנייה', 'נושא', 'שם', 'קטגוריה', 'סטטוס', 'תאריך'];
       const rows = inquiries.map(i => [
         i.inquiry_number || '',
@@ -312,11 +386,12 @@ const Inquiries = {
         Utils.formatDate(new Date(i.created_at).getTime())
       ]);
 
-      const csv = [headers, ...rows]
-        .map(row => row.map(cell => `"${cell}"`).join(','))
-        .join('\n');
+      const csv = [
+        headers.map(h => this.escapeCSVCell(h)).join(','),
+        ...rows.map(row => row.map(cell => this.escapeCSVCell(cell)).join(','))
+      ].join('\n');
 
-      // Add BOM for Hebrew support
+      // Add BOM for Hebrew support in Excel
       const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
       const a = document.createElement('a');

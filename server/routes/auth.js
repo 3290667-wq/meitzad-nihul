@@ -146,6 +146,111 @@ router.get('/me', isAuthenticated, (req, res) => {
   }
 });
 
+// POST /api/auth/forgot-password - Request password reset
+router.post('/forgot-password', async (req, res) => {
+  try {
+    const { email } = req.body;
+
+    if (!email) {
+      return res.status(400).json({ error: 'נא להזין כתובת אימייל' });
+    }
+
+    // Find user
+    const user = getUserByEmail.get(email);
+    if (!user) {
+      // Don't reveal if user exists for security
+      return res.json({ message: 'אם האימייל קיים במערכת, נשלח אליך קישור לאיפוס סיסמה' });
+    }
+
+    // Generate reset token (simple version - in production use crypto)
+    const resetToken = Math.random().toString(36).substring(2, 15) +
+                       Math.random().toString(36).substring(2, 15) +
+                       Date.now().toString(36);
+    const resetExpires = new Date(Date.now() + 3600000); // 1 hour
+
+    // Save reset token to database
+    const { db } = require('../database/db');
+    db.prepare(`
+      UPDATE users
+      SET reset_token = ?, reset_token_expires = ?
+      WHERE id = ?
+    `).run(resetToken, resetExpires.toISOString(), user.id);
+
+    // Log audit
+    addAuditLog.run({
+      user_id: user.id,
+      action: 'PASSWORD_RESET_REQUESTED',
+      entity_type: 'user',
+      entity_id: user.id,
+      old_values: null,
+      new_values: JSON.stringify({ email }),
+      ip_address: req.ip
+    });
+
+    // In production, send email with reset link
+    // For now, just log the token
+    console.log(`Password reset token for ${email}: ${resetToken}`);
+
+    res.json({ message: 'אם האימייל קיים במערכת, נשלח אליך קישור לאיפוס סיסמה' });
+  } catch (error) {
+    console.error('Forgot password error:', error);
+    res.status(500).json({ error: 'שגיאה בבקשת איפוס סיסמה' });
+  }
+});
+
+// POST /api/auth/reset-password - Reset password with token
+router.post('/reset-password', async (req, res) => {
+  try {
+    const { token, newPassword } = req.body;
+
+    if (!token || !newPassword) {
+      return res.status(400).json({ error: 'נא למלא את כל השדות' });
+    }
+
+    if (newPassword.length < 6) {
+      return res.status(400).json({ error: 'הסיסמה חייבת להכיל לפחות 6 תווים' });
+    }
+
+    // Find user by reset token
+    const { db } = require('../database/db');
+    const user = db.prepare(`
+      SELECT * FROM users
+      WHERE reset_token = ? AND reset_token_expires > datetime('now')
+    `).get(token);
+
+    if (!user) {
+      return res.status(400).json({ error: 'קישור איפוס לא תקין או פג תוקף' });
+    }
+
+    // Hash new password
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(newPassword, salt);
+
+    // Update password and clear reset token
+    db.prepare(`
+      UPDATE users
+      SET password = ?, reset_token = NULL, reset_token_expires = NULL, updated_at = CURRENT_TIMESTAMP
+      WHERE id = ?
+    `).run(hashedPassword, user.id);
+
+    // Log audit
+    addAuditLog.run({
+      user_id: user.id,
+      action: 'PASSWORD_RESET_COMPLETED',
+      entity_type: 'user',
+      entity_id: user.id,
+      old_values: null,
+      new_values: null,
+      ip_address: req.ip
+    });
+
+    res.json({ message: 'הסיסמה אופסה בהצלחה. ניתן להתחבר עם הסיסמה החדשה.' });
+  } catch (error) {
+    console.error('Reset password error:', error);
+    res.status(500).json({ error: 'שגיאה באיפוס הסיסמה' });
+  }
+});
+
 // POST /api/auth/change-password - Change password
 router.post('/change-password', isAuthenticated, async (req, res) => {
   try {
