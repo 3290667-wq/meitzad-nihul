@@ -246,20 +246,8 @@ const Auth = {
 
   // Called when authentication is successful
   onAuthSuccess() {
-    // Hide login screen, show main app
-    const loginScreen = document.getElementById('login-screen');
-    const mainScreen = document.getElementById('main-screen');
-
-    loginScreen.classList.remove('active');
-    mainScreen.classList.add('active');
-
-    // Update user info in sidebar
-    this.updateUserUI();
-
-    // Initialize the app
-    if (typeof App !== 'undefined' && App.init) {
-      App.init();
-    }
+    // Redirect to admin dashboard
+    window.location.href = '/admin/dashboard.html';
   },
 
   // Called when user is not authenticated

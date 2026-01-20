@@ -3,7 +3,8 @@ const API_BASE = '/api';
 
 // State
 let currentUser = null;
-let authToken = localStorage.getItem('authToken');
+// Support both token names for compatibility
+let authToken = localStorage.getItem('meitzad_token') || localStorage.getItem('authToken');
 
 // Status translations
 const STATUS_MAP = {
@@ -78,7 +79,7 @@ function updateDateTime() {
 
 async function checkAuth() {
   if (!authToken) {
-    window.location.href = '/#login';
+    window.location.href = '/';
     return;
   }
 
@@ -116,7 +117,9 @@ function logout() {
   authToken = null;
   currentUser = null;
   localStorage.removeItem('authToken');
-  window.location.href = '/#login';
+  localStorage.removeItem('meitzad_token');
+  localStorage.removeItem('meitzad_user');
+  window.location.href = '/';
 }
 
 // ==================== Dashboard Data ====================

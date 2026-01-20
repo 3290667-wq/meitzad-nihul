@@ -1573,9 +1573,16 @@
     padding: var(--space-6);
   }
 
+  .welcome-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
   .quick-actions {
     flex-wrap: wrap;
     justify-content: center;
+    width: 100%;
   }
 
   .quick-action-btn {
@@ -1583,9 +1590,32 @@
     font-size: 0.85rem;
   }
 
+  .admin-header {
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+  }
+
+  .admin-header h1 {
+    text-align: center;
+    width: 100%;
+    order: 1;
+  }
+
   .header-right,
   .header-left {
     gap: var(--space-2);
+    justify-content: center;
+  }
+
+  .header-right {
+    order: 2;
+    width: 100%;
+  }
+
+  .header-left {
+    order: 3;
+    width: 100%;
   }
 
   .header-date {
@@ -1594,6 +1624,26 @@
 
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
+    justify-items: center;
+  }
+
+  .stat-card {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .dashboard-section {
+    text-align: center;
+  }
+
+  .section-header {
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-3);
+  }
+
+  .section-header h2 {
+    justify-content: center;
   }
 
   .emergency-contacts {
@@ -1601,6 +1651,32 @@
   }
 
   .notification-panel {
+    width: 100%;
+  }
+
+  /* Center dashboard grid items */
+  .dashboard-grid {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  .dashboard-section {
+    width: 100%;
+  }
+
+  /* Center announcements and events lists */
+  .announcements-list,
+  .events-list,
+  .bookings-list,
+  .polls-list {
+    align-items: center;
+  }
+
+  .announcement-item,
+  .event-item,
+  .booking-item,
+  .poll-item {
     width: 100%;
   }
 }
