@@ -24,12 +24,15 @@ function verifyToken(req, res, next) {
 
 // Check if user has required role
 function requireRole(...roles) {
+  // Flatten roles array to support both requireRole('admin', 'staff') and requireRole(['admin', 'staff'])
+  const flatRoles = roles.flat();
+
   return (req, res, next) => {
     if (!req.user) {
       return res.status(401).json({ error: 'נדרשת התחברות' });
     }
 
-    if (!roles.includes(req.user.role)) {
+    if (!flatRoles.includes(req.user.role)) {
       return res.status(403).json({ error: 'אין לך הרשאה לפעולה זו' });
     }
 
